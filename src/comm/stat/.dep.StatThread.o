@@ -1,3 +1,0 @@
-StatThread.o: StatThread.cc ../common/memcheck.h ../common/log.h \
- StatThread.h StatMgr.h StatInfo.h ../common/atomic.h \
- ../common/atomic_gcc.h ../common/atomic_gcc8.h

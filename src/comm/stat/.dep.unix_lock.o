@@ -1,1 +1,0 @@
-unix_lock.o: unix_lock.c unix_lock.h
