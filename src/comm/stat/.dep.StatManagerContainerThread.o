@@ -1,4 +1,0 @@
-StatManagerContainerThread.o: StatManagerContainerThread.cc \
- ../common/memcheck.h ../common/log.h StatManagerContainerThread.h \
- StatMgr.h StatInfo.h ../common/atomic.h ../common/atomic_gcc.h \
- ../common/atomic_gcc8.h ../common/lock.h ../common/namespace.h
