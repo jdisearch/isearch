@@ -1,0 +1,4 @@
+StatAttn.o: StatAttn.cc ../3rdparty/attr_api/../attr_api/Attr_API.h \
+ StatAttn.h StatClient.h StatMgr.h StatInfo.h ../common/atomic.h \
+ ../common/atomic_gcc.h ../common/atomic_gcc8.h DtcStatAlarmReporter.h \
+ ../common/singleton.h ../common/lock.h ../common/namespace.h

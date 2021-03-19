@@ -1,0 +1,2 @@
+formater.o: formater.cc formater.h ../common/buffer.h \
+ ../common/memcheck.h

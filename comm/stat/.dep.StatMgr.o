@@ -1,0 +1,3 @@
+StatMgr.o: StatMgr.cc ../common/memcheck.h ../common/log.h unix_lock.h \
+ StatMgr.h StatInfo.h ../common/atomic.h ../common/atomic_gcc.h \
+ ../common/atomic_gcc8.h

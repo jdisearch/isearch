@@ -1,0 +1,20 @@
+DtcStatAlarmReporter.o: DtcStatAlarmReporter.cc DtcStatAlarmReporter.h \
+ StatClient.h StatMgr.h StatInfo.h ../common/atomic.h \
+ ../common/atomic_gcc.h ../common/atomic_gcc8.h ../common/singleton.h \
+ ../common/lock.h ../common/namespace.h \
+ ../3rdparty/http_service/curl_http.h \
+ ../3rdparty/curl/include64/curl/curl.h \
+ ../3rdparty/curl/include64/curl/curlver.h \
+ ../3rdparty/curl/include64/curl/curlbuild.h \
+ ../3rdparty/curl/include64/curl/curlrules.h \
+ ../3rdparty/curl/include64/curl/easy.h \
+ ../3rdparty/curl/include64/curl/multi.h \
+ ../3rdparty/curl/include64/curl/curl.h \
+ ../3rdparty/jsoncpp/include/json/json.h \
+ ../3rdparty/jsoncpp/include/json/autolink.h \
+ ../3rdparty/jsoncpp/include/json/config.h \
+ ../3rdparty/jsoncpp/include/json/value.h \
+ ../3rdparty/jsoncpp/include/json/forwards.h \
+ ../3rdparty/jsoncpp/include/json/reader.h \
+ ../3rdparty/jsoncpp/include/json/features.h \
+ ../3rdparty/jsoncpp/include/json/writer.h dtcutils.h ../common/log.h

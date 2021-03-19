@@ -1,0 +1,9 @@
+curl_http.o: ../3rdparty/http_service/curl_http.cpp \
+ ../3rdparty/http_service/curl_http.h \
+ ../3rdparty/curl/include64/curl/curl.h \
+ ../3rdparty/curl/include64/curl/curlver.h \
+ ../3rdparty/curl/include64/curl/curlbuild.h \
+ ../3rdparty/curl/include64/curl/curlrules.h \
+ ../3rdparty/curl/include64/curl/easy.h \
+ ../3rdparty/curl/include64/curl/multi.h \
+ ../3rdparty/curl/include64/curl/curl.h

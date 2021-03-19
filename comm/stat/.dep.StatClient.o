@@ -1,0 +1,2 @@
+StatClient.o: StatClient.cc StatClient.h StatMgr.h StatInfo.h \
+ ../common/atomic.h ../common/atomic_gcc.h ../common/atomic_gcc8.h

@@ -1,0 +1,3 @@
+stat_index.o: stat_index.cc stat_index.h StatThread.h StatMgr.h \
+ StatInfo.h ../common/atomic.h ../common/atomic_gcc.h \
+ ../common/atomic_gcc8.h StatTTCDef.h version.h ../common/log.h
