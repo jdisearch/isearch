@@ -10,10 +10,14 @@
    安装命令：
    git clone https://github.com/gflags/gflags.git
    cd gflags
-   git checkout v2.0
-   ./configure && make && sudo make install
+   git checkout -b 2.2 v2.2.2
+   cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DBUILD_SHARED_LIBS=ON -DGFLAGS_NAMESPACE=google -G "Unix Makefiles" .
+   make && sudo make install
+   sudo ldconfig
+   sudo ln -s /usr/local/lib/libgflags.so.2.2 /lib64
    安装后，需要将gflags的包含路径添加到你的CPATH环境变量中
 5）安装rocksdb依赖库：zlib，bzip2，lz4，snappy，zstandard
+   sudo yum install -y snappy snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan openssl-devel
 '
 
 localdir=`pwd`

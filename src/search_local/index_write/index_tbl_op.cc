@@ -309,7 +309,7 @@ int CIndexTableManager::do_insert_intelligent(string key, string doc_id, string 
 		IntelligentInfo info = *iter;
 		DTC::Result rst;
 		ret = insert_intelligent_execute(dtcServer, key, doc_id, word, info, rst, doc_version);
-		if (ret != 0)
+		if (ret != 0 && ret != -1062) // duplicate is ok
 		{
 			log_error("insert request error! ,errno %d ,errmsg %s, errfrom %s\n", ret, rst.ErrorMessage(), rst.ErrorFrom());
 			return -1;
