@@ -60,12 +60,14 @@ int LogicalOperate::Process(const vector<vector<FieldInfo> >& keys, vector<Index
 					doc_id_vec.clear();
 					return -RT_GET_DOC_ERR;
 				}
+				sort(doc_info.begin(), doc_info.end());
 			} else if ((*it).segment_tag == 4) {
 				int ret = GetDocByShiftEnWord(*it, doc_info, m_appid, highlightWord);
 				if (ret != 0) {
 					doc_id_vec.clear();
 					return -RT_GET_DOC_ERR;
 				}
+				sort(doc_info.begin(), doc_info.end());
 			} else if ((*it).segment_tag == 5 && (*it).word == "") { // 范围查询
 				stringstream ss;
 				ss << m_appid;
