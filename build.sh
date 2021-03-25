@@ -43,6 +43,12 @@ rm librocksdb.so librocksdb.so.6
 ln -s librocksdb.so.6.6.0 librocksdb.so.6
 ln -s librocksdb.so.6 librocksdb.so
 
+cd $src_index_storage
+make
+cp $src_index_storage/api/c_api_cc/libdtc-gcc-*.so /lib64
+ln -s /lib64/libdtc-gcc-*.so /lib64/libdtc.so.1
+ln -s /lib64/libdtc.so.1 /lib64/libdtc.so
+
 cd $src_common
 cmake .
 make
@@ -62,6 +68,3 @@ cd $src_index_read
 cmake .
 make
 cd $localdir
-
-cd $src_index_storage
-make
