@@ -27,7 +27,7 @@
 #include "protocol.h"
 #include "version.h"
 #include "packet.h"
-#include "../api/c_api/dtc_int.h"
+#include "../api/c_api_cc/dtcint.h"
 #include "table_def.h"
 #include "decode.h"
 
@@ -67,8 +67,8 @@ int Templateencode_request(NCRequest &rq, const DTCValue *kptr, T *tgt)
 	vi.set_hot_backup_id(rq.hotBackupID);
 
 	// hot backup timestamp
-	vi.set_master_hb_timestamp(rq.master_hb_timestamp);
-	vi.set_slave_hb_timestamp(rq.slave_hb_timestamp);
+	vi.set_master_hb_timestamp(rq.MasterHBTimestamp);
+	vi.set_slave_hb_timestamp(rq.SlaveHBTimestamp);
 	if (sv->tdef && rq.adminCode != 0)
 		vi.set_data_table_hash(sv->tdef->table_hash());
 
@@ -81,7 +81,7 @@ int Templateencode_request(NCRequest &rq, const DTCValue *kptr, T *tgt)
 	int isbatch = 0;
 	if (rq.flags & DRequest::Flag::MultiKeyValue)
 	{
-		if (sv->simple_batch_key() && rq.kvl.key_count() == 1)
+		if (sv->SimpleBatchKey() && rq.kvl.KeyCount() == 1)
 		{
 			/* single field single key batch, convert to normal */
 			kptr = rq.kvl.val;
@@ -95,8 +95,8 @@ int Templateencode_request(NCRequest &rq, const DTCValue *kptr, T *tgt)
 
 	if (isbatch)
 	{
-		int keyFieldCnt = rq.kvl.key_fields();
-		int keyCount = rq.kvl.key_count();
+		int keyFieldCnt = rq.kvl.KeyFields();
+		int keyCount = rq.kvl.KeyCount();
 		int i, j;
 		vi.set_tag(10, keyFieldCnt);
 		vi.set_tag(11, keyCount);
@@ -105,14 +105,14 @@ int Templateencode_request(NCRequest &rq, const DTCValue *kptr, T *tgt)
 		if (kt.ptr == NULL)
 			throw std::bad_alloc();
 		for (i = 0; i < keyFieldCnt; i++)
-			kt.Add((uint8_t)(rq.kvl.key_type(i)));
+			kt.Add((uint8_t)(rq.kvl.KeyType(i)));
 		vi.set_tag(12, DTCValue::Make(kt.ptr, kt.len));
 		// key name
 		kn.ptr = (char *)MALLOC((256 + sizeof(uint32_t)) * keyFieldCnt);
 		if (kn.ptr == NULL)
 			throw std::bad_alloc();
 		for (i = 0; i < keyFieldCnt; i++)
-			kn.Add(rq.kvl.key_name(i));
+			kn.Add(rq.kvl.KeyName(i));
 		vi.set_tag(13, DTCValue::Make(kn.ptr, kn.len));
 		// key value
 		unsigned int buf_size = 0;
@@ -121,7 +121,7 @@ int Templateencode_request(NCRequest &rq, const DTCValue *kptr, T *tgt)
 			for (i = 0; i < keyFieldCnt; i++)
 			{
 				DTCValue &v = rq.kvl(j, i);
-				switch (rq.kvl.key_type(i))
+				switch (rq.kvl.KeyType(i))
 				{
 				case DField::Signed:
 				case DField::Unsigned:
@@ -157,9 +157,9 @@ int Templateencode_request(NCRequest &rq, const DTCValue *kptr, T *tgt)
 	else if (kptr)
 		ri.set_key(*kptr);
 	// cmd
-	if (sv->get_timeout())
+	if (sv->GetTimeout())
 	{
-		ri.set_timeout(sv->get_timeout());
+		ri.set_timeout(sv->GetTimeout());
 	}
 	//limit
 	if (rq.limitCount)

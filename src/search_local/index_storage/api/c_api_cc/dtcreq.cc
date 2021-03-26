@@ -57,7 +57,7 @@ NCRequest::NCRequest(NCServer *s, int op)
 	case DRequest::Monitor:
 		break;
 	default:
-		op = DRequest::ResultCode;
+		op = DRequest::result_code;
 	}
 	cmd = op;
 	err = 0;
@@ -123,7 +123,7 @@ int NCRequest::AttachServer(NCServer *s)
 			// no current tabledef
 		} else if(tdef == server->tdef) {
 			// same tabledef
-		} else if(tdef->IsSameTable(server->tdef)) {
+		} else if(tdef->is_same_table(server->tdef)) {
 			// hash equal
 		} else {
 			// force re-resolve fieldnames
@@ -152,7 +152,7 @@ int NCRequest::Need(const char *n, int vid)
 		return_err(-EC_NOT_INITIALIZED);
 	if(cmd!=DRequest::Get && cmd!=DRequest::SvrAdmin)
 		return_err(-EC_BAD_OPERATOR);
-	int ret = fs.AddField(n, vid);
+	int ret = fs.add_field(n, vid);
 	if(ret) err = ret;
 	return ret;
 }
@@ -177,7 +177,7 @@ int NCRequest::AddCondition(const char *n, uint8_t op, uint8_t t, const DTCValue
 	default:
 	    return_err(-EC_BAD_FIELD_TYPE);
 	}
-	int ret = ci.AddValue(n, op, t, v);
+	int ret = ci.add_value(n, op, t, v);
 	if(ret) err = ret;
 	return ret;
 }
@@ -219,7 +219,7 @@ int NCRequest::AddOperation(const char *n, uint8_t op, uint8_t t, const DTCValue
 	default:
 	    return_err(-EC_BAD_FIELD_TYPE);
 	}
-	int ret = ui.AddValue(n, op, t, v);
+	int ret = ui.add_value(n, op, t, v);
 	if(ret) err = ret;
 	return ret;
 }
@@ -244,9 +244,9 @@ int NCRequest::initCompress()
         return -EC_CHECKSUM_MISMATCH;
     if (server->GetCompressLevel())
     {
-        gzip->SetCompressLevel(server->GetCompressLevel());
+        gzip->set_compress_level(server->GetCompressLevel());
     }
-    return gzip->SetBufferLen(tdef->MaxFieldSize());
+    return gzip->set_buffer_len(tdef->max_field_size());
 }
 
 int NCRequest::CompressSet(const char *n,const char * v,int len)
@@ -275,19 +275,19 @@ int NCRequest::CompressSet(const char *n,const char * v,int len)
         iret = initCompress();
         if (iret) return iret;
     }
-    if (tdef->CompressFieldId() <= 0)
+    if (tdef->compress_field_id() <= 0)
     {
         snprintf(_errmsg, sizeof(_errmsg), "compress error:DTC must add a field for compress(FieldType=2,FieldSize=8,DefaultValue=compressflag)");
         return -EC_COMPRESS_ERROR;
     }
 
-    if (tdef->FieldType(tdef->FieldId(n)) != DField::Binary)
+    if (tdef->field_type(tdef->field_id(n)) != DField::Binary)
     {
         snprintf(_errmsg, sizeof(_errmsg), "compress error:compress just support binary field");
         return - EC_BAD_VALUE_TYPE;
     }
 
-    iret = gzip->Compress(v,len);
+    iret = gzip->compress(v,len);
     if (iret)
     {
         if (iret==-111111)
@@ -299,7 +299,7 @@ int NCRequest::CompressSet(const char *n,const char * v,int len)
     iret = setCompressFlag(n);
     if (iret) return iret;
 
-    return AddOperation(n,DField::Set,DField::String,DTCValue::Make(gzip->GetBuf(),gzip->GetLen()));
+    return AddOperation(n,DField::Set,DField::String,DTCValue::Make(gzip->get_buf(),gzip->get_len()));
 }
 
 int NCRequest::CompressSetForce(const char *n,const char * v,int len)
@@ -329,13 +329,13 @@ int NCRequest::CompressSetForce(const char *n,const char * v,int len)
         if (iret) return iret;
     }
 
-    if (tdef->FieldType(tdef->FieldId(n)) != DField::Binary)
+    if (tdef->field_type(tdef->field_id(n)) != DField::Binary)
     {
         snprintf(_errmsg, sizeof(_errmsg), "compress error:compress just support binary field");
         return - EC_BAD_VALUE_TYPE;
     }
 
-    iret = gzip->Compress(v,len);
+    iret = gzip->compress(v,len);
     if (iret)
     {
         if (iret==-111111)
@@ -346,14 +346,14 @@ int NCRequest::CompressSetForce(const char *n,const char * v,int len)
     }
     if (iret) return iret;
 
-    return AddOperation(n,DField::Set,DField::String,DTCValue::Make(gzip->GetBuf(),gzip->GetLen()));
+    return AddOperation(n,DField::Set,DField::String,DTCValue::Make(gzip->get_buf(),gzip->get_len()));
 }
 
 int NCRequest::AddValue(const char *n, uint8_t t, const DTCValue &v)
 {
 	if(server==NULL) return_err(-EC_NOT_INITIALIZED);
 	if(cmd!=DRequest::Insert && cmd!=DRequest::Replace) return_err(-EC_BAD_COMMAND);
-	int ret = ui.AddValue(n, DField::Set, t, v);
+	int ret = ui.add_value(n, DField::Set, t, v);
 	if(ret) err = ret;
 	return ret;
 }
@@ -453,11 +453,11 @@ int NCRequest::SetTabDef(void)
 
 int NCRequest::CheckKey(const DTCValue *kptr)
 {
-	int keyType = tdef->KeyType();
-	int keySize = tdef->KeySize();
+	int keyType = tdef->key_type();
+	int keySize = tdef->key_size();
 	if(kptr){//多key查询时 kptr为空
 		if(keyType == 1 || keyType == 2){
-			return CheckIntValue( *kptr, keyType, keySize);
+			return check_int_value( *kptr, keyType, keySize);
 		}else if(keyType == 4 || keyType == 5){
 			if(keySize <  kptr->str.len)
 				return -EC_BAD_FIELD_SIZE_ON_CHECKKEY;
@@ -468,7 +468,7 @@ int NCRequest::CheckKey(const DTCValue *kptr)
 	return 0;
 }
 
-int NCRequest::Encode(const DTCValue *kptr, CPacket *pkt)
+int NCRequest::Encode(const DTCValue *kptr, Packet *pkt)
 {
 	int err;
 	int force = SetTabDef();
@@ -482,7 +482,7 @@ int NCRequest::Encode(const DTCValue *kptr, CPacket *pkt)
 		return err;
 	}
 
-	if((err = pkt->EncodeRequest(*this, kptr)) != 0) {
+	if((err = pkt->encode_request(*this, kptr)) != 0) {
 		return err;
 	}
 	return 0;
@@ -500,7 +500,7 @@ NCResult *NCRequest::ExecuteStream(const DTCValue *kptr)
 
 		if(resend)
 		{
-			CPacket pk;
+			Packet pk;
 
 			if((err=Encode(kptr, &pk)) < 0)
 			{
@@ -532,7 +532,7 @@ NCResult *NCRequest::ExecuteStream(const DTCValue *kptr)
 		}
 
 		NCResult *res = new NCResult(tdef);
-		res->versionInfo.SetSerialNr(server->LastSerialNr());
+		res->versionInfo.set_serial_nr(server->LastSerialNr());
 
 		err = server->DecodeResultStream(*res);
 
@@ -549,14 +549,14 @@ NCResult *NCRequest::ExecuteStream(const DTCValue *kptr)
 		}
 		nrecv++;
 
-		if (res->versionInfo.SerialNr() != server->LastSerialNr())
+		if (res->versionInfo.serial_nr() != server->LastSerialNr())
 		{
 			log_debug("SN different, receive again. my SN: %lu, result SN: %lu",
 					(unsigned long)server->LastSerialNr(),
-					(unsigned long)res->versionInfo.SerialNr());
+					(unsigned long)res->versionInfo.serial_nr());
 			// receive again
 			resend = 0;
-		} else if (res->ResultCode() == -EC_CHECKSUM_MISMATCH && nrecv <= 1)
+		} else if (res->result_code() == -EC_CHECKSUM_MISMATCH && nrecv <= 1)
 		{
 			resend = 1;
 			// tabledef changed, resend
@@ -568,17 +568,17 @@ NCResult *NCRequest::ExecuteStream(const DTCValue *kptr)
 		else
 		{
 			// got valid result
-			if (res->ResultCode() >= 0 && cmd == DRequest::Get)
+			if (res->result_code() >= 0 && cmd == DRequest::Get)
 				res->SetVirtualMap(fs);
 
 			if(0 != server->GetRemoveCount())
 				server->ClearRemoveCount();
 
 			uint64_t time = 0;
-			if(res->resultInfo.TagPresent(7)){
-				char *t = res->resultInfo.TimeInfo();
+			if(res->resultInfo.tag_present(7)){
+				char *t = res->resultInfo.time_info();
 				if(t){
-					CTimeInfo *t_info = (CTimeInfo *)t;
+					DTCTimeInfo *t_info = (DTCTimeInfo *)t;
 					time = (t_info->time)>0 ? (t_info->time):0;
 					server->SetAgentTime(time);
 				}
@@ -607,7 +607,7 @@ NCResult *NCRequest::ExecuteDgram(SocketAddress *peer, const DTCValue *kptr)
 		int err;
 
 		if (resend) {
-			CPacket pk;
+			Packet pk;
 
 			if ((err = Encode(kptr, &pk)) < 0)
 			{
@@ -635,7 +635,7 @@ NCResult *NCRequest::ExecuteDgram(SocketAddress *peer, const DTCValue *kptr)
 		}
 
 		NCResult *res = new NCResult(tdef);
-		res->versionInfo.SetSerialNr(server->LastSerialNr());
+		res->versionInfo.set_serial_nr(server->LastSerialNr());
 		err = server->DecodeResultDgram(peer, *res);
 		if(err < 0) {
 			// network error encountered
@@ -643,25 +643,25 @@ NCResult *NCRequest::ExecuteDgram(SocketAddress *peer, const DTCValue *kptr)
 		}
 		nrecv++;
 
-		if (res->versionInfo.SerialNr() != server->LastSerialNr()) {
+		if (res->versionInfo.serial_nr() != server->LastSerialNr()) {
 			log_debug("SN different, receive again. my SN: %lu, result SN: %lu",
 					(unsigned long)server->LastSerialNr(),
-					(unsigned long)res->versionInfo.SerialNr());
+					(unsigned long)res->versionInfo.serial_nr());
 			// receive again
 			resend = 0;
-		} else if (res->ResultCode() == -EC_CHECKSUM_MISMATCH && nrecv <= 1) {
+		} else if (res->result_code() == -EC_CHECKSUM_MISMATCH && nrecv <= 1) {
 			resend = 1;
 			// tabledef changed, resend
 		} else {
 			// got valid result
-			if (res->ResultCode() >= 0 && cmd == DRequest::Get)
+			if (res->result_code() >= 0 && cmd == DRequest::Get)
 				res->SetVirtualMap(fs);
 
 			uint64_t time = 0;
-			if(res->resultInfo.TagPresent(7)){
-				char *t = res->resultInfo.TimeInfo();
+			if(res->resultInfo.tag_present(7)){
+				char *t = res->resultInfo.time_info();
 				if(t){
-					CTimeInfo *t_info = (CTimeInfo *)t;
+					DTCTimeInfo *t_info = (DTCTimeInfo *)t;
 					time = (t_info->time)>0 ? (t_info->time):0;
 					server->SetAgentTime(time);
 				}
@@ -734,7 +734,7 @@ NCResult *NCRequest::ExecuteInternal(const DTCValue *kptr)
 		return_err_res(err, "API::sending", "internal client api execute error");
 	}
 
-	if(res->ResultCode() >= 0 && cmd==DRequest::Get)
+	if(res->result_code() >= 0 && cmd==DRequest::Get)
 		res->SetVirtualMap(fs);
 
 	return reinterpret_cast<NCResult *>(res);
@@ -752,7 +752,7 @@ NCResult *NCRequest::PreCheck(const DTCValue *kptr) {
 		return_err_res(err, "API::encoding", "Init Operation Error");
 	if(server==NULL)
 		return_err_res(-EC_NOT_INITIALIZED, "API::encoding", "Server Not Initialized");
-	if(cmd==DRequest::ResultCode)
+	if(cmd==DRequest::result_code)
 		return_err_res(-EC_BAD_COMMAND, "API::encoding", "Unknown Request Type");
 	if(server->badkey)
 		return_err_res(-EC_BAD_KEY_TYPE, "API::encoding", "Key Type Mismatch");
@@ -800,13 +800,13 @@ NCResult *NCRequest::PreCheck(const DTCValue *kptr) {
 int NCRequest::SetCompressFieldName()
 {
     int iret = 0;
-    if (tdef && tdef->CompressFieldId()>0)//启用压缩必定有这个字段
+    if (tdef && tdef->compress_field_id()>0)//启用压缩必定有这个字段
     {
         if (gzip==NULL)//读请求需要need字段
         {
             if (cmd != DRequest::Get)
                 return 0;
-            iret = Need(tdef->FieldName(tdef->CompressFieldId()),0);
+            iret = Need(tdef->field_name(tdef->compress_field_id()),0);
             if (iret)
             {
                 snprintf(_errmsg, sizeof(_errmsg), "need CompressField error,errorcode is %d",iret);
@@ -817,12 +817,12 @@ int NCRequest::SetCompressFieldName()
 		{
 			if  (cmd == DRequest::Insert||cmd == DRequest::Replace)
 			{
-				iret = AddOperation(tdef->FieldName(tdef->CompressFieldId()),//name
+				iret = AddOperation(tdef->field_name(tdef->compress_field_id()),//name
 						DField::Set,DField::Signed,DTCValue::Make(compressFlag));
 			}
 			else if (cmd == DRequest::Update)
 			{
-				iret = AddOperation(tdef->FieldName(tdef->CompressFieldId()),//name
+				iret = AddOperation(tdef->field_name(tdef->compress_field_id()),//name
 						DField::OR,DField::Signed,DTCValue::Make(compressFlag));
 			}
 			else
@@ -864,18 +864,14 @@ NCResult *NCRequest::Execute(const DTCValue *kptr) {
         
         std::string accessKey = server->accessToken;
 
-        if(ret != NULL && ret->resultInfo.ResultCode() == -ETIMEDOUT){
-        	//server->dc->SetReportInfo(accessKey, CLIENT_CURVE, server->GetTimeout());
+        if(ret != NULL && ret->resultInfo.result_code() == -ETIMEDOUT){
         	server->dc->SetReportInfo(accessKey, AGENT_CURVE, server->GetTimeout());
         }else{
-        	//server->dc->SetReportInfo(accessKey, CLIENT_CURVE, timeInterval);
         	server->dc->SetReportInfo(accessKey, AGENT_CURVE, (server->GetAgentTime() != 0)?server->GetAgentTime():timeInterval);
         }
 		server->dc->SetReportInfo(accessKey, CLIENT_CURVE, timeInterval);
 		
-		//top_percentile_report(accessKey, server->GetAddress(), timeInterval, ret ? ret->resultInfo.ResultCode() : 1, RT_SHARDING);
-		//top_percentile_report(accessKey, "", timeInterval, ret ? ret->resultInfo.ResultCode() : 1, RT_ALL);
-		server->dc->SetTopPercentileData(accessKey, server->GetAddress(), timeInterval, ret ? ret->resultInfo.ResultCode() : 1);
+		server->dc->SetTopPercentileData(accessKey, server->GetAddress(), timeInterval, ret ? ret->resultInfo.result_code() : 1);
 		
 		std::string stemp = accessKey.substr(0, 8);
 		uint32_t bid = 0;
@@ -919,7 +915,7 @@ int NCRequest::EncodeBuffer(char *&ptr, int &len, int64_t &magic, const DTCValue
 	NCResult *ret = PreCheck(kptr);
 	if(ret!=NULL)
 	{
-		err = ret->ResultCode();
+		err = ret->result_code();
 		delete ret;
 		return err;
 	}
@@ -934,7 +930,7 @@ int NCRequest::EncodeBuffer(char *&ptr, int &len, int64_t &magic, const DTCValue
 		return err;
 	}
 
-	if((err = CPacket::EncodeSimpleRequest(*this, kptr, ptr, len)) != 0) {
+	if((err = Packet::encode_simple_request(*this, kptr, ptr, len)) != 0) {
 		return err;
 	}
 
@@ -1001,9 +997,9 @@ int NCRequest::SetExpireTime(const char* key, int t){
 	ret = AddOperation("_dtc_sys_expiretime", DField::Set, DField::Signed, DTCValue::Make(t));
 	if(ret != 0) return ret;
 	NCResult * rst = Execute(); //rst 不会为空
-	ret = rst->ResultCode();
+	ret = rst->result_code();
 	if(ret != 0){
-		log_error("set expireTime fail, errmsg:%s, errfrom:%s",  rst->resultInfo.ErrorMessage(),  rst->resultInfo.ErrorFrom());
+		log_error("set expireTime fail, errmsg:%s, errfrom:%s",  rst->resultInfo.error_message(),  rst->resultInfo.error_from());
 	}
 	delete rst;
 	rst = NULL;
@@ -1049,9 +1045,9 @@ int NCRequest::GetExpireTime(const char* key){
 		return ret;
 	}
 	NCResult * rst = Execute(); //rst 不会为空
-	ret = rst->ResultCode();
+	ret = rst->result_code();
 	if(ret < 0){
-		log_error("get expireTime fail, errmsg:%s, errfrom:%s", rst->resultInfo.ErrorMessage(), rst->resultInfo.ErrorFrom());
+		log_error("get expireTime fail, errmsg:%s, errfrom:%s", rst->resultInfo.error_message(), rst->resultInfo.error_from());
 		delete rst;
 		rst = NULL;
 		return ret;
@@ -1063,30 +1059,30 @@ int NCRequest::GetExpireTime(const char* key){
 		rst = NULL;
 		return -EC_GET_EXPIRETIME_RESULT_NULL;
 	}
-	if(rst->result->TotalRows() <= 0){
+	if(rst->result->total_rows() <= 0){
 		log_error("get expireTime fail, no data exist in dtc for key:%s", key);
 		delete rst;
 		rst = NULL;
 		return -EC_GET_EXPIRETIME_END_OF_RESULT;
 	}
-	ret = rst->result->DecodeRow();
+	ret = rst->result->decode_row();
 	if(ret < 0){
-		log_error("get expireTime fail, fetch_row error, errmsg:%s, errfrom:%s", rst->resultInfo.ErrorMessage(), rst->resultInfo.ErrorFrom());
+		log_error("get expireTime fail, fetch_row error, errmsg:%s, errfrom:%s", rst->resultInfo.error_message(), rst->resultInfo.error_from());
 		delete rst;
 		rst = NULL;
 		return ret;
 	}
 	int expiretime = 0;
-	int id = rst->FieldId("_dtc_sys_expiretime");
+	int id = rst->field_id("_dtc_sys_expiretime");
 	if(id >= 0) {
 		const DTCValue *v;
-		if(id==0 && !(rst->result->FieldPresent(0)))
-			v = rst->ResultKey();
+		if(id==0 && !(rst->result->field_present(0)))
+			v = rst->result_key();
 		else
-			v = rst->result->FieldValue(id);
+			v = rst->result->field_value(id);
 
 		if(v) {
-			switch(rst->FieldType(id)) {
+			switch(rst->field_type(id)) {
 				case DField::Signed:
 				case DField::Unsigned:
 					{

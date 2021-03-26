@@ -1,7 +1,7 @@
 include ../Make.conf
 
 target = libcommon.a libcommon_nopic.a
-CFLAGS+=-I../api/c_api -I. -I../watchdog -I../stat -I../../../3rdlib/attr_api $(ZINC)
+CFLAGS+=-I../api/c_api_cc -I. -I../watchdog -I../stat -I../../../3rdlib/attr_api $(ZINC)
 LIBS = $(Z_LIB)
 VPATH = ../watchdog
 #SVN_VERSION = $(shell test -d .svn && (svn info ../ | grep "Last Changed Rev" | cut -d " " -f 4))

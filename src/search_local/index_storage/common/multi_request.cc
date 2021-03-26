@@ -84,7 +84,7 @@ int MultiRequest::decode_key_list(void)
 	if (wait->internal_key_val_list())
 	{
 		// embeded API
-		totalReq = wait->internal_key_val_list()->key_count();
+		totalReq = wait->internal_key_val_list()->KeyCount();
 		// Q&D discard const here
 		// this keyList member can't be const,
 		// but actually readonly after init

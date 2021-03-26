@@ -30,7 +30,7 @@
 #include "log.h"
 #include "task_request.h"
 #include "result.h"
-#include <dtc_int.h>
+#include <dtcint.h>
 
 inline int DTCFieldSet::Copy(const FieldSetByName &rq)
 {
@@ -159,12 +159,12 @@ int TaskRequest::Copy(NCRequest &rq, const DTCValue *kptr)
 	// inline from prepare_process()
 	if ((requestFlags & DRequest::Flag::MultiKeyValue))
 	{
-		if (rq.kvl.key_fields() != key_fields())
+		if (rq.kvl.KeyFields() != key_fields())
 		{
 			set_error(-EC_KEY_NEEDED, "decoder", "key field count incorrect");
 			return -EC_KEY_NEEDED;
 		}
-		if (rq.kvl.key_count() < 1)
+		if (rq.kvl.KeyCount() < 1)
 		{
 			set_error(-EC_KEY_NEEDED, "decoder", "require key value");
 			return -EC_KEY_NEEDED;
@@ -224,15 +224,15 @@ int DTCTask::Copy(NCRequest &rq, const DTCValue *kptr)
 	versionInfo.set_hot_backup_id(rq.hotBackupID);
 
 	// hot backup timestamp
-	versionInfo.set_master_hb_timestamp(rq.master_hb_timestamp);
-	versionInfo.set_slave_hb_timestamp(rq.slave_hb_timestamp);
+	versionInfo.set_master_hb_timestamp(rq.MasterHBTimestamp);
+	versionInfo.set_slave_hb_timestamp(rq.SlaveHBTimestamp);
 	if (sv->tdef && rq.adminCode != 0)
 		versionInfo.set_data_table_hash(sv->tdef->table_hash());
 
 	if (rq.flags & DRequest::Flag::MultiKeyValue)
 	{
 		kptr = NULL;
-		if (sv->simple_batch_key() && rq.kvl.key_count() == 1)
+		if (sv->SimpleBatchKey() && rq.kvl.KeyCount() == 1)
 		{
 			/* single field single key batch, convert to normal */
 			kptr = rq.kvl.val;
@@ -248,9 +248,9 @@ int DTCTask::Copy(NCRequest &rq, const DTCValue *kptr)
 		requestInfo.set_key(*kptr);
 	}
 	// cmd
-	if (sv->get_timeout())
+	if (sv->GetTimeout())
 	{
-		requestInfo.set_timeout(sv->get_timeout());
+		requestInfo.set_timeout(sv->GetTimeout());
 	}
 	//limit
 	if (rq.limitCount)

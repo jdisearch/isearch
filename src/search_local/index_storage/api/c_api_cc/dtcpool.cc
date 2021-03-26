@@ -39,7 +39,7 @@ enum {
 
 NCPool::NCPool(int ms, int mr)
 	:
-	CPollerUnit(1024+16)
+	PollerUnit(1024+16)
 {
 	int i;
 
@@ -128,17 +128,17 @@ int NCServer::AsyncConnect(int &netfd)
 	int err = -EC_NOT_INITIALIZED;
 	netfd = -1;
 
-	if(addr.SocketFamily() != 0) {
-		netfd = addr.CreateSocket();
+	if(addr.socket_family() != 0) {
+		netfd = addr.create_socket();
 		if(netfd < 0) {
 			err = -errno;
-		} else if(addr.SocketFamily()==AF_UNIX && IsDgram() && BindTempUnixSocket() < 0) {
+		} else if(addr.socket_family()==AF_UNIX && IsDgram() && BindTempUnixSocket() < 0) {
 			err = -errno;
 			close(netfd);
 			netfd = -1;
 		} else {
 			fcntl(netfd, F_SETFL, O_RDWR|O_NONBLOCK);
-			if(addr.ConnectSocket(netfd)==0)
+			if(addr.connect_socket(netfd)==0)
 				return 0;
 			err = -errno;
 			if(err!=-EINPROGRESS) 
@@ -153,7 +153,7 @@ int NCServer::AsyncConnect(int &netfd)
 
 NCConnection::NCConnection(NCPool *owner, NCServerInfo *si)
 	:
-	CPollerObject(owner),
+	PollerObject(owner),
 	timer(this)
 {
 	serverInfo = si;
@@ -170,7 +170,7 @@ NCConnection::~NCConnection(void)
 	/* remove partial result */
 	DELETE(result);
 	/* remove from all connection queue */
-	ListDel();
+	list_del();
 	/* abort all associated requests */
 	AbortRequests(-EC_REQUEST_ABORTED);
 	serverInfo->MoreClosedConnectionAndReady();
@@ -185,9 +185,9 @@ void NCConnection::SwitchToIdle(void)
 	ListMove(&serverInfo->idleList);
 	serverInfo->ConnectionIdleAndReady();
 	state = SS_CONNECTED;
-	DisableOutput();
-	EnableInput();
-	timer.DisableTimer();
+	disable_output();
+	enable_input();
+	timer.disable_timer();
 	/* ApplyEvnets by caller */
 }
 
@@ -195,10 +195,10 @@ void NCConnection::SwitchToIdle(void)
 void NCConnection::SwitchToConnecting(void)
 {
 	state = SS_CONNECTING;
-	timer.AttachTimer(serverInfo->timerList);
+	timer.attach_timer(serverInfo->timerList);
 	ListMove(&serverInfo->busyList);
 	DisableInput();
-	EnableOutput();
+	enable_output();
 	// no apply events, following AttachPoller will do it */
 }
 
@@ -209,13 +209,13 @@ int NCConnection::Connect(void)
 	if(err == 0) {
 		SwitchToIdle();
 		/* treat epollsize overflow as fd overflow */
-		if(AttachPoller() < 0)
+		if(attach_poller() < 0)
 			return -EMFILE;
 		/* AttachPoller will ApplyEvents automatically */
 	} else if(err == -EINPROGRESS) {
 		SwitchToConnecting();
 		/* treat epollsize overflow as fd overflow */
-		if(AttachPoller() < 0)
+		if(attach_poller() < 0)
 			return -EMFILE;
 		/* AttachPoller will ApplyEvents automatically */
 	}
@@ -231,11 +231,11 @@ void NCConnection::ProcessRequest(NCTransation *r)
 	sreq->AttachConnection(this);
 
 	/* adjust server connection statistics */
-	ListMoveTail(&serverInfo->busyList);
+	list_move_tail(&serverInfo->busyList);
 	serverInfo->RequestScheduled();
 
 	/* initial timing and flushing */
-	timer.AttachTimer(serverInfo->timerList);
+	timer.attach_timer(serverInfo->timerList);
 	SendRequest();
 }
 
@@ -269,7 +269,7 @@ void NCConnection::AbortSendSide(int err)
 		// async connection, lingering
 		ListMove(&serverInfo->busyList);
 		state = SS_LINGER;
-		timer.AttachTimer(serverInfo->timerList);
+		timer.attach_timer(serverInfo->timerList);
 	}
 }
 
@@ -288,7 +288,7 @@ void NCConnection::DoneResult(void)
 	if(result)
 	{
 		/* searching SN */
-		CListObject<NCTransation> *reqPtr = reqList.ListNext();
+		ListObject<NCTransation> *reqPtr = reqList.ListNext();
 		while(reqPtr != &reqList)
 		{
 			NCTransation *req = reqPtr->ListOwner();
@@ -309,7 +309,7 @@ void NCConnection::DoneResult(void)
 		 * ASYNC server always idle, no switch needed
 		 */
 		SwitchToIdle();
-		ApplyEvents();
+		apply_events();
 	} else if(state == SS_LINGER) {
 		/* close LINGER connection if all result done */
 		if(reqList.ListEmpty())
@@ -339,28 +339,28 @@ int NCConnection::CheckHangup(void)
 void NCConnection::SendRequest(void)
 {
 	int ret = sreq->Send(netfd);
-	timer.DisableTimer();
+	timer.disable_timer();
 	switch (ret)
 	{
 		case SendResultMoreData:
 			/* more data to send, enable EPOLLOUT and timer */
-			EnableOutput();
-			ApplyEvents();
-			timer.AttachTimer(serverInfo->timerList);
+			enable_output();
+			apply_events();
+			timer.attach_timer(serverInfo->timerList);
 			break;
 
 		case SendResultDone:
 			/* send OK, disable output and enable receiving */
-			DisableOutput();
-			EnableInput();
+			disable_output();
+			enable_input();
 			sreq->SendOK(&reqList);
 			sreq = NULL;
 			serverInfo->RequestSent();
 			/* fire up receiving timer */
-			timer.AttachTimer(serverInfo->timerList);
+			timer.attach_timer(serverInfo->timerList);
 			if(IsAsync())
 			{
-				ListMoveTail(&serverInfo->idleList); 
+				list_move_tail(&serverInfo->idleList); 
 				serverInfo->ConnectionIdleAndReady();
 			}
 #if 0
@@ -369,7 +369,7 @@ void NCConnection::SendRequest(void)
 				RecvResult();
 			}
 #endif
-			ApplyEvents();
+			apply_events();
 			break;
 
 		default:
@@ -398,7 +398,7 @@ int NCConnection::RecvResult(void)
 			ret = result->Decode(serverInfo->owner->buf, ret);
 	} else
 		ret = result->Decode(receiver);
-	timer.DisableTimer();
+	timer.disable_timer();
 	switch (ret)
 	{
 		default:
@@ -427,7 +427,7 @@ int NCConnection::RecvResult(void)
 			break;
 	}
 	if(sreq || !reqList.ListEmpty())
-		timer.AttachTimer(serverInfo->timerList);
+		timer.attach_timer(serverInfo->timerList);
 	return ret;
 }
 
@@ -461,7 +461,7 @@ void NCConnection::OutputNotify(void)
 		SendRequest();
 		break;
 	default:
-		DisableOutput();
+		disable_output();
 		break;
 	}
 }
@@ -475,7 +475,7 @@ void NCConnection::HangupNotify(void)
 	delete this;
 }
 
-void NCConnection::TimerNotify(void)
+void NCConnection::timer_notify(void)
 {
 	if(sreq || !reqList.ListEmpty())
 	{
@@ -531,7 +531,7 @@ void NCServerInfo::Init(NCServer *server, int maxReq, int maxConn)
 	owner = server->ownerPool;
 	int to = server->GetTimeout();
 	if(to <= 0) to = 3600 * 1000; // 1 hour
-	timerList = owner->GetTimerListByMSeconds( to );
+	timerList = owner->get_timer_list_by_m_seconds( to );
 
 	mode = server->IsDgram() ? 2 : maxReq==maxConn ? 0 : 1;
 }
@@ -563,7 +563,7 @@ void NCServerInfo::AbortWaitQueue(int err)
 	}
 }
 
-void NCServerInfo::TimerNotify()
+void NCServerInfo::timer_notify()
 {
 	while(reqRemain>0 && !reqList.ListEmpty())
 	{
@@ -592,7 +592,7 @@ void NCServerInfo::TimerNotify()
 		}
 	}
 	/* no more work, clear bogus ready timer */
-	CTimerObject::DisableTimer();
+	TimerObject::disable_timer();
 	/* reset connect error count */
 	connError = 0;
 }
@@ -629,7 +629,7 @@ NCTransation::~NCTransation(void)
 void NCTransation::Clear(void)
 {
 	// detach from list, mostly freeList
-	CListObject<NCTransation>::ResetList();
+	ListObject<NCTransation>::ResetList();
 
 	// increase reqId
 	genId++;
@@ -656,7 +656,7 @@ int NCTransation::AttachRequest(NCServerInfo *info, long long tag, NCRequest *re
 	state = RS_WAIT;
 	reqTag = tag;
 	server = info;
-	packet = new CPacket;
+	packet = new Packet;
 	int ret = req->Encode(key, packet);
 	if(ret < 0) {
 		/* encode error */
@@ -672,12 +672,12 @@ extern inline void NCTransation::AttachConnection(NCConnection *c) {
 	conn = c;
 }
 
-extern inline void NCTransation::SendOK(CListObject<NCTransation> *queue) {
+extern inline void NCTransation::SendOK(ListObject<NCTransation> *queue) {
 	state = RS_RECV;
 	ListAddTail(queue);
 }
 
-extern inline void NCTransation::RecvOK(CListObject<NCTransation> *queue) {
+extern inline void NCTransation::RecvOK(ListObject<NCTransation> *queue) {
 	state = RS_DONE;
 	ListAddTail(queue);
 }
@@ -694,7 +694,7 @@ void NCTransation::Abort(int err)
 	conn = NULL;
 
 	NCPool *owner = server->owner;
-	ListDel();
+	list_del();
 
 	server->RequestDoneAndReady(state);
 	server = NULL;
@@ -776,11 +776,11 @@ int NCPool::AddRequest(NCRequest *req, long long tag, DTCValue *key)
 
 void NCPool::ExecuteOneLoop(int timeout)
 {
-	WaitPollerEvents(timeout);
+	wait_poller_events(timeout);
 	uint64_t now = GET_TIMESTAMP();
-	ProcessPollerEvents();
-	CheckExpired(now);
-	CheckReady();
+	process_poller_events();
+	check_expired(now);
+	check_ready();
 }
 
 int NCPool::Execute(int timeout)
@@ -802,7 +802,7 @@ int NCPool::Execute(int timeout)
 #else
 		msec = exp * 1000/TIMESTAMP_PRECISION;
 #endif
-		ExecuteOneLoop(ExpireMicroSeconds(msec, 1));
+		ExecuteOneLoop(expire_micro_seconds(msec, 1));
 	}
 	return doneRequests;
 }
@@ -826,7 +826,7 @@ int NCPool::ExecuteAll(int timeout)
 #else
 		msec = exp * 1000/TIMESTAMP_PRECISION;
 #endif
-		ExecuteOneLoop(ExpireMicroSeconds(msec, 1));
+		ExecuteOneLoop(expire_micro_seconds(msec, 1));
 	}
 	return doneRequests;
 }
@@ -835,17 +835,17 @@ int NCPool::InitializePollerUnit(void)
 {
 	if(initFlag==-1)
 	{
-		initFlag = CPollerUnit::InitializePollerUnit() >= 0;
+		initFlag = PollerUnit::initialize_poller_unit() >= 0;
 	}
 	return initFlag;
 }
 
 int NCPool::GetEpollFD(int mp)
 {
-	if(initFlag == -1 && mp > CPollerUnit::GetMaxPollers())
-		CPollerUnit::SetMaxPollers(mp);
+	if(initFlag == -1 && mp > PollerUnit::get_max_pollers())
+		PollerUnit::set_max_pollers(mp);
 	InitializePollerUnit();
-	return CPollerUnit::GetFD();
+	return PollerUnit::get_fd();
 }
 
 NCTransation * NCPool::Id2Req(int reqId) const

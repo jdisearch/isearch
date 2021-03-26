@@ -26,7 +26,7 @@
 #include "listener_pool.h"
 #include "request_threading.h"
 #include "task_multiplexer.h"
-#include "../api/c_api/dtc_int.h"
+#include "../api/c_api_cc/dtcint.h"
 #include "proxy_listen_pool.h"
 #include "table_def_manager.h"
 
@@ -171,7 +171,7 @@ extern "C" __EXPORT
 
 void InitTaskExecutor(const char *name, AgentListenPool *listener, TaskDispatcher<TaskRequest> *output)
 {
-	if (NCResultInternal::verify_class() == 0)
+	if (NCResultInternal::VerifyClass() == 0)
 	{
 		log_error("Inconsistent class NCResultInternal detected, internal API disabled");
 		return;

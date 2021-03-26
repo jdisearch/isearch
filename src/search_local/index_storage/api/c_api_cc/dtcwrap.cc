@@ -643,33 +643,33 @@ __EXPORT
 int Result::FetchRow(void) {
 	CAST(NCResult, r);
 	if(r==NULL) return -EC_NO_MORE_DATA;
-	if(r->ResultCode()<0) return r->ResultCode();
+	if(r->result_code()<0) return r->result_code();
 	if(r->result==NULL) return -EC_NO_MORE_DATA;
-	return r->result->DecodeRow();
+	return r->result->decode_row();
 }
 
 __EXPORT
 int Result::Rewind(void) {
 	CAST(NCResult, r);
 	if(r==NULL) return -EC_NO_MORE_DATA;
-	if(r->ResultCode()<0) return r->ResultCode();
+	if(r->result_code()<0) return r->result_code();
 	if(r->result==NULL)  return -EC_NO_MORE_DATA;
-	return r->result->Rewind();
+	return r->result->rewind();
 }
 
 __EXPORT
 int Result::ResultCode(void) const {
 	CAST(NCResult, r);
 	if(r==NULL) return 0;
-	return r->ResultCode();
+	return r->result_code();
 }
 
 __EXPORT
 const char * Result::ErrorMessage(void) const {
 	CAST(NCResult, r);
 	if(r==NULL) return NULL;
-	int code = r->ResultCode();
-	const char *msg = r->resultInfo.ErrorMessage();
+	int code = r->result_code();
+	const char *msg = r->resultInfo.error_message();
 	if(msg==NULL && code < 0) {
 		char a[1];
 		msg = strerror_r(-code, a, 1);
@@ -682,54 +682,54 @@ __EXPORT
 const char * Result::ErrorFrom(void) const {
 	CAST(NCResult, r);
 	if(r==NULL) return NULL;
-	return r->resultInfo.ErrorFrom();
+	return r->resultInfo.error_from();
 }
 
 __EXPORT
 long long Result::HotBackupID() const {
     CAST(NCResult, r);
-    return r->versionInfo.HotBackupID();
+    return r->versionInfo.hot_backup_id();
 }
 
 __EXPORT
 long long Result::MasterHBTimestamp() const {
     CAST(NCResult, r);
-    return r->versionInfo.MasterHBTimestamp();
+    return r->versionInfo.master_hb_timestamp();
 }
 
 __EXPORT
 long long Result::SlaveHBTimestamp() const {
     CAST(NCResult, r);
-    return r->versionInfo.SlaveHBTimestamp();
+    return r->versionInfo.slave_hb_timestamp();
 }
 
 __EXPORT
 char* Result::ServerInfo() const {
     CAST(NCResult, r);
-    return r->resultInfo.ServerInfo();
+    return r->resultInfo.server_info();
 }
 
 __EXPORT
 long long Result::BinlogID() const {
-	CServerInfo *p = (CServerInfo *)ServerInfo();
+	DTCServerInfo *p = (DTCServerInfo *)ServerInfo();
 	return p ? p->binlog_id : 0;
 }
 
 __EXPORT
 long long Result::BinlogOffset() const {
-	CServerInfo *p = (CServerInfo *)ServerInfo();
+	DTCServerInfo *p = (DTCServerInfo *)ServerInfo();
 	return p ? p->binlog_off : 0;
 }
 __EXPORT
 long long Result::MemSize() const
 {
-	CServerInfo *p = (CServerInfo *)ServerInfo();
+	DTCServerInfo *p = (DTCServerInfo *)ServerInfo();
 	return p ? p->memsize : 0;
 }
 __EXPORT
 long long Result::DataSize() const
 {
-	CServerInfo *p = (CServerInfo *)ServerInfo();
+	DTCServerInfo *p = (DTCServerInfo *)ServerInfo();
 	return p ? p->datasize : 0;
 }
 
@@ -737,74 +737,74 @@ __EXPORT
 int Result::NumRows(void) const {
 	CAST(NCResult, r);
 	if(r==NULL || r->result==NULL) return 0;
-	return r->result->TotalRows();
+	return r->result->total_rows();
 }
 
 __EXPORT
 int Result::TotalRows(void) const {
 	CAST(NCResult, r);
 	if(r==NULL) return 0;
-	return r->resultInfo.TotalRows();
+	return r->resultInfo.total_rows();
 }
 
 __EXPORT
 long long Result::InsertID(void) const {
 	CAST(NCResult, r);
 	if(r==NULL) return 0;
-	return r->resultInfo.InsertID();
+	return r->resultInfo.insert_id();
 }
 
 __EXPORT
 int Result::NumFields(void) const {
 	CAST(NCResult, r);
 	if(r==NULL || r->result==NULL) return 0;
-	return r->result->NumFields();
+	return r->result->num_fields();
 }
 
 __EXPORT
 const char* Result::FieldName(int n) const {
 	CAST(NCResult, r);
 	if(r==NULL || r->result==NULL) return NULL;
-	if(n<0 || n>=r->result->NumFields()) return NULL;
-	return r->FieldName(r->result->FieldId(n));
+	if(n<0 || n>=r->result->num_fields()) return NULL;
+	return r->field_name(r->result->field_id(n));
 }
 
 __EXPORT
 int Result::FieldPresent(const char* name) const {
 	CAST(NCResult, r);
 	if(r==NULL || r->result==NULL) return 0;
-	int id = r->FieldId(name);
+	int id = r->field_id(name);
 	if(id < 0) return 0;
-	return r->result->FieldPresent(id);
+	return r->result->field_present(id);
 }
 
 __EXPORT
 int Result::FieldType(int n) const {
 	CAST(NCResult, r);
 	if(r==NULL || r->result==NULL) return FieldTypeNone;
-	if(n<0 || n>=r->result->NumFields()) return FieldTypeNone;
-	return r->FieldType(r->result->FieldId(n));
+	if(n<0 || n>=r->result->num_fields()) return FieldTypeNone;
+	return r->field_type(r->result->field_id(n));
 }
 
 __EXPORT
 int Result::AffectedRows(void) const {
 	CAST(NCResult, r);
 	if(r==NULL) return 0;
-	return r->resultInfo.AffectedRows();
+	return r->resultInfo.affected_rows();
 }
 
 __EXPORT
 long long Result::IntKey(void) const {
 	CAST(NCResult, r);
 	const DTCValue *v = NULL;
-	if(r && r->FlagMultiKeyResult() && r->result){
-		v = r->result->FieldValue(0);
+	if(r && r->flag_multi_key_result() && r->result){
+		v = r->result->field_value(0);
 	}
-	else if(r && r->ResultKey()){
-		v = r->ResultKey();
+	else if(r && r->result_key()){
+		v = r->result_key();
 	}
 	if(v != NULL){
-		switch(r->FieldType(0)) {
+		switch(r->field_type(0)) {
 		case DField::Signed:
 		case DField::Unsigned:
 		    return v->s64;
@@ -826,14 +826,14 @@ __EXPORT
 const char *Result::StringKey(void) const {
 	CAST(NCResult, r);
 	const DTCValue *v = NULL;
-	if(r && r->FlagMultiKeyResult() && r->result){
-		v = r->result->FieldValue(0);
+	if(r && r->flag_multi_key_result() && r->result){
+		v = r->result->field_value(0);
 	}
-	else if(r && r->ResultKey()){
-		v = r->ResultKey();
+	else if(r && r->result_key()){
+		v = r->result_key();
 	}
 	if(v != NULL){
-		  switch(r->FieldType(0)) {
+		  switch(r->field_type(0)) {
 			case DField::Binary:
 			case DField::String:
 				return v->bin.ptr;
@@ -847,14 +847,14 @@ __EXPORT
 const char *Result::StringKey(int *lp) const {
 	CAST(NCResult, r);
 	const DTCValue *v = NULL;
-	if(r && r->FlagMultiKeyResult() && r->result){
-		v = r->result->FieldValue(0);
+	if(r && r->flag_multi_key_result() && r->result){
+		v = r->result->field_value(0);
 	}
-	else if(r && r->ResultKey()){
-		v = r->ResultKey();
+	else if(r && r->result_key()){
+		v = r->result_key();
 	}
 	if(v != NULL){
-		switch(r->FieldType(0)) {
+		switch(r->field_type(0)) {
 		case DField::Binary:
 		case DField::String:
 			 if(lp) *lp = v->bin.len;
@@ -868,14 +868,14 @@ const char *Result::StringKey(int *lp) const {
 const char *Result::StringKey(int &l) const {
 	CAST(NCResult, r);
 	const DTCValue *v = NULL;
-	if(r && r->FlagMultiKeyResult() && r->result){
-		v = r->result->FieldValue(0);
+	if(r && r->flag_multi_key_result() && r->result){
+		v = r->result->field_value(0);
 	}
-	else if(r && r->ResultKey()){
-		v = r->ResultKey();
+	else if(r && r->result_key()){
+		v = r->result_key();
 	}
 	if(v != NULL){
-		switch(r->FieldType(0)) {
+		switch(r->field_type(0)) {
 		case DField::Binary:
 		case DField::String:
 			 l = v->bin.len;
@@ -904,13 +904,13 @@ const char *Result::BinaryKey(int &l) const {
 static inline int64_t GetIntValue(NCResult *r, int id) {
 	if(id >= 0) {
 		const DTCValue *v;
-		if(id==0 && !(r->result->FieldPresent(0)))
-			v = r->ResultKey();
+		if(id==0 && !(r->result->field_present(0)))
+			v = r->result_key();
 		else
-			v = r->result->FieldValue(id);
+			v = r->result->field_value(id);
 
 		if(v) {
-			switch(r->FieldType(id)) {
+			switch(r->field_type(id)) {
 				case DField::Signed:
 				case DField::Unsigned:
 					return v->s64;
@@ -929,13 +929,13 @@ static inline int64_t GetIntValue(NCResult *r, int id) {
 static inline double GetFloatValue(NCResult *r, int id) {
 	if(id >= 0) {
 		const DTCValue *v;
-		if(id==0 && !(r->result->FieldPresent(0)))
-			v = r->ResultKey();
+		if(id==0 && !(r->result->field_present(0)))
+			v = r->result_key();
 		else
-			v = r->result->FieldValue(id);
+			v = r->result->field_value(id);
 
 		if(v) {
-			switch(r->FieldType(id)) {
+			switch(r->field_type(id)) {
 				case DField::Signed:
 					return (double)v->s64;
 				case DField::Unsigned:
@@ -954,13 +954,13 @@ static inline double GetFloatValue(NCResult *r, int id) {
 static inline const char *GetStringValue(NCResult *r, int id, int *lenp) {
 	if(id >= 0) {
 		const DTCValue *v;
-		if(id==0 && !(r->result->FieldPresent(0)))
-			v = r->ResultKey();
+		if(id==0 && !(r->result->field_present(0)))
+			v = r->result_key();
 		else
-			v = r->result->FieldValue(id);
+			v = r->result->field_value(id);
 
 		if(v) {
-			switch(r->FieldType(id)) {
+			switch(r->field_type(id)) {
 				case DField::String:
 					if(lenp) *lenp = v->bin.len;
 					return v->str.ptr;
@@ -973,13 +973,13 @@ static inline const char *GetStringValue(NCResult *r, int id, int *lenp) {
 static inline const char *GetBinaryValue(NCResult *r, int id, int *lenp) {
 	if(id >= 0) {
 		const DTCValue *v;
-		if(id==0 && !(r->result->FieldPresent(0)))
-			v = r->ResultKey();
+		if(id==0 && !(r->result->field_present(0)))
+			v = r->result_key();
 		else
-			v = r->result->FieldValue(id);
+			v = r->result->field_value(id);
 
 		if(v) {
-			switch(r->FieldType(id)) {
+			switch(r->field_type(id)) {
 				case DField::String:
 				case DField::Binary:
 					if(lenp) *lenp = v->bin.len;
@@ -994,7 +994,7 @@ __EXPORT
 long long Result::IntValue(const char *name) const {
 	CAST(NCResult, r);
 	if(r && r->result)
-	    return GetIntValue(r, r->FieldId(name));
+	    return GetIntValue(r, r->field_id(name));
 	return 0;
 }
 
@@ -1010,7 +1010,7 @@ __EXPORT
 double Result::FloatValue(const char *name) const {
 	CAST(NCResult, r);
 	if(r && r->result)
-	    return GetFloatValue(r, r->FieldId(name));
+	    return GetFloatValue(r, r->field_id(name));
 	return NAN;
 }
 
@@ -1027,7 +1027,7 @@ const char *Result::StringValue(const char *name, int *lenp) const {
 	if(lenp) *lenp = 0;
 	CAST(NCResult, r);
 	if(r && r->result)
-	    return GetStringValue(r, r->FieldId(name), lenp);
+	    return GetStringValue(r, r->field_id(name), lenp);
 	return NULL;
 }
 
@@ -1065,7 +1065,7 @@ const char *Result::BinaryValue(const char *name, int *lenp) const {
 	if(lenp) *lenp = 0;
 	CAST(NCResult, r);
 	if(r && r->result)
-	    return GetBinaryValue(r, r->FieldId(name), lenp);
+	    return GetBinaryValue(r, r->field_id(name), lenp);
 	return NULL;
 }
 
@@ -1091,7 +1091,7 @@ int Result::UnCompressBinaryValue(const char *name,char **buf,int *lenp){
 			snprintf(r->gzip->_errmsg, sizeof(r->gzip->_errmsg), "field name is null");
 			return -EC_UNCOMPRESS_ERROR;
 		}
-		int fieldId = r->FieldId(name);
+		int fieldId = r->field_id(name);
 		if (fieldId >63)//fieldid must less than 64,because compressflag is 8 bytes uint
 		{
 			snprintf(r->gzip->_errmsg, sizeof(r->gzip->_errmsg), "fieldid must less than 64,because compressflag is 8 bytes uint");
@@ -1154,7 +1154,7 @@ int Result::UnCompressBinaryValueForce(const char *name,char **buf,int *lenp){
 		}
 		iret = r->initCompress();
 		if (iret) return iret;
-		int fieldId = r->FieldId(name);
+		int fieldId = r->field_id(name);
 		buf_dup = GetBinaryValue(r, fieldId, lenp);
 		if (buf_dup==NULL)
 		{
@@ -1175,7 +1175,7 @@ const char *Result::UnCompressErrorMessage() const
 {
 	CAST(NCResult, r);
 	if(r && r->gzip)
-        return  r->gzip->ErrorMessage();
+        return  r->gzip->error_message();
     return NULL;
 }
 
@@ -1226,7 +1226,7 @@ __EXPORT
 long long Result::Magic(void) const {
 	CAST(NCResult, r);
 	if(r==NULL) return 0;
-	return r->versionInfo.SerialNr();
+	return r->versionInfo.serial_nr();
 };
 
 __EXPORT

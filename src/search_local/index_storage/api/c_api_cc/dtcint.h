@@ -7,7 +7,7 @@
 #include <unistd.h>
 #include <buffer_error.h>
 #include <log.h>
-#include "keylist.h"
+#include "key_list.h"
 #include <task_request.h>
 #include <container.h>
 #include <net_addr.h>
@@ -53,7 +53,7 @@ static const uint32_t kpi_sample_count[] =
 
 
 class DTCTask;
-class CPacket;
+class Packet;
 
 class NCResult;
 class NCResultInternal;
@@ -177,10 +177,10 @@ public:
 	void Close(void);
 	void SetFD(int fd) { Close(); netfd = fd; UpdateTimeout(); }
 	// stream, connected
-	int SendPacketStream(CPacket &);
+	int SendPacketStream(Packet &);
 	int DecodeResultStream(NCResult &);
 	// dgram, connected or connectless
-	int SendPacketDgram(SocketAddress *peer, CPacket &);
+	int SendPacketDgram(SocketAddress *peer, Packet &);
 	int DecodeResultDgram(SocketAddress *peer, NCResult &);
 	// connectless
 	NCUdpPort *GetGlobalPort(void);
@@ -340,7 +340,7 @@ public:
 	NCResult *Execute(const char *, int);
 	NCResult *PreCheck(const DTCValue *key); // return error result, NULL==success
     int SetCompressFieldName(void);//Need compress flag for read,or set compressFlag for write
-	int Encode(const DTCValue *key, CPacket *);
+	int Encode(const DTCValue *key, Packet *);
 	// return 1 if tdef changed...
 	int SetTabDef(void);
 

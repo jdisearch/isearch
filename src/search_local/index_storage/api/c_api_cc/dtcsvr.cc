@@ -18,8 +18,6 @@
 #include "dtcint.h"
 #include <timestamp.h>
 #include <container.h>
-#include "curl_http.h"
-#include "json/json.h"
 
 using namespace std;
 
@@ -178,7 +176,7 @@ int NCServer::SetAddress(const char *h, const char *p) {
 		oldhost = strdupa(addr.Name());
 	}
 
-	const char *err = addr.SetAddress(h, p);
+	const char *err = addr.set_address(h, p);
 	if(err) {
 		this->errstr = err;
 		return -EC_BAD_HOST_STRING;
@@ -192,14 +190,14 @@ int NCServer::SetAddress(const char *h, const char *p) {
 
     //set network model
 	executor = NULL;
-    if(!_network_mode&&iservice && iservice->MatchListeningPorts(addr.Name(), NULL)) {
-        executor = iservice->QueryTaskExecutor();
-        DTCTableDefinition *t1 = iservice->QueryTableDefinition();
+    if(!_network_mode&&iservice && iservice->match_listening_ports(addr.Name(), NULL)) {
+        executor = iservice->query_task_executor();
+        DTCTableDefinition *t1 = iservice->query_table_definition();
         if(t1 != this->tdef) {
             DEC_DELETE(this->tdef);
             this->tdef = t1;
         }
-        DTCTableDefinition *t2 = iservice->QueryAdminTableDefinition();
+        DTCTableDefinition *t2 = iservice->query_admin_table_definition();
         if(t2 != this->tdef) {
             DEC_DELETE(this->admin_tdef);
             this->admin_tdef = t2;
@@ -259,9 +257,9 @@ int NCServer::FieldType(const char *name) {
 		Ping();
 
 	if(tdef != NULL){
-		int id = tdef->FieldId(name);
+		int id = tdef->field_id(name);
 		if(id >= 0)
-			return tdef->FieldType(id);
+			return tdef->field_type(id);
 	}
 	
 	return DField::None;
@@ -345,12 +343,12 @@ int NCServer::Connect(void) {
 
 	int err = -EC_NOT_INITIALIZED;
 
-	if(addr.SocketFamily() != 0) {
-		netfd = addr.CreateSocket();
+	if(addr.socket_family() != 0) {
+		netfd = addr.create_socket();
 		if(netfd < 0) {
 			log_error("create socket error: %d, %m", errno);
 			err = -errno;
-		} else if(addr.SocketFamily()==AF_UNIX && IsDgram() && BindTempUnixSocket() < 0) {
+		} else if(addr.socket_family()==AF_UNIX && IsDgram() && BindTempUnixSocket() < 0) {
 			log_error("bind unix socket error: %d, %m", errno);
 			err = -errno;
 			Close();
@@ -358,7 +356,7 @@ int NCServer::Connect(void) {
 			int iRes = -1;
 			//先将netfd设置为非阻塞模式，然后进行connect，返回0，则建立连接成功；返回其它失败
 			fcntl(netfd, F_SETFL, fcntl(netfd, F_GETFL, 0) | O_NONBLOCK);
-			if(addr.ConnectSocket(netfd)==0) {
+			if(addr.connect_socket(netfd)==0) {
 				iRes = 0;
 			}
 			else{
@@ -416,7 +414,7 @@ int NCServer::Reconnect(void) {
 	if(netfd < 0)
 		return -ENOTCONN;
 
-	if(addr.ConnectSocket(netfd)==0) {
+	if(addr.connect_socket(netfd)==0) {
 		return 0;
 	}
 	log_error("connect dtc server error: %d,%m", errno);
@@ -426,7 +424,7 @@ int NCServer::Reconnect(void) {
 	return err;
 }
 
-int NCServer::SendPacketStream(CPacket &pk) {
+int NCServer::SendPacketStream(Packet &pk) {
 	int err;
 #ifndef SIOCOUTQ
 	if(1) //if(!IsDgram())
@@ -479,12 +477,12 @@ int NCServer::DecodeResultStream(NCResult &tk)
 {
 	if(netfd < 0) 
 	{
-		tk.SetError(-ENOTCONN, "API::recving", "connection is closed");
+		tk.set_error(-ENOTCONN, "API::recving", "connection is closed");
 		return -ENOTCONN;
 	}
 
 	int err;
-	CSimpleReceiver receiver(netfd);
+	SimpleReceiver receiver(netfd);
 
 	uint64_t beginTime = 0;
 	//log_debug("wait response time stamp = %lld", (long long)(beginTime = GET_TIMESTAMP()));
@@ -507,14 +505,14 @@ int NCServer::DecodeResultStream(NCResult &tk)
 			// unsent bytes
 			if(value > 0) {
 				err = -EAGAIN;
-				tk.SetError(err, "API::sending", "client send packet error");
+				tk.set_error(err, "API::sending", "client send packet error");
 				Close();
 				return err;
 			}
 #endif
 			Close();
 			// EAGAIN never return FatalError, should be DecodeWaitData
-			tk.SetError(err, "API::recving", "client recv packet error");
+			tk.set_error(err, "API::recving", "client recv packet error");
 			return err;
 		}
 
@@ -537,7 +535,7 @@ int NCServer::DecodeResultStream(NCResult &tk)
 			log_debug("use time %ldms", (long)((GET_TIMESTAMP()-beginTime)/1000));
 			
 			Close();
-			tk.SetError(-ETIMEDOUT, "API::recving", "client recv packet timedout");
+			tk.set_error(-ETIMEDOUT, "API::recving", "client recv packet timedout");
 			return -ETIMEDOUT;
 		}
 	}
@@ -547,18 +545,18 @@ int NCServer::DecodeResultStream(NCResult &tk)
 	SaveDefinition(&tk);
 	if(autoping) {
 		time(&lastAct);
-		err = tk.versionInfo.KeepAliveTimeout();
+		err = tk.versionInfo.keep_alive_timeout();
 		if(err<15) err = 15;
 		lastAct += err - 1;
 	}
 	return 0;
 }
 
-int NCServer::SendPacketDgram(SocketAddress *peer, CPacket &pk)
+int NCServer::SendPacketDgram(SocketAddress *peer, Packet &pk)
 {
 	int err = 0;
 
-	while ((err = pk.SendTo(netfd, peer)) == SendResultMoreData)
+	while ((err = pk.send_to(netfd, peer)) == SendResultMoreData)
 	{
 		if (errno == EINPROGRESS)
 		{
@@ -663,7 +661,7 @@ int NCServer::DecodeResultDgram(SocketAddress *peer, NCResult &tk)
 {
 	if(netfd < 0) 
 	{
-		tk.SetError(-ENOTCONN, "API::recving", "connection is closed");
+		tk.set_error(-ENOTCONN, "API::recving", "connection is closed");
 		return -ENOTCONN;
 	}
 
@@ -674,18 +672,18 @@ int NCServer::DecodeResultDgram(SocketAddress *peer, NCResult &tk)
 
 	log_debug("wait response time stamp = %lld", (long long)(beginTime = GET_TIMESTAMP()));
 	
-	if(addr.SocketFamily() == AF_UNIX) {
+	if(addr.socket_family() == AF_UNIX) {
 		if(peer == NULL) {
 			buf = RecvPacketPoll(netfd, timeout,  len, saved_errno);
 		} else {
-			if(peer->ConnectSocket(netfd) < 0) {
+			if(peer->connect_socket(netfd) < 0) {
 				saved_errno = errno;
 				log_error("connect dtc server error: %d,%m", saved_errno);
 				if(saved_errno == EAGAIN) {
 					// unix socket return EAGAIN if listen queue overflow
 					saved_errno = EC_SERVER_BUSY;
 				}
-				tk.SetError(-saved_errno, "API::connecting", "client api connect server error");
+				tk.set_error(-saved_errno, "API::connecting", "client api connect server error");
 				return -saved_errno;
 			}
 
@@ -713,11 +711,11 @@ int NCServer::DecodeResultDgram(SocketAddress *peer, NCResult &tk)
 		if(saved_errno == EAGAIN) {
 			// change errcode to TIMEDOUT;
 			saved_errno = ETIMEDOUT;
-			tk.SetError(-ETIMEDOUT, "API::recving", "client recv packet timedout");
+			tk.set_error(-ETIMEDOUT, "API::recving", "client recv packet timedout");
 		} else {
 			if(saved_errno==0)
 				saved_errno = ECONNRESET;
-			tk.SetError(-saved_errno, "API::recving", "connection reset by peer");
+			tk.set_error(-saved_errno, "API::recving", "connection reset by peer");
 		}
 		return -saved_errno;
 	}
@@ -727,7 +725,7 @@ int NCServer::DecodeResultDgram(SocketAddress *peer, NCResult &tk)
 	switch(err) {
 	case DecodeFatalError:
 		log_error("socket[%d] decode udp data error: invalid packet content", netfd);
-		tk.SetError(-ECONNRESET, "API::recving", "invalid packet content");
+		tk.set_error(-ECONNRESET, "API::recving", "invalid packet content");
 		FREE_IF(buf); // buf not eaten
 		return -ECONNRESET;
 
@@ -735,7 +733,7 @@ int NCServer::DecodeResultDgram(SocketAddress *peer, NCResult &tk)
 	default:
 		// UNREACHABLE, DecodePacket never return these code
 		log_error("socket[%d] decode udp data error: %d, %m", netfd, errno);
-		tk.SetError(-ETIMEDOUT, "API::recving", "client recv packet timedout");
+		tk.set_error(-ETIMEDOUT, "API::recving", "client recv packet timedout");
 		return -ETIMEDOUT;
 
 	case DecodeDataError:
@@ -754,7 +752,7 @@ int NCServer::DecodeResultDgram(SocketAddress *peer, NCResult &tk)
 //Get udpport form udppool
 NCUdpPort *NCServer::GetGlobalPort()
 {
-    NCUdpPort *udpport = NCUdpPort::Get(addr.SocketFamily());
+    NCUdpPort *udpport = NCUdpPort::Get(addr.socket_family());
 
     if (udpport)
     {
@@ -789,28 +787,28 @@ void NCServer::PutGlobalPort(NCUdpPort *udpport)
 
 void NCServer::SaveDefinition(NCResult *tk)
 {
-	if(strcmp("*", tablename)!=0 && tk->ResultCode()==-EC_TABLE_MISMATCH) {
+	if(strcmp("*", tablename)!=0 && tk->result_code()==-EC_TABLE_MISMATCH) {
 		badname = 1;
 		errstr = "Table Name Mismatch";
 		return;
 	}
-	if(strcmp("*", tablename)!=0 && tk->ResultCode()==-EC_BAD_KEY_TYPE) {
+	if(strcmp("*", tablename)!=0 && tk->result_code()==-EC_BAD_KEY_TYPE) {
 		badkey = 1;
 		errstr = "Key Type Mismatch";
 		return;
 	}
 	
-	DTCTableDefinition *t = tk->RemoteTableDefinition();
+	DTCTableDefinition *t = tk->remote_table_definition();
 	if(t == NULL) return;
 
-	if(t->IsAdminTable()){
+	if(t->is_admin_table()){
 		if(admin_tdef)
 		{
-			if(admin_tdef->IsSameTable(t)) return;
+			if(admin_tdef->is_same_table(t)) return;
 			if(!autoUpdateTable){
 				badname = 1;
 				errstr = "Table Mismatch";
-				tk->SetError(-EC_TABLE_MISMATCH, "API::executed", "AdminTable Mismatch");
+				tk->set_error(-EC_TABLE_MISMATCH, "API::executed", "AdminTable Mismatch");
 				return;
 			}
 			DEC_DELETE(admin_tdef);
@@ -821,11 +819,11 @@ void NCServer::SaveDefinition(NCResult *tk)
 	else{
 		if(tdef)
 		{
-			if(tdef->IsSameTable(t)) return;
+			if(tdef->is_same_table(t)) return;
 			if(!autoUpdateTable){
 				badname = 1;
 				errstr = "Table Mismatch";
-				tk->SetError(-EC_TABLE_MISMATCH, "API::executed", "Table Mismatch");
+				tk->set_error(-EC_TABLE_MISMATCH, "API::executed", "Table Mismatch");
 				return;
 			}
 			DEC_DELETE(tdef);
@@ -834,8 +832,8 @@ void NCServer::SaveDefinition(NCResult *tk)
 		tdef->INC();
 		
 		FREE(tablename);
-		tablename = STRDUP(tdef->TableName());
-		keytype = tdef->KeyType();
+		tablename = STRDUP(tdef->table_name());
+		keytype = tdef->key_type();
 
 	    //bugfix， by ada
 	    if(keytype == DField::Unsigned)
@@ -862,7 +860,7 @@ int NCServer::Ping(void) {
 		return 0;
 		NCRequest r(this, DRequest::Nop);
 	NCResult *t = r.ExecuteNetwork();
-	int ret = t->ResultCode();
+	int ret = t->result_code();
 	delete t;
 	return ret;
 }
@@ -871,10 +869,10 @@ NCResult *NCServer::DecodeBuffer(const char *buf, int len)
 {
 	NCResult *res = new NCResult(tdef);
 
-	switch(len <= (int)sizeof(CPacketHeader) ? DecodeFatalError : res->Decode(buf, len))
+	switch(len <= (int)sizeof(PacketHeader) ? DecodeFatalError : res->Decode(buf, len))
 	{
 		default:
-			res->SetError(-EINVAL, "API::decoding", "invalid packet content");
+			res->set_error(-EINVAL, "API::decoding", "invalid packet content");
 			break;
 		case DecodeDataError:
 		case DecodeDone:
@@ -885,7 +883,7 @@ NCResult *NCServer::DecodeBuffer(const char *buf, int len)
 
 int NCServer::CheckPacketSize(const char *buf, int len)
 {
-	return NCResult::CheckPacketSize(buf, len);
+	return NCResult::check_packet_size(buf, len);
 }
 
 /*date:2014/06/04, author:xuxinxin*/
@@ -965,94 +963,6 @@ DataConnector::~DataConnector()
 
 int DataConnector::SendData()
 {
-	int ret = 0;
-	std::map<bidCurve, businessStatistics> mapData;
-	GetReportInfo(mapData);
-	int flag = 0;
-	for(std::map<bidCurve, businessStatistics>::iterator itrflag = mapData.begin(); itrflag != mapData.end(); ++itrflag)
-	{
-		flag += itrflag->second.TotalTime +  itrflag->second.TotalRequests;
-	}
-	if(flag == 0)
-	{
-		return 0;
-	}
-	int HttpServiceTimeOut = 2;
-	std::string strServiceUrl = "http://report.dtc.jd.com:9090";
-	std::string strRsp = "";
-	CurlHttp curlHttp;
-	Json::FastWriter writer;
-	Json::Value statics;
-
-	for(std::map<bidCurve, businessStatistics>::iterator itr = mapData.begin(); itr != mapData.end(); ++itr)
-	{
-		log_info("bid:%d, curve:%u, TotalTime:%lu, TotalRequests:%u", itr->first.bid, itr->first.curve, itr->second.TotalTime, itr->second.TotalRequests);
-		uint32_t bid = 0;
-		uint32_t curve = 0;
-		bid = itr->first.bid;
-		curve = itr->first.curve;
-
-		uint64_t totalTime = itr->second.TotalTime;
-		uint32_t reqNum = itr->second.TotalRequests;
-		Json::Value content;
-		Json::Value	inner;
-		Json::Value inArr;
-
-		Json::Value middle;
-		if(0 != totalTime && 0 != reqNum)
-		{
-			inner["curve"] = curve;
-			inner["etype"] = "1";
-			inner["data1"] = static_cast<Json::UInt64>(totalTime);
-			inner["data2"] = reqNum;
-			inner["extra"] = "";
-			inner["cmd"] = "0";
-			inArr.append(inner);
-
-			middle["bid"] = bid;
-			middle["content"] =inArr;
-
-			statics.append(middle);
-		}
-		else
-		{
-			log_error("empty data in bid:[%d]!curve:[%d]", bid, curve);
-		}
-
-	}
-	Json::Value body;
-	body["cmd"] = 3;
-	body["statics"]=statics;
-	BuffV buf;
-	std::string strBody = writer.write(body);
-	log_info("HttpBody = [%s]", strBody.c_str());
-	curlHttp.SetHttpParams("%s", strBody.c_str());
-	curlHttp.SetTimeout(HttpServiceTimeOut);
-	ret = curlHttp.HttpRequest(strServiceUrl, &buf, false);
-	if(ret != 0){
-		log_error("report http error! curlHttp.HttpRequest error ret:%d", ret);
-	}
-	strRsp = buf.Ptr();
-	log_info("ret:%d, strRsp:%s", ret, strRsp.c_str());
-
-	Json::Value root;
-	Json::Reader reader;
-	if (!reader.parse(strRsp.c_str(), root))
-	{
-		log_error("parse Json failed, strRsp:%s", strRsp.c_str());
-	}
-
-	std::string strRetCode = root["retCode"].asString();
-	log_info("strRetCode:%s", strRetCode.c_str());
-
-	if(strRetCode == "1")
-	{
-		log_info("call dtchttpd success!");
-	}
-	else
-	{
-		log_error("call dtchttpd failed! strRetCode:%s", strRetCode.c_str());
-	}
 	return 0;
 }
 
@@ -1069,7 +979,7 @@ int DataConnector::SetReportInfo(const std::string str, const uint32_t curve, co
 	{
 		do
 		{
-			CScopedLock lock(_lock);
+			ScopedLock lock(_lock);
 			mapBi[bc].TotalTime += t;
 			mapBi[bc].TotalRequests += 1;
 		}while(0);
@@ -1079,7 +989,7 @@ int DataConnector::SetReportInfo(const std::string str, const uint32_t curve, co
 
 void DataConnector::GetReportInfo(std::map<bidCurve, businessStatistics> &map)
 {
-	CScopedLock lock(_lock);
+	ScopedLock lock(_lock);
 	for(std::map<bidCurve, businessStatistics>::iterator it = mapBi.begin(); it != mapBi.end(); ++it)
 	{
 		struct businessStatistics bs;
@@ -1091,7 +1001,7 @@ void DataConnector::GetReportInfo(std::map<bidCurve, businessStatistics> &map)
 
 int DataConnector::SetBussinessId(std::string str)
 {
-	CScopedLock lock(_lock);
+	ScopedLock lock(_lock);
 	if(mapBi.size() == 0)
 	{
 		pthread_mutex_init(&wakeLock, NULL);
@@ -1123,87 +1033,9 @@ int DataConnector::SetBussinessId(std::string str)
 
 int DataConnector::SendTopPercentileData()
 {
-	std::map<uint64_t, top_percentile_statistics> mapStat;
-	GetTopPercentileData(mapStat);
-	
-	int HttpServiceTimeOut = 2;
-	std::string strServiceUrl = "http://tp99dtc.m.jd.local/tp99/forSdk";
-	std::string strRsp = "";
-	CurlHttp curlHttp;
-	Json::FastWriter writer;
-	Json::Value statics;
-
-	uint8_t isHaveData = 0;
-	for(std::map<uint64_t, top_percentile_statistics>::iterator it = mapStat.begin(); it != mapStat.end(); ++it)
-	{
-		if(0 == it->second.uiTotalRequests || 0 == it->second.uiTotalTime)
-			continue;
-
-		if(!isHaveData)
-			isHaveData = 1;
-		
-		Json::Value sharding;
-		sharding["bid"] = it->second.uiBid;
-		sharding["ip"] = it->second.uiAgentIP;
-		sharding["port"] = it->second.uiAgentPort;
-		sharding["totalCount"] = it->second.uiTotalRequests;
-		sharding["totalTime"] = static_cast<Json::UInt64>(it->second.uiTotalTime);
-		sharding["failCount"] = it->second.uiFailCount;
-		sharding["maxTime"] = static_cast<Json::UInt64>(it->second.uiMaxTime);
-		sharding["minTime"] = static_cast<Json::UInt64>(it->second.uiMinTime);
-
-		for(uint16_t iNum = 0; iNum < (sizeof(it->second.statArr) / sizeof(it->second.statArr[0])); ++ iNum)
-		{
-			sharding["stat"].append(it->second.statArr[iNum]);
-		}
-
-		statics["content"].append(sharding);
-	}
-
-	if(!isHaveData)
-		return 0;
-	struct timeval stTV;
-	gettimeofday(&stTV, NULL);
-	statics["datetime"] = static_cast<Json::UInt64>(stTV.tv_sec);
-	
-	BuffV buf;
-	int ret = 0;
-	std::string strStat = writer.write(statics);
-	log_info("HttpBody = [%s]", strStat.c_str());
-	curlHttp.SetHttpParams("%s", strStat.c_str());
-	curlHttp.SetTimeout(HttpServiceTimeOut);
-	ret = curlHttp.HttpRequest(strServiceUrl, &buf, false);
-	if(ret != 0)
-	{
-		log_error("report http error! curlHttp.HttpRequest error ret:%d", ret);
-		return 0;
-	}
-
-	strRsp = buf.Ptr();
-	log_info("ret:%d, strRsp:%s", ret, strRsp.c_str());
-
-	Json::Value root;
-	Json::Reader reader;
-	if (!reader.parse(strRsp.c_str(), root))
-	{
-		log_error("parse Json failed, strRsp:%s", strRsp.c_str());
-		return 0;
-	}
-
-	std::string strRetCode = root["retCode"].asString();
-	log_info("strRetCode:%s", strRetCode.c_str());
-
-	if(strRetCode == "1")
-		log_info("call dtchttpd success!");
-	else
-		log_error("call dtchttpd failed! strRetCode:%s", strRetCode.c_str());
-
 	return 0;
 }
 
-/*
- *@strAgentAddr:192.168.145.135:20024/tcp
- */
 int DataConnector::SetTopPercentileData(const std::string strAccessKey, const std::string strAgentAddr, const uint64_t elapse, const int status)
 {
 	if(strAccessKey.empty())
@@ -1228,7 +1060,7 @@ int DataConnector::SetTopPercentileData(const std::string strAccessKey, const st
 
 	uint64_t uiKey = (uiIP << 32) | (uiPort << 16) | (uint64_t)uiBid;
 	std::map<uint64_t, DataConnector::top_percentile_statistics>::iterator it;
-	CScopedLock lock(m_tp_lock);
+	ScopedLock lock(m_tp_lock);
 	if((it = mapTPStat.find(uiKey)) == mapTPStat.end())
 	{
 		DataConnector::top_percentile_statistics tpStat;
@@ -1259,7 +1091,7 @@ int DataConnector::SetTopPercentileData(const std::string strAccessKey, const st
 
 void DataConnector::GetTopPercentileData(std::map<uint64_t, top_percentile_statistics> &mapStat)
 {
-	CScopedLock lock(m_tp_lock);
+	ScopedLock lock(m_tp_lock);
 	std::swap(mapTPStat, mapStat);
 }
 

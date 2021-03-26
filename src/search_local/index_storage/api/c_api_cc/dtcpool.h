@@ -5,9 +5,9 @@
 
 #include "list.h"
 #include "poller.h"
-#include "timerlist.h"
+#include "timer_list.h"
 #include "dtcint.h"
-#include "cache_error.h"
+#include "buffer_error.h"
 
 class NCServerInfo;
 class NCPool;
@@ -15,7 +15,7 @@ class NCConnection;
 
 // transation is a internal async request
 class NCTransation :
-	public CListObject<NCTransation>
+	public ListObject<NCTransation>
 {
 public:
 	// constructor/destructor equiv
@@ -35,13 +35,13 @@ public:
 	/* state & info management */
 	int State(void) const { return state; }
 	int GenId(void) const { return genId; }
-	int MatchSN(NCResult *res) const { return SN == res->versionInfo.SerialNr(); }
+	int MatchSN(NCResult *res) const { return SN == res->versionInfo.serial_nr(); }
 	/* send packet management */
 	int Send(int fd) { return packet->Send(fd); }
 	int AttachRequest(NCServerInfo *s, long long tag, NCRequest *req, DTCValue *key);
 	void AttachConnection(NCConnection *c);
-	void SendOK(CListObject<NCTransation>*);
-	void RecvOK(CListObject<NCTransation>*);
+	void SendOK(ListObject<NCTransation>*);
+	void RecvOK(ListObject<NCTransation>*);
 
 public: // constant member declare as static
 	// owner info, associated server
@@ -60,15 +60,15 @@ private:// transient members is private
 	uint64_t SN;
 
 	// sending packet
-	CPacket *packet;
+	Packet *packet;
 
 	// execute result
 	NCResult *result;
 };
 
 class NCConnection :
-	public CListObject<NCConnection>,
-	public CPollerObject
+	public ListObject<NCConnection>,
+	public PollerObject
 {
 public:
 	NCConnection(NCPool *, NCServerInfo *);
@@ -103,13 +103,13 @@ public:
 	virtual void InputNotify(void);
 	virtual void OutputNotify(void);
 	virtual void HangupNotify(void);
-	virtual void TimerNotify(void);
+	virtual void timer_notify(void);
 
 private:
 	/* associated server */
 	NCServerInfo *serverInfo;
 	/* queued transation in RECV state */
-	CListObject<NCTransation> reqList;
+	ListObject<NCTransation> reqList;
 	/* sending transation */
 	NCTransation *sreq;
 	/* decoding/decoded result */
@@ -120,15 +120,15 @@ private:
 	int NETFD(void) const { return netfd; }
 
 private:
-	CTimerMember<NCConnection> timer;
-	CSimpleReceiver receiver;
+	TimerMember<NCConnection> timer;
+	SimpleReceiver receiver;
 };
 
-typedef CListObject<NCConnection> NCConnectionList;
+typedef ListObject<NCConnection> NCConnectionList;
 
 class NCPool :
-	public CPollerUnit,
-	public CTimerUnit
+	public PollerUnit,
+	public TimerUnit
 {
 public:
 	NCPool(int maxServers, int maxRequests);
@@ -172,8 +172,8 @@ private:
 	int numRequests;
 	int maxRequestId;
 	int doneRequests;
-	CListObject<NCTransation> freeList;
-	CListObject<NCTransation> doneList;
+	ListObject<NCTransation> freeList;
+	ListObject<NCTransation> doneList;
 	NCServerInfo *serverList;
 	NCTransation *transList;
 public:
@@ -181,7 +181,7 @@ public:
 };
 
 class NCServerInfo :
-	private CTimerObject
+	private TimerObject
 {
 public:
 	NCServerInfo(void);
@@ -189,8 +189,8 @@ public:
 	void Init(NCServer *, int, int);
 
 	/* prepare wake TimerNotify */
-	void MarkAsReady() { AttachReadyTimer(owner); }
-	virtual void TimerNotify(void);
+	void MarkAsReady() { attach_ready_timer(owner); }
+	virtual void timer_notify(void);
 	/* four reason server has more work to do */
 	/* more transation attached */
 	void MoreRequestAndReady(void) { reqWait++; MarkAsReady(); }
@@ -224,21 +224,21 @@ public:
 	NCTransation * GetRequestFromQueue(void)
 	{
 		NCTransation *trans = reqList.NextOwner();
-		trans->ListDel();
+		trans->list_del();
 		reqWait--;
 		return trans;
 	}
 
 private:
 	int Connect(void);
-	CListObject<NCTransation> reqList;
+	ListObject<NCTransation> reqList;
 
 public: // constant member declare as public
 	/* associated ServerPool */
 	NCPool *owner;
 	/* basic server info */
 	NCServer *info;
-	CTimerList *timerList;
+	TimerList *timerList;
 	int mode; // 0--TCP 1--ASYNC 2--UDP
 	/* total connection */
 	int connTotal;
