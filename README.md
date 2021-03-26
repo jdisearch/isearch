@@ -182,17 +182,16 @@ fields：返回指定字段值，多个字段用逗号隔开
 
 **布尔搜索**
 
-"key_and":"content:京东 title:张三”  // 并且
+"key_and":"content:京东 author:张三"  // 并且
 
-"key":"content:京东 title:张三” // 或者
+"key":"content:京东 author:张三" // 或者
 
-"key":"content:京东” key_invert:” title:张三” // 排除
+"key":"content:京东" key_invert:"author:张三" // 排除
 
 **查询结果示例**
 
 ```
 {"code":0,"count":2,"hlWord":["京东"],"result":[{"doc_id":"1381","title":"测试标题1","score":2}, {"doc_id":"1382","title":"测试标题2","score":1}]}
-
 ```
 
 其中code为返回码，count为匹配到的结果总数，hlWord为结果需要高亮的词语，result为匹配到的详细信息，score为匹配度得分，默认由高到低排序。
