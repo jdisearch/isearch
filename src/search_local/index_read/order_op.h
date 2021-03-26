@@ -130,7 +130,7 @@ void COrderOp<T>::ProcessSearchAfter(std::set<DocIdEntry<T> >& score_set, DocIdE
 	if(_SortType == SORT_FIELD_ASC){
 		set_it = std::upper_bound(score_set.begin(), score_set.end(), last_value);
 	} else {
-		set_it = std::lower_bound(score_set.begin(), score_set.end(), last_value);
+		set_it = std::upper_bound(score_set.begin(), score_set.end(), last_value);
 	}
 	if (set_it != score_set.end()) {
 		int c = 0;

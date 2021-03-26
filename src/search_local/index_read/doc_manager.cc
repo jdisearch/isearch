@@ -96,7 +96,18 @@ void DocManager::CheckIfKeyValid(const vector<ExtraFilterKey>& extra_filter_vec,
 		bool the_same = false;
 		string field_name = extra_filter_vec[i].field_name;
 		if(extra_filter_vec[i].field_type == FIELD_INT){
-			the_same = (atoi(extra_filter_vec[i].field_value.c_str()) == value[field_name.c_str()].asInt());
+			string query = extra_filter_vec[i].field_value;
+			vector<string> query_vec = splitEx(query, "|");
+			if(query_vec.size() > 1){
+				for(int i = 0 ; i < (int)query_vec.size(); i++){
+					if(atoi(query_vec[i].c_str()) == value[field_name.c_str()].asInt()){
+						the_same = true;
+						break;
+					}
+				}
+			} else {
+				the_same = (atoi(extra_filter_vec[i].field_value.c_str()) == value[field_name.c_str()].asInt());
+			}
 		} else if(extra_filter_vec[i].field_type == FIELD_DOUBLE){
 			double d_field_value = atof(extra_filter_vec[i].field_value.c_str());
 			double d_extend = value[field_name.c_str()].asDouble();
