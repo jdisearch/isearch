@@ -61,6 +61,13 @@ int LogicalOperate::Process(const vector<vector<FieldInfo> >& keys, vector<Index
 					return -RT_GET_DOC_ERR;
 				}
 				sort(doc_info.begin(), doc_info.end());
+				for (size_t doc_info_idx = 0; doc_info_idx < doc_info.size(); doc_info_idx++){
+					KeyInfo info;
+					info.word_freq = 1;
+					info.field = (*it).field;
+					info.word = (*it).word;
+					ves[doc_info[doc_info_idx].doc_id].push_back(info);
+				}
 			} else if ((*it).segment_tag == 4) {
 				int ret = GetDocByShiftEnWord(*it, doc_info, m_appid, highlightWord);
 				if (ret != 0) {
@@ -68,6 +75,13 @@ int LogicalOperate::Process(const vector<vector<FieldInfo> >& keys, vector<Index
 					return -RT_GET_DOC_ERR;
 				}
 				sort(doc_info.begin(), doc_info.end());
+				for (size_t doc_info_idx = 0; doc_info_idx < doc_info.size(); doc_info_idx++){
+					KeyInfo info;
+					info.word_freq = 1;
+					info.field = (*it).field;
+					info.word = (*it).word;
+					ves[doc_info[doc_info_idx].doc_id].push_back(info);
+				}
 			} else if ((*it).segment_tag == 5 && (*it).word == "") { // 范围查询
 				stringstream ss;
 				ss << m_appid;
