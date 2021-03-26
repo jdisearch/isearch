@@ -38,11 +38,6 @@ src_index_read="$srcdir/$search_local/$index_read"
 src_index_storage="$srcdir/$search_local/$index_storage"
 src_rocksdb_lib="$srcdir/$rocksdb_lib"
 
-cd $src_rocksdb_lib
-rm librocksdb.so librocksdb.so.6
-ln -s librocksdb.so.6.6.0 librocksdb.so.6
-ln -s librocksdb.so.6 librocksdb.so
-
 cd $src_index_storage
 make
 cp $src_index_storage/api/c_api_cc/libdtc-gcc-*.so /lib64
