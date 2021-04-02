@@ -20,6 +20,8 @@ cat /usr/local/intelligentsearch/index_write/conf/app_field_define.txt
 
 ### 2. 上报索引数据
 
+说明：由于接入层RESTFul API仍在开发中，目前仅能通过tcp请求的方式进行索引的导入和查询，后续会支持RESTFul格式的API进行索引的操作。
+
 执行如下命令进行测试数据的导入。
 ```
 cd /usr/local/intelligentsearch/tools
