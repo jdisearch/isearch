@@ -8,7 +8,7 @@
 
 ### 体验demo项目
 
-体验demo项目请参考：[Quickstart.md](https://gitee.com/jd-platform-opensource/isearch/docs/Quickstart.md)
+体验demo项目请参考：[Quickstart.md](https://gitee.com/jd-platform-opensource/isearch/blob/master/docs/Quickstart.md)
 
 ### 架构图
 ![架构图](http://storage.jd.com/search-index/intelligentsearch.jpg)
