@@ -25,8 +25,11 @@ JSON
 | sort_type  | int  | 否  | 排序方式  |
 | sort_field  | string  | 否  | 排序字段  |
 | fields | string  | 否  | 返回指定字段值  |
+
 说明：key支持多字段检索，如key为”content:京东 author:张三”表示搜索content字段包含京东并且author是张三的记录，其中city为应用内配置的字段名，应用可以自定义字段名称。
+
 应用的定义及支持的字段类型可参考：[项目配置文件](https://gitee.com/jd-platform-opensource/isearch#%E9%A1%B9%E7%9B%AE%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)
+
 ### Http返回结果说明
 | 字段  | 类型  | 描述  |
 | ------------ | ------------ | ------------ |
@@ -34,22 +37,22 @@ JSON
 | count  | int  | 结果总数  |
 | result  | string  | 结果内容  |
 ### CURL调用示例
-```html
+```
 curl 'http://127.0.0.1/index/search?page_index=0&key=京东&appid=10001'
 ```
 ### 成功返回示例
 ```json
 {
-"code": 0,
-"count": 10,
-"result": [7976,12984,11705,2572,239,474,343,290,10086,318]
+  "code": 0,
+  "count": 10,
+  "result": [7976,12984,11705,2572,239,474,343,290,10086,318]
 }
 ```
 ### 错误返回示例
 ```json
 {
-"code": -1,
-"message": "keyword is required"
+  "code": -1,
+  "message": "keyword is required"
 }
 ```
 
@@ -77,7 +80,9 @@ JSON
 | ------------ | ------------ | ------------ | ------------ |
 |  cmd  |  string | 是  |  操作类型 |
 |  fields | object  | 是  |  文章对象 |
+
 注：cmd取值包括add,delete,update。
+
 #### fields的参数
 | 参数 | 类型 | 是否必需 | 描述 |
 | ------------ | ------------ | ------------ | ------------ |
@@ -114,6 +119,6 @@ curl -X POST \
 ### 成功返回示例
 ```json
 {
-"code": 0
+  "code": 0
 }
 ```
