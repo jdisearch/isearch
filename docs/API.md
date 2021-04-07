@@ -26,7 +26,7 @@ JSON
 | sort_field  | string  | 否  | 排序字段  |
 | fields | string  | 否  | 返回指定字段值  |
 
-说明：key支持多字段检索，如key为”content:京东 author:张三”表示搜索content字段包含京东并且author是张三的记录，其中city为应用内配置的字段名，应用可以自定义字段名称。
+说明：key支持多字段检索，如key为`content:京东 author:张三`表示搜索content字段包含京东并且author是张三的记录，其中content和city为应用内配置的字段名，应用可以自定义字段名称。
 
 应用的定义及支持的字段类型可参考：[项目配置文件](https://gitee.com/jd-platform-opensource/isearch#%E9%A1%B9%E7%9B%AE%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)
 
@@ -59,7 +59,7 @@ curl 'http://127.0.0.1/index/search?page_index=0&key=京东&appid=10001'
 ## 索引上报
 ----
 ### 接口描述
->该接口上传文章内容至普通索引服务，生成普通索引表。
+>该接口上传记录至索引服务，生成普通索引表。
 
 ### URL
 ```html
