@@ -36,3 +36,30 @@
 ![bench-curve](http://storage.jd.com/search-index/image/bench-curve.png)
 
 可以得出index_read进程的qps最高为10272。
+
+### 与ES性能对比
+
+在A机器上安装elasticsearch-7.12.0，在导入相同数据的场景下，针对相同的查询条件进行压测，以下为QPS结果对比：
+
+| 查询场景                | isearch | es   |
+|---------------------|---------|------|
+| 导入3个文档，其中两个包含查询词    | 8297    | 6108 |
+| 导入100个文档，其中20个包含查询词 | 3862    | 1718 |
+| 范围查询，其中两个文档在查询范围内 | 3282    | 1528 |
+| 多字段组合查询，其中10个文档符合查询条件 | 3671    | 1117 |
+
+其中es查询语句为：
+```
+curl 'http://127.0.0.1:9200/article/_search?pretty&q=content:京东'
+curl 'http://127.0.0.1:9200/article/_search?pretty&q=weight:[50 TO 60]'
+curl 'http://127.0.0.1:9200/article/_search?pretty&q=title:宝宝%20AND%20content:宝宝'
+```
+
+isearch查询语句为：
+```
+curl 'http://127.0.0.1/index/search?appid=10001&key=content:京东'
+curl 'http://127.0.0.1/index/search?appid=10001&key=weight:[50,60]'
+curl 'http://127.0.0.1/index/search?appid=10001&key_and=title:宝宝 content:宝宝'
+```
+
+注：查询语句中特殊字符和中文均需要进行url转义。
