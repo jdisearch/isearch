@@ -20,10 +20,10 @@
 
 机器的详细配置如下：
 
-CPU: Intel(R) Xeon(R) CPU E5-2620 v4 @ 2.10GHz 4核  
+CPU：Intel(R) Xeon(R) CPU E5-2620 v4 @ 2.10GHz 4核  
 内存大小：8G  
-内存规格: DDR4  
-内存速度: 2400 MHz  
+内存规格：DDR4  
+内存速度：2400 MHz  
 操作系统：CentOS Linux release 7.2.1511 (Core)  
 内核版本：Linux version 3.10.0-693.5.2.el7.jd_3313.x86_64  
 
