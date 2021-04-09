@@ -21,7 +21,9 @@
 机器的详细配置如下：
 
 CPU: Intel(R) Xeon(R) CPU E5-2620 v4 @ 2.10GHz 4核  
-内存：8G  
+内存大小：8G  
+内存规格: DDR4  
+内存速度: 2400 MHz  
 操作系统：CentOS Linux release 7.2.1511 (Core)  
 内核版本：Linux version 3.10.0-693.5.2.el7.jd_3313.x86_64  
 
@@ -69,4 +71,4 @@ curl 'http://127.0.0.1/index/search?appid=10001&key=weight:[50,60]'
 curl 'http://127.0.0.1/index/search?appid=10001&key_and=title:宝宝 content:宝宝'
 ```
 
-注：查询语句中特殊字符和中文均需要进行url转义。
+注：查询语句中特殊字符和中文均需要进行url编码。
