@@ -4,7 +4,7 @@
 
 ### 测试方法
 
-本次采用自己编译的测试工具isearchbench，原理是开启多个线程，每个线程依次与index_read建立tcp连接，发送检索请求，并等待结果返回。测试数据来源于discovery_release_article表，共100w+文档，事先已经将索引导入到机器中。
+本次采用自己编译的测试工具isearchbench，原理是开启多个线程，每个线程依次与index_read建立tcp连接，发送检索请求，并等待结果返回。测试数据来源于discovery_release_article表，事先已经将索引导入到机器中。
 
 ### 测试目标
 
