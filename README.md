@@ -30,20 +30,20 @@ words_base.txt 为词库文件，用于进行文本分词
 
 app_field_define.txt 定义应用字段的信息，格式如下：
 
-| id    | app_id  | field_name | is_primary_key | field_type  | index_tag | snapshot_tag | segment_tag | field_value | create_time  | segment_feature | reserved2 |
-|  ----  | ----  | ----  | ----  |  ----  | ----  | ----  | ----  |  ----  | ----  | ----  | ----  |
-|  1    |  10001  | doc_id | 1 |     2 |    0 |     0 |        0 |       4 | 2018-12-10 16:51:47 |  0 |   0 |
-|  2    |  10001  | weight | 0 |     1 |    1 |     1 |        5 |       5 | 2018-12-10 16:52:11 |  0 |   0 |
-|  3    |  10001  | author | 0 |     2 |    1 |     1 |        3 |       6 | 2018-12-10 16:52:21 |  0 |   0 |
-|  4    |  10001  | title  | 0 |     2 |    1 |     1 |        0 |       2 | 2018-12-10 16:52:32 |  0 |   0 |
-|  5    |  10001  | content| 0 |     3 |    1 |     1 |        1 |       1 | 2018-12-10 16:52:43 |  0 |   0 |
-
+| app_id | field_id    | field_name  | is_primary_key | field_type | index_tag | snapshot_tag | segment_tag | reserved2 |
+|  ----  | ----  |  ----  | ----  |  ----  | ----  |  ----  | ----  |  ----  |
+|  10061 |           1 | doc_id      |              1 |          1 |         0 |            0 |           0 |           |
+|  10061 |           2 | poi_name    |              0 |          2 |         1 |            1 |           1 |           |
+|  10061 |           3 | longitude   |              0 |          5 |         1 |            1 |           0 |           |
+|  10061 |           4 | latitude    |              0 |          6 |         1 |            1 |           0 |           |
+|  10061 |           5 | gis         |              0 |          1 |         1 |            0 |           0 |           |
+|  10061 |           0 | idx_gis_poi |              0 |         11 |         0 |            0 |           0 | 5,2       |
 
 字段详细解释如下：
 
-id：自增id
-
 app_id：应用唯一标识
+
+field_id：字段值，建索引时唯一标识一个字段
 
 field_name：字段名称，由用户自行定义
 
@@ -56,10 +56,6 @@ index_tag：是否需要对该字段建索引
 snapshot_tag：是否需要在快照中保存该字段
 
 segment_tag：分词模式，0：不进行分词 1：默认分词模式 3：汉拼分词 5：支持范围查询
-
-field_value：字段值，建索引时唯一标识一个字段
-
-create_time：创建时间
 
 segment_feature：分词特征
 
