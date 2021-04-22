@@ -124,15 +124,6 @@ public:
 	virtual bool DeleteIndex(const InvertIndexEntry& entry);
 	virtual void DumpIndex();
 
-	void GetRangeIndexGELETest(std::vector<InvertIndexEntry>& entry);
-	void GetRangeIndexGETest(std::vector<InvertIndexEntry>& entry);
-	void GetRangeIndexLETest(std::vector<InvertIndexEntry>& entry);
-	void GetRangeIndexGTLTTest(std::vector<InvertIndexEntry>& entry);
-	void GetRangeIndexGTLETest(std::vector<InvertIndexEntry>& entry);
-	void GetRangeIndexGELTTest(std::vector<InvertIndexEntry>& entry);
-	void GetRangeIndexGTTest(std::vector<InvertIndexEntry>& entry);
-	void GetRangeIndexLTTest(std::vector<InvertIndexEntry>& entry);
-
 private:
 	int getFieldIndex(const char *fieldName);
 	void buildTableFieldMap(CConfig* _DTCTableConfig);

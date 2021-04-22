@@ -437,30 +437,6 @@ bool SearchRocksDBIndex::Init(){
 		return false;
 	}
 
-	const char *db_addr = _DTCTableConfig->GetStrVal("Machine1", "DbAddr");
-	if (db_addr == NULL) {
-		log_error("has no DbAddr ");
-		return false;
-	}
-
-	const char *db_user = _DTCTableConfig->GetStrVal("Machine1", "DbUser");
-	if (db_user == NULL) {
-		log_error("has no DbUser ");
-		return false;
-	}
-
-	const char *db_pass = _DTCTableConfig->GetStrVal("Machine1", "DbPass");
-	if (db_pass == NULL) {
-		log_error("has no DbPass ");
-		return false;
-	}
-
-	const char *db_name = _DTCTableConfig->GetStrVal("DB_DEFINE", "DbName");
-	if (db_name == NULL) {
-		log_error("has no DbName ");
-		return false;
-	}
-
 	CConfig* _DTCCacheConfig = new CConfig();
 
 	if ( _DTCCacheConfig->ParseConfig(cache_configfile, "search_cache")) {
@@ -561,7 +537,6 @@ void SearchRocksDBIndex::setQueryCond(QueryCond& query_cond, int field_index, in
 void SearchRocksDBIndex::GetRangeIndexGELE(InvertIndexEntry& begin_key, const InvertIndexEntry& end_key, std::vector<InvertIndexEntry>& entry){
 	
 	DirectRequestContext direct_request_context;
-	
 	stringstream ss;
 
 	if(getFieldIndex("field") == -1){
@@ -598,63 +573,9 @@ void SearchRocksDBIndex::GetRangeIndexGELE(InvertIndexEntry& begin_key, const In
 	setEntry(direct_request_context, entry);
 }
 
-void SearchRocksDBIndex::GetRangeIndexGELETest(std::vector<InvertIndexEntry>& entry){
-
-	DirectRequestContext direct_request_context;
-	direct_request_context.sMagicNum = 12345;
-	direct_request_context.sSequenceId = 10;
-
-	if(getFieldIndex("field") == -1){
-		log_error("GetRangeIndexGELETest get field Index error");
-		return;
-	}
-
-	if(getFieldIndex("key") == -1){
-		log_error("GetRangeIndexGELETest get key Index error");
-		return;
-	}
-
-	QueryCond query_cond1;
-	query_cond1.sFieldIndex = getFieldIndex("field");
-	query_cond1.sCondOpr = 0;
-	query_cond1.sCondValue = "6";
-	direct_request_context.sFieldConds.push_back(query_cond1);
-
-
-	QueryCond query_cond2;
-	query_cond2.sFieldIndex = getFieldIndex("key");
-	query_cond2.sCondOpr = 5;
-	query_cond2.sCondValue = "10062#00#00000000000000000040";
-	direct_request_context.sFieldConds.push_back(query_cond2);
-
-
-	QueryCond query_cond3;
-	query_cond3.sFieldIndex = getFieldIndex("key");
-	query_cond3.sCondOpr = 3;
-	query_cond3.sCondValue = "10062#00#00000000001805837055";
-	direct_request_context.sFieldConds.push_back(query_cond3);
-
-	std::pair<int, bool> order_cond;
-	order_cond = make_pair(0, false);
-	direct_request_context.sOrderbyFields.push_back(order_cond);
-	std::pair<int, bool> order_cond2;
-	order_cond2 = make_pair(1, false);
-	direct_request_context.sOrderbyFields.push_back(order_cond2);
-
-	LimitCond sLimitCond;
-	sLimitCond.sLimitStart = 0;
-	sLimitCond.sLimitStep = 5;
-	direct_request_context.sLimitCond = sLimitCond;
-
-	setEntry(direct_request_context, entry);
-}
-
-
-
 void SearchRocksDBIndex::GetRangeIndexGE(InvertIndexEntry& begin_key, std::vector<InvertIndexEntry>& entry){
 	
 	DirectRequestContext direct_request_context;
-	
 	stringstream ss;
 
 	if(getFieldIndex("field") == -1){
@@ -689,47 +610,6 @@ void SearchRocksDBIndex::GetRangeIndexGE(InvertIndexEntry& begin_key, std::vecto
 
 	setEntry(direct_request_context, entry);
 }
-
-void SearchRocksDBIndex::GetRangeIndexGETest(std::vector<InvertIndexEntry>& entry){
-
-	DirectRequestContext direct_request_context;
-	direct_request_context.sMagicNum = 12345;
-	direct_request_context.sSequenceId = 10;
-
-	if(getFieldIndex("field") == -1){
-		log_error("GetRangeIndexGETest get field Index error");
-		return;
-	}
-
-	if(getFieldIndex("key") == -1){
-		log_error("GetRangeIndexGETest get key Index error");
-		return;
-	}
-
-	QueryCond query_cond1;
-	query_cond1.sFieldIndex = getFieldIndex("field");
-	query_cond1.sCondOpr = 0;
-	query_cond1.sCondValue = "10";
-	direct_request_context.sFieldConds.push_back(query_cond1);
-
-
-	QueryCond query_cond2;
-	query_cond2.sFieldIndex = getFieldIndex("key");
-	query_cond2.sCondOpr = 5;
-	query_cond2.sCondValue = "105";
-	direct_request_context.sFieldConds.push_back(query_cond2);
-
-
-	QueryCond query_cond3;
-	query_cond3.sFieldIndex = getFieldIndex("key");
-	query_cond3.sCondOpr = 2;
-	query_cond3.sCondValue = "102";
-	direct_request_context.sFieldConds.push_back(query_cond3);
-
-	setEntry(direct_request_context, entry);
-}
-
-
 
 void SearchRocksDBIndex::GetRangeIndexLE(InvertIndexEntry& end_key, std::vector<InvertIndexEntry>& entry){
 	
@@ -768,51 +648,9 @@ void SearchRocksDBIndex::GetRangeIndexLE(InvertIndexEntry& end_key, std::vector<
 	setEntry(direct_request_context, entry);
 }
 
-
-void SearchRocksDBIndex::GetRangeIndexLETest(std::vector<InvertIndexEntry>& entry){
-
-  DirectRequestContext direct_request_context;
-  direct_request_context.sMagicNum = 12345;
-  direct_request_context.sSequenceId = 10;
-
-  if(getFieldIndex("field") == -1){
-    log_error("GetRangeIndexLETest get field Index error");
-    return;
-  }
-
-  if(getFieldIndex("key") == -1){
-    log_error("GetRangeIndexLETest get key Index error");
-    return;
-  }
-
-  QueryCond query_cond1;
-  query_cond1.sFieldIndex = getFieldIndex("field");
-  query_cond1.sCondOpr = 0;
-  query_cond1.sCondValue = "10";
-  direct_request_context.sFieldConds.push_back(query_cond1);
-
-
-  QueryCond query_cond2;
-  query_cond2.sFieldIndex = getFieldIndex("key");
-  query_cond2.sCondOpr = 3;
-  query_cond2.sCondValue = "101";
-  direct_request_context.sFieldConds.push_back(query_cond2);
-
-
-  QueryCond query_cond3;
-  query_cond3.sFieldIndex = getFieldIndex("key");
-  query_cond3.sCondOpr = 4;
-  query_cond3.sCondValue = "101";
-  direct_request_context.sFieldConds.push_back(query_cond3);
-
-  setEntry(direct_request_context, entry);
-}
-
-
 void SearchRocksDBIndex::GetRangeIndexGTLT(InvertIndexEntry& begin_key, const InvertIndexEntry& end_key, std::vector<InvertIndexEntry>& entry){
 	
 	DirectRequestContext direct_request_context;
-	
 	stringstream ss;
 
 	if(getFieldIndex("field") == -1){
@@ -824,7 +662,6 @@ void SearchRocksDBIndex::GetRangeIndexGTLT(InvertIndexEntry& begin_key, const In
 		log_error("GetRangeIndexGTLT get key Index error");
 		return;
 	}
-
 
 	QueryCond query_cond1;
 	query_cond1.sFieldIndex = getFieldIndex("field");
@@ -849,51 +686,9 @@ void SearchRocksDBIndex::GetRangeIndexGTLT(InvertIndexEntry& begin_key, const In
 	setEntry(direct_request_context, entry);
 }
 
-
-void SearchRocksDBIndex::GetRangeIndexGTLTTest(std::vector<InvertIndexEntry>& entry){
-
-  DirectRequestContext direct_request_context;
-  direct_request_context.sMagicNum = 12345;
-  direct_request_context.sSequenceId = 10;
-
-  if(getFieldIndex("field") == -1){
-    log_error("GetRangeIndexGTLTTest get field Index error");
-    return;
-  }
-
-  if(getFieldIndex("key") == -1){
-    log_error("GetRangeIndexGTLTTest get key Index error");
-    return;
-  }
-
-  QueryCond query_cond1;
-  query_cond1.sFieldIndex = getFieldIndex("field");
-  query_cond1.sCondOpr = 0;
-  query_cond1.sCondValue = "10";
-  direct_request_context.sFieldConds.push_back(query_cond1);
-
-
-  QueryCond query_cond2;
-  query_cond2.sFieldIndex = getFieldIndex("key");
-  query_cond2.sCondOpr = 4;
-  query_cond2.sCondValue = "101";
-  direct_request_context.sFieldConds.push_back(query_cond2);
-
-
-  QueryCond query_cond3;
-  query_cond3.sFieldIndex = getFieldIndex("key");
-  query_cond3.sCondOpr = 2;
-  query_cond3.sCondValue = "102";
-  direct_request_context.sFieldConds.push_back(query_cond3);
-
-  setEntry(direct_request_context, entry);
-}
-
-
 void SearchRocksDBIndex::GetRangeIndexGTLE(InvertIndexEntry& begin_key, const InvertIndexEntry& end_key, std::vector<InvertIndexEntry>& entry){
 	
 	DirectRequestContext direct_request_context;
-	
 	stringstream ss;
 
 	if(getFieldIndex("field") == -1){
@@ -928,51 +723,9 @@ void SearchRocksDBIndex::GetRangeIndexGTLE(InvertIndexEntry& begin_key, const In
 	setEntry(direct_request_context, entry);
 }
 
-
-void SearchRocksDBIndex::GetRangeIndexGTLETest(std::vector<InvertIndexEntry>& entry){
-
-  DirectRequestContext direct_request_context;
-  direct_request_context.sMagicNum = 12345;
-  direct_request_context.sSequenceId = 10;
-
-  if(getFieldIndex("field") == -1){
-    log_error("GetRangeIndexGTLETest get field Index error");
-    return;
-  }
-
-  if(getFieldIndex("key") == -1){
-    log_error("GetRangeIndexGTLETest get key Index error");
-    return;
-  }
-
-  QueryCond query_cond1;
-  query_cond1.sFieldIndex = getFieldIndex("field");
-  query_cond1.sCondOpr = 0;
-  query_cond1.sCondValue = "10";
-  direct_request_context.sFieldConds.push_back(query_cond1);
-
-
-  QueryCond query_cond2;
-  query_cond2.sFieldIndex = getFieldIndex("key");
-  query_cond2.sCondOpr = 4;
-  query_cond2.sCondValue = "102";
-  direct_request_context.sFieldConds.push_back(query_cond2);
-
-
-  QueryCond query_cond3;
-  query_cond3.sFieldIndex = getFieldIndex("key");
-  query_cond3.sCondOpr = 3;
-  query_cond3.sCondValue = "102";
-  direct_request_context.sFieldConds.push_back(query_cond3);
-
-  setEntry(direct_request_context, entry);
-}
-
-
 void SearchRocksDBIndex::GetRangeIndexGELT(InvertIndexEntry& begin_key, const InvertIndexEntry& end_key, std::vector<InvertIndexEntry>& entry){
 	
 	DirectRequestContext direct_request_context;
-	
 	stringstream ss;
 
 	if(getFieldIndex("field") == -1){
@@ -1007,51 +760,9 @@ void SearchRocksDBIndex::GetRangeIndexGELT(InvertIndexEntry& begin_key, const In
 	setEntry(direct_request_context, entry);
 }
 
-
-void SearchRocksDBIndex::GetRangeIndexGELTTest(std::vector<InvertIndexEntry>& entry){
-
-  DirectRequestContext direct_request_context;
-  direct_request_context.sMagicNum = 12345;
-  direct_request_context.sSequenceId = 10;
-
-  if(getFieldIndex("field") == -1){
-    log_error("GetRangeIndexGELTTest get field Index error");
-    return;
-  }
-
-  if(getFieldIndex("key") == -1){
-    log_error("GetRangeIndexGELTTest get key Index error");
-    return;
-  }
-
-  QueryCond query_cond1;
-  query_cond1.sFieldIndex = getFieldIndex("field");
-  query_cond1.sCondOpr = 0;
-  query_cond1.sCondValue = "10";
-  direct_request_context.sFieldConds.push_back(query_cond1);
-
-
-  QueryCond query_cond2;
-  query_cond2.sFieldIndex = getFieldIndex("key");
-  query_cond2.sCondOpr = 5;
-  query_cond2.sCondValue = "101";
-  direct_request_context.sFieldConds.push_back(query_cond2);
-
-
-  QueryCond query_cond3;
-  query_cond3.sFieldIndex = getFieldIndex("key");
-  query_cond3.sCondOpr = 2;
-  query_cond3.sCondValue = "102";
-  direct_request_context.sFieldConds.push_back(query_cond3);
-
-  setEntry(direct_request_context, entry);
-}
-
-
 void SearchRocksDBIndex::GetRangeIndexGT(InvertIndexEntry& begin_key, std::vector<InvertIndexEntry>& entry){
 	
 	DirectRequestContext direct_request_context;
-	
 	stringstream ss;
 
 	if(getFieldIndex("field") == -1){
@@ -1086,52 +797,9 @@ void SearchRocksDBIndex::GetRangeIndexGT(InvertIndexEntry& begin_key, std::vecto
 	setEntry(direct_request_context, entry);
 }
 
-
-void SearchRocksDBIndex::GetRangeIndexGTTest(std::vector<InvertIndexEntry>& entry){
-
-  DirectRequestContext direct_request_context;
-  direct_request_context.sMagicNum = 12345;
-  direct_request_context.sSequenceId = 10;
-
-  if(getFieldIndex("field") == -1){
-    log_error("GetRangeIndexGTTest get field Index error");
-    return;
-  }
-
-  if(getFieldIndex("key") == -1){
-    log_error("GetRangeIndexGTTest get key Index error");
-    return;
-  }
-
-  QueryCond query_cond1;
-  query_cond1.sFieldIndex = getFieldIndex("field");
-  query_cond1.sCondOpr = 0;
-  query_cond1.sCondValue = "10";
-  direct_request_context.sFieldConds.push_back(query_cond1);
-
-
-  QueryCond query_cond2;
-  query_cond2.sFieldIndex = getFieldIndex("key");
-  query_cond2.sCondOpr = 4;
-  query_cond2.sCondValue = "101";
-  direct_request_context.sFieldConds.push_back(query_cond2);
-
-
-  QueryCond query_cond3;
-  query_cond3.sFieldIndex = getFieldIndex("key");
-  query_cond3.sCondOpr = 2;
-  query_cond3.sCondValue = "102";
-  direct_request_context.sFieldConds.push_back(query_cond3);
-
-  setEntry(direct_request_context, entry);
-}
-
-
-
 void SearchRocksDBIndex::GetRangeIndexLT(InvertIndexEntry& end_key, std::vector<InvertIndexEntry>& entry){
 	
 	DirectRequestContext direct_request_context;
-	
 	stringstream ss;
 
 	if(getFieldIndex("field") == -1){
@@ -1165,47 +833,6 @@ void SearchRocksDBIndex::GetRangeIndexLT(InvertIndexEntry& end_key, std::vector<
 
 	setEntry(direct_request_context, entry);
 }
-
-
-void SearchRocksDBIndex::GetRangeIndexLTTest(std::vector<InvertIndexEntry>& entry){
-
-  DirectRequestContext direct_request_context;
-  direct_request_context.sMagicNum = 12345;
-  direct_request_context.sSequenceId = 10;
-
-  if(getFieldIndex("field") == -1){
-    log_error("GetRangeIndexLTTest get field Index error");
-    return;
-  }
-
-  if(getFieldIndex("key") == -1){
-    log_error("GetRangeIndexLTTest get key Index error");
-    return;
-  }
-
-  QueryCond query_cond1;
-  query_cond1.sFieldIndex = getFieldIndex("field");
-  query_cond1.sCondOpr = 0;
-  query_cond1.sCondValue = "10";
-  direct_request_context.sFieldConds.push_back(query_cond1);
-
-
-  QueryCond query_cond2;
-  query_cond2.sFieldIndex = getFieldIndex("key");
-  query_cond2.sCondOpr = 2;
-  query_cond2.sCondValue = "103";
-  direct_request_context.sFieldConds.push_back(query_cond2);
-
-
-  QueryCond query_cond3;
-  query_cond3.sFieldIndex = getFieldIndex("key");
-  query_cond3.sCondOpr = 4;
-  query_cond3.sCondValue = "102";
-  direct_request_context.sFieldConds.push_back(query_cond3);
-
-  setEntry(direct_request_context, entry);
-}
-
 
 void SearchRocksDBIndex::GetScoreByCacheSet(const CacheQueryInfo &query_info, const set<string>& valid_docs, SkipList& skipList, map<string, uint32_t>& valid_version){
 
