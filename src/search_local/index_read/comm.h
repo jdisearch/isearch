@@ -236,7 +236,7 @@ struct CacheQueryInfo
 
 enum KeyType
 {
-	MAINKEY,
+	ORKEY,
 	ANDKEY,
 	INVERTKEY,
 };

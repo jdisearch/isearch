@@ -22,6 +22,7 @@
 #include "json/json.h"
 #include <string>
 #include <vector>
+#include "query/query_parser.h"
 using namespace std;
 
 class Component
@@ -100,7 +101,6 @@ private:
 	uint32_t m_snapshot_switch;
 	uint32_t m_sort_type;
 	uint32_t m_appid;
-	string m_user_id;
 	string m_sort_field;
 	string m_last_id;
 	string m_last_score;
@@ -110,5 +110,8 @@ private:
 	uint32_t m_jdq_switch;
 	uint32_t m_terminal_tag;
 	bool m_terminal_tag_valid;
+	Json::Value m_query;
+	QueryParser* query_parser;
+	QueryParserRes* query_parser_res;
 };
 #endif

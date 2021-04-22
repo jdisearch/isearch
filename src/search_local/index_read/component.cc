@@ -20,6 +20,7 @@
 #include "split_manager.h"
 #include "db_manager.h"
 #include "utf8_str.h"
+#include "query/bool_query_parser.h"
 #include <sstream>
 using namespace std;
 
@@ -35,7 +36,6 @@ Component::Component(){
 	m_snapshot_switch = 0;
 	m_sort_type = SORT_RELEVANCE;
 	m_appid = 10001;
-	m_user_id = "0";
 	m_last_id = "";
 	m_last_score = "";
 	m_search_after = false;
@@ -45,7 +45,12 @@ Component::Component(){
 }
 
 Component::~Component(){
-
+	if(NULL != query_parser){
+		delete query_parser;
+	}
+	if(NULL != query_parser_res){
+		delete query_parser_res;
+	}
 }
 
 int Component::ParseJson(const char *sz_json, int json_len, Json::Value &recv_packet)
@@ -68,12 +73,8 @@ int Component::ParseJson(const char *sz_json, int json_len, Json::Value &recv_pa
 		m_appid = 10001;
 	}
 
-	if (recv_packet.isMember("userid") && recv_packet["userid"].isString())
-	{
-		m_user_id = recv_packet["userid"].asString();
-	}
-	else {
-		m_user_id = "0";
+	if(recv_packet.isMember("query")){
+		m_query = recv_packet["query"];	
 	}
 
 	if (recv_packet.isMember("key") && recv_packet["key"].isString())
@@ -214,9 +215,34 @@ void Component::InitSwitch()
 }
 
 void Component::GetQueryWord(uint32_t &m_has_gis){
-	GetFieldWords(MAINKEY, m_Data, m_appid, m_has_gis);
-	GetFieldWords(ANDKEY, m_Data_and, m_appid, m_has_gis);
-	GetFieldWords(INVERTKEY, m_Data_invert, m_appid, m_has_gis);
+	if(m_query.isObject()){
+		if(m_query.isMember("bool")){
+			query_parser = new BoolQueryParser(m_appid, m_query["bool"]);
+		}
+		query_parser_res = new QueryParserRes();
+		query_parser->ParseContent(query_parser_res);
+		map<uint32_t, vector<FieldInfo> >::iterator field_key_map_iter = query_parser_res->FieldKeysMap().begin();
+		for(; field_key_map_iter != query_parser_res->FieldKeysMap().end(); field_key_map_iter++){
+			AddToFieldList(ANDKEY, field_key_map_iter->second);
+		}
+		map<uint32_t, vector<FieldInfo> >::iterator or_key_map_iter = query_parser_res->OrFieldKeysMap().begin();
+		for(; or_key_map_iter != query_parser_res->OrFieldKeysMap().end(); or_key_map_iter++){
+			AddToFieldList(ORKEY, or_key_map_iter->second);
+		}
+		m_has_gis = query_parser_res->HasGis();
+		if(m_has_gis){
+			latitude = query_parser_res->Latitude();
+			longitude = query_parser_res->Longitude();
+			distance = query_parser_res->Distance();
+		}
+		extra_filter_keys.assign(query_parser_res->ExtraFilterKeys().begin(), query_parser_res->ExtraFilterKeys().end());
+		extra_filter_and_keys.assign(query_parser_res->ExtraFilterAndKeys().begin(), query_parser_res->ExtraFilterAndKeys().end());
+		extra_filter_invert_keys.assign(query_parser_res->ExtraFilterInvertKeys().begin(), query_parser_res->ExtraFilterInvertKeys().end());
+	} else {
+		GetFieldWords(ORKEY, m_Data, m_appid, m_has_gis);
+		GetFieldWords(ANDKEY, m_Data_and, m_appid, m_has_gis);
+		GetFieldWords(INVERTKEY, m_Data_invert, m_appid, m_has_gis);
+	}
 }
 
 void Component::GetFieldWords(int type, string dataStr, uint32_t appid, uint32_t &m_has_gis){
