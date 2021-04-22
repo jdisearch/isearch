@@ -23,7 +23,6 @@
 #include "chash.h"
 
 #include "search_conf.h"
-#include "search_list.h"
 #include "search_util.h"
 #include "json/value.h"
 #include <stdio.h>

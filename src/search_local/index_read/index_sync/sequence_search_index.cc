@@ -403,15 +403,9 @@ vector<string> split(const string& str, const string& delim) {
 }
 
 std::string getPath(const char *bind_addr){
-	string str = bind_addr;
-	vector<string> res = split(str, ":");
-    res = split(res[1], "/");
-	string s = "/tmp/domain_socket/rocks_direct_";
-	s.append(res[0]);
-	s.append(".sock");
+	string s = "/tmp/domain_socket/rocks_direct_20000.sock";
 	return s;
 }
-
 
 void SearchRocksDBIndex::buildTableFieldMap(CConfig* _DTCTableConfig){
 	int fieldCount = _DTCTableConfig->GetIntVal("TABLE_DEFINE", "FieldCount", 0);

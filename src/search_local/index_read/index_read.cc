@@ -67,10 +67,7 @@ static CAgentProcess* agentProcess;
 static CAgentListenPkg* agentListener;
 static CSearchProcess* searchProcess;
 static CPollThread* updateThread;
-
-extern MemPool listNodePool;
 extern MemPool skipNodePool;
-
 pthread_mutex_t mutex;
 SyncIndexTimer *globalSyncIndexTimer;
 int stop = 0;
@@ -116,7 +113,6 @@ static int ServicePreRun(int log_level, bool deam, string log_path)
 	log_debug("start service verison %s build at %s %s", SEARCH_VERSION_STR, __DATE__, __TIME__);
 
 	pthread_mutex_init(&mutex, NULL);
-	listNodePool.SetMemInfo("listnode", sizeof(ListNode));
 	skipNodePool.SetMemInfo("skipnode", sizeof(SkipListNode));
 
 	if (SIG_ERR == signal(SIGTERM, catch_signal))
@@ -139,11 +135,6 @@ static int ServicePreRun(int log_level, bool deam, string log_path)
 
 	if (!DBManager::Instance()->Init(global_cfg)){
 		log_error("db manager error");
-		return -RT_INIT_ERR;
-	}
-
-	if (!TernaryTree::Instance()->Init(global_cfg.suggestPath)){
-		log_error("int suggest words error");
 		return -RT_INIT_ERR;
 	}
 
@@ -177,7 +168,6 @@ void ServicePostRun(string str_pid_file) {
 	SearchConf::Instance()->Destroy();
 	DataManager::Instance()->Destroy();
 	SplitManager::Instance()->Destroy();
-	TernaryTree::Instance()->Destroy();
 	search_delete_pid(str_pid_file);
 }
 
