@@ -243,32 +243,6 @@ int SearchTask::GetDocScore(map<string, double>& top_doc_score)
 	uint32_t word_freq = 0;
 	uint32_t field = 0;
 
-	// 如果按指定字段排序且有效文档数超过一定值（暂时定为1000），排序操作通过范围查询的缓存set来做，不去查快照获取对应字段值
-	if((m_sort_type == SORT_FIELD_ASC || m_sort_type == SORT_FIELD_DESC) && valid_docs.size() > 1000){
-		log_info("valid_docs size[%d] too big, use range query cache set to do the sort.", (int)valid_docs.size());
-		uint32_t field_value = 0;
-		bool bRet = DBManager::Instance()->GetFieldValue(m_appid, m_sort_field, field_value);
-		if(false == bRet){
-			log_error("appid[%d] field[%s] not find.", m_appid, m_sort_field.c_str());
-			return -RT_GET_FIELD_ERROR;
-		}
-		m_index_set_cnt = valid_docs.size();
-		CacheQueryInfo query_info;
-		query_info.appid = m_appid;
-		query_info.sort_field = field_value;
-		query_info.sort_type = m_sort_type;
-		query_info.page_index = component->PageIndex();
-		query_info.page_size = component->PageSize();
-		query_info.last_score = component->LastScore();
-		query_info.last_id = component->LastId();
-		if(component->SearchAfter()){
-			globalSyncIndexTimer->GetSearchIndex()->GetScoreByCacheSetSearchAfter(query_info, valid_docs, skipList, doc_manager->ValidVersion());
-		} else {
-			globalSyncIndexTimer->GetSearchIndex()->GetScoreByCacheSet(query_info, valid_docs, skipList, doc_manager->ValidVersion());
-		}
-		return 0;
-	}
-
 	if(m_sort_type == SORT_RELEVANCE || m_sort_type == SORT_TIMESTAMP){
 		if(m_has_gis){
 			hash_double_map::iterator dis_iter = distances.begin();
@@ -628,12 +602,6 @@ int SearchTask::Process(CTaskRequest *request)
 		log_error("TerminalTag is 1 and TerminalTagValid is false.");
 		common::ProfilerMonitor::GetInstance().FunctionError(caller_info);
 		return -RT_PARSE_JSON_ERR;
-	}
-	if (component->JdqSwitch() == 1 && component->QueryWord() != "") {
-		stringstream query_info;
-		uint32_t m_time = time(NULL);
-		string time_str = GetFormatTimeStr(m_time);
-		query_info << m_appid << "|" << component->QueryWord() << "|" << 0 << "|" << time_str << "|";
 	}
 	doc_manager = new DocManager(component);
 
