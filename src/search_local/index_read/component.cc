@@ -21,6 +21,10 @@
 #include "db_manager.h"
 #include "utf8_str.h"
 #include "query/bool_query_parser.h"
+#include "query/geo_distance_parser.h"
+#include "query/range_query_parser.h"
+#include "query/match_query_parser.h"
+#include "query/term_query_parser.h"
 #include <sstream>
 using namespace std;
 
@@ -218,6 +222,14 @@ void Component::GetQueryWord(uint32_t &m_has_gis){
 	if(m_query.isObject()){
 		if(m_query.isMember("bool")){
 			query_parser = new BoolQueryParser(m_appid, m_query["bool"]);
+		} else if(m_query.isMember("geo_distance")){
+			query_parser = new GeoDistanceParser(m_appid, m_query["geo_distance"]);
+		} else if(m_query.isMember("range")){
+			query_parser = new RangeQueryParser(m_appid, m_query["range"]);
+		} else if(m_query.isMember("match")){
+			query_parser = new MatchQueryParser(m_appid, m_query["match"]);
+		} else if(m_query.isMember("term")){
+			query_parser = new TermQueryParser(m_appid, m_query["term"]);
 		}
 		query_parser_res = new QueryParserRes();
 		query_parser->ParseContent(query_parser_res);
@@ -234,6 +246,7 @@ void Component::GetQueryWord(uint32_t &m_has_gis){
 			latitude = query_parser_res->Latitude();
 			longitude = query_parser_res->Longitude();
 			distance = query_parser_res->Distance();
+			log_debug("lat: %s, lon: %s, distance: %f", latitude.c_str(), longitude.c_str(), distance);
 		}
 		extra_filter_keys.assign(query_parser_res->ExtraFilterKeys().begin(), query_parser_res->ExtraFilterKeys().end());
 		extra_filter_and_keys.assign(query_parser_res->ExtraFilterAndKeys().begin(), query_parser_res->ExtraFilterAndKeys().end());

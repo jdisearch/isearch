@@ -102,8 +102,8 @@ void GeoDistanceParser::ParseContent(QueryParserRes* query_parser_res){
         stringstream sslat;
         stringstream sslon;
         sslat << geo.lat;
-        sslon << geo.lon;
         query_parser_res->Latitude() = sslat.str();
+        sslon << geo.lon;
         query_parser_res->Longitude() = sslon.str();
         query_parser_res->Distance() = distance;
 	}

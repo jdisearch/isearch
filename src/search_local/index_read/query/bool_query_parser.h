@@ -24,6 +24,7 @@
 class RangeQueryParser;
 class TermQueryParser;
 class MatchQueryParser;
+class GeoDistanceParser;
 class BoolQueryParser : public QueryParser
 {
 public:
@@ -38,15 +39,10 @@ private:
 private:
 	uint32_t appid;
 	Json::Value value;
-	static const char* const NAME;
-	static const char* const MUST;
-	static const char* const SHOULD;
-	static const char* const TERM;
-	static const char* const MATCH;
-	static const char* const RANGE;
 	RangeQueryParser* range_query_parser;
 	TermQueryParser* term_query_parser;
 	MatchQueryParser* match_query_parser;
+	GeoDistanceParser* geo_query_parser;
 };
 
 #endif

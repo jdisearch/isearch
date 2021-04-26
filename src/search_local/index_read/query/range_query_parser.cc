@@ -53,9 +53,10 @@ void RangeQueryParser::ParseContent(QueryParserRes* query_parser_res, uint32_t t
 					info.range_type = RANGE_GTLT;
 				}
 			}
-			info.start = start.asInt();
-			info.end = end.asInt();
-			fieldInfos.push_back(info);
+			fieldInfo.start = start.asInt();
+			fieldInfo.end = end.asInt();
+			fieldInfo.range_type = info.range_type;
+			fieldInfos.push_back(fieldInfo);
 		}
 		if(fieldInfos.size() != 0){
             if(type == ORKEY){

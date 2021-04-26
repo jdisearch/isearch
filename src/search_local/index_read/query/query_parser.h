@@ -48,7 +48,7 @@ public:
         return latitude;
     }
     string& Longitude(){
-        return latitude;
+        return longitude;
     }
     double& Distance(){
         return distance;

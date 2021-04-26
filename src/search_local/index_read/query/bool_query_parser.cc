@@ -4,13 +4,15 @@
 #include "range_query_parser.h"
 #include "term_query_parser.h"
 #include "match_query_parser.h"
+#include "geo_distance_parser.h"
 
-const char* const BoolQueryParser::NAME ="bool";
-const char* const BoolQueryParser::MUST ="must";
-const char* const BoolQueryParser::SHOULD ="should";
-const char* const BoolQueryParser::TERM ="term";
-const char* const BoolQueryParser::MATCH ="match";
-const char* const BoolQueryParser::RANGE ="range";
+const char* const NAME ="bool";
+const char* const MUST ="must";
+const char* const SHOULD ="should";
+const char* const TERM ="term";
+const char* const MATCH ="match";
+const char* const RANGE ="range";
+const char* const GEODISTANCE ="geo_distance";
 
 BoolQueryParser::BoolQueryParser(uint32_t a, Json::Value& v)
 :appid(a),value(v)
@@ -28,6 +30,9 @@ BoolQueryParser::~BoolQueryParser(){
 	if(NULL != match_query_parser){
 		delete match_query_parser;
 	}
+	if(NULL != geo_query_parser){
+		delete geo_query_parser;
+	}
 }
 
 void BoolQueryParser::DoJobByType(Json::Value& value, uint32_t type, QueryParserRes* query_parser_res){
@@ -40,6 +45,9 @@ void BoolQueryParser::DoJobByType(Json::Value& value, uint32_t type, QueryParser
 	} else if(value.isMember(RANGE)){
 		range_query_parser = new RangeQueryParser(appid, value[RANGE]);
 		range_query_parser->ParseContent(query_parser_res, type);
+	} else if(value.isMember(GEODISTANCE)){
+		geo_query_parser = new GeoDistanceParser(appid, value[GEODISTANCE]);
+		geo_query_parser->ParseContent(query_parser_res);
 	}
 }
 
