@@ -12,11 +12,11 @@ TermQueryParser::~TermQueryParser(){
 
 }
 
-void TermQueryParser::ParseContent(QueryParserRes* query_parser_res){
-    ParseContent(query_parser_res, ORKEY);
+int TermQueryParser::ParseContent(QueryParserRes* query_parser_res){
+    return ParseContent(query_parser_res, ORKEY);
 }
 
-void TermQueryParser::ParseContent(QueryParserRes* query_parser_res, uint32_t type){
+int TermQueryParser::ParseContent(QueryParserRes* query_parser_res, uint32_t type){
     vector<FieldInfo> fieldInfos;
 	Json::Value::Members member = value.getMemberNames();
 	Json::Value::Members::iterator iter = member.begin();
@@ -28,7 +28,8 @@ void TermQueryParser::ParseContent(QueryParserRes* query_parser_res, uint32_t ty
 		json_value = value[fieldname];
 		field_value = json_value.asString();
 	} else {
-		return;
+		log_error("TermQueryParser error, value is null");
+		return -RT_PARSE_CONTENT_ERROR;
 	}
 	uint32_t segment_tag = 0;
 	FieldInfo fieldInfo;
@@ -45,9 +46,7 @@ void TermQueryParser::ParseContent(QueryParserRes* query_parser_res, uint32_t ty
 		} else if (type == INVERTKEY) {
 			query_parser_res->ExtraFilterInvertKeys().push_back(extra_filter_key);
 		}
-		return;
-	}
-	if (field != 0)
+	} else if (field != 0)
 	{
 		fieldInfo.word = field_value;
 		fieldInfos.push_back(fieldInfo);
@@ -55,9 +54,11 @@ void TermQueryParser::ParseContent(QueryParserRes* query_parser_res, uint32_t ty
 	if(fieldInfos.size() != 0){
         if(type == ORKEY){
             query_parser_res->OrFieldKeysMap().insert(make_pair(fieldInfo.field, fieldInfos));
-        } else {
+        } else if(type == ANDKEY) {
             query_parser_res->FieldKeysMap().insert(make_pair(fieldInfo.field, fieldInfos));
-        }
+        } else if(type == INVERTKEY){
+			query_parser_res->InvertFieldKeysMap().insert(make_pair(fieldInfo.field, fieldInfos));
+		}
 	}
-	return;
+	return 0;
 }

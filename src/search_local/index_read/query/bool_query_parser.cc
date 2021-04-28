@@ -9,10 +9,16 @@
 const char* const NAME ="bool";
 const char* const MUST ="must";
 const char* const SHOULD ="should";
+const char* const MUST_NOT ="must_not";
 const char* const TERM ="term";
 const char* const MATCH ="match";
 const char* const RANGE ="range";
 const char* const GEODISTANCE ="geo_distance";
+
+void SetErrMsg(QueryParserRes* query_parser_res, string err_msg){
+    log_error(err_msg.c_str());
+    query_parser_res->ErrMsg() = err_msg;
+}
 
 BoolQueryParser::BoolQueryParser(uint32_t a, Json::Value& v)
 :appid(a),value(v)
@@ -35,43 +41,84 @@ BoolQueryParser::~BoolQueryParser(){
 	}
 }
 
-void BoolQueryParser::DoJobByType(Json::Value& value, uint32_t type, QueryParserRes* query_parser_res){
+int BoolQueryParser::DoJobByType(Json::Value& value, uint32_t type, QueryParserRes* query_parser_res){
 	if(value.isMember(TERM)){
 		term_query_parser = new TermQueryParser(appid, value[TERM]);
-		term_query_parser->ParseContent(query_parser_res, type);
+		return term_query_parser->ParseContent(query_parser_res, type);
 	} else if(value.isMember(MATCH)){
 		match_query_parser = new MatchQueryParser(appid, value[MATCH]);
-		match_query_parser->ParseContent(query_parser_res, type);
+		return match_query_parser->ParseContent(query_parser_res, type);
 	} else if(value.isMember(RANGE)){
 		range_query_parser = new RangeQueryParser(appid, value[RANGE]);
-		range_query_parser->ParseContent(query_parser_res, type);
+		return range_query_parser->ParseContent(query_parser_res, type);
 	} else if(value.isMember(GEODISTANCE)){
 		geo_query_parser = new GeoDistanceParser(appid, value[GEODISTANCE]);
-		geo_query_parser->ParseContent(query_parser_res);
+		return geo_query_parser->ParseContent(query_parser_res);
+	} else {
+		SetErrMsg(query_parser_res, "BoolQueryParser only support term/match/range/geo_distance!");
+		return -RT_PARSE_CONTENT_ERROR;
 	}
+	return 0;
 }
 
-void BoolQueryParser::ParseContent(QueryParserRes* query_parser_res){
+int BoolQueryParser::ParseContent(QueryParserRes* query_parser_res){
+	int ret = 0;
 	if(value.isMember(MUST)){
 		int type = ANDKEY;
 		Json::Value must = value[MUST];
 		if(must.isArray()){
 			for(int i = 0; i < (int)must.size(); i++){
-				DoJobByType(must[i], type, query_parser_res);
+				ret = DoJobByType(must[i], type, query_parser_res);
+				if(ret != 0){
+					log_error("DoJobByType error!");
+					return -RT_PARSE_CONTENT_ERROR;
+				}
 			}
 		} else if (must.isObject()){
-			DoJobByType(must, type, query_parser_res);
+			ret = DoJobByType(must, type, query_parser_res);
+			if(ret != 0){
+				log_error("DoJobByType error!");
+				return -RT_PARSE_CONTENT_ERROR;
+			}
 		}
-	} else if (value.isMember(SHOULD)){
+	}
+	if (value.isMember(SHOULD)){
 		int type = ORKEY;
 		Json::Value should = value[SHOULD];
 		if(should.isArray()){
 			for(int i = 0; i < (int)should.size(); i++){
-				DoJobByType(should[i], type, query_parser_res);
+				ret = DoJobByType(should[i], type, query_parser_res);
+				if(ret != 0){
+					log_error("DoJobByType error!");
+					return -RT_PARSE_CONTENT_ERROR;
+				}
 			}
 		} else if (should.isObject()){
-			DoJobByType(should, type, query_parser_res);
+			ret = DoJobByType(should, type, query_parser_res);
+			if(ret != 0){
+				log_error("DoJobByType error!");
+				return -RT_PARSE_CONTENT_ERROR;
+			}
 		}
 	}
-	return;
+	if (value.isMember(MUST_NOT)){
+		int type = INVERTKEY;
+		Json::Value must_not = value[MUST_NOT];
+		if(must_not.isArray()){
+			for(int i = 0; i < (int)must_not.size(); i++){
+				ret = DoJobByType(must_not[i], type, query_parser_res);
+				if(ret != 0){
+					log_error("DoJobByType error!");
+					return -RT_PARSE_CONTENT_ERROR;
+				}
+			}
+		} else if (must_not.isObject()) {
+			ret = DoJobByType(must_not, type, query_parser_res);
+			if(ret != 0){
+				log_error("DoJobByType error!");
+				return -RT_PARSE_CONTENT_ERROR;
+			}
+		}
+	}
+	return 0;
 }

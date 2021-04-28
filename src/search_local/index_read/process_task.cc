@@ -39,9 +39,12 @@ ProcessTask::~ProcessTask()
 
 }
 
-string ProcessTask::GenReplyStr(RSPCODE code) {
+string ProcessTask::GenReplyStr(RSPCODE code, string err_msg) {
 	Json::Value m_ReplyPacket;
 	m_ReplyPacket["code"] = code;
+	if(err_msg != ""){
+		m_ReplyPacket["message"] = err_msg;
+	}
 	Json::StyledWriter _sw;
 	string resultStr = _sw.write(m_ReplyPacket);
 	return resultStr;

@@ -32,6 +32,9 @@ public:
     map<uint32_t, vector<FieldInfo> >& OrFieldKeysMap(){
         return or_field_keys_map;
     }
+    map<uint32_t, vector<FieldInfo> >& InvertFieldKeysMap(){
+        return invert_field_keys_map;
+    }
     vector<ExtraFilterKey>& ExtraFilterKeys(){
         return extra_filter_keys;
     }
@@ -53,13 +56,18 @@ public:
     double& Distance(){
         return distance;
     }
+    string& ErrMsg(){
+        return err_msg;
+    }
 private:
     uint32_t m_has_gis;
     string latitude;
 	string longitude;
 	double distance;
+    string err_msg;
     map<uint32_t, vector<FieldInfo> > field_keys_map;
 	map<uint32_t, vector<FieldInfo> > or_field_keys_map;
+    map<uint32_t, vector<FieldInfo> > invert_field_keys_map;
     vector<ExtraFilterKey> extra_filter_keys;
 	vector<ExtraFilterKey> extra_filter_and_keys;
 	vector<ExtraFilterKey> extra_filter_invert_keys;
@@ -67,7 +75,7 @@ private:
 
 class QueryParser{
 public:
-    virtual void ParseContent(QueryParserRes* query_parser_res) = 0;
+    virtual int ParseContent(QueryParserRes* query_parser_res) = 0;
     virtual  ~QueryParser() {};
 };
 

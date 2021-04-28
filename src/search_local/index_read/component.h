@@ -31,7 +31,7 @@ public:
 	Component();
 	~Component();
 
-	void GetQueryWord(uint32_t &m_has_gis);
+	int GetQueryWord(uint32_t &m_has_gis, string &err_msg);
 	const vector<vector<FieldInfo> >& Keys();
 	const vector<vector<FieldInfo> >& AndKeys();
 	const vector<vector<FieldInfo> >& InvertKeys();

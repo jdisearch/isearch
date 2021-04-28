@@ -31,10 +31,10 @@ public:
 	BoolQueryParser(uint32_t a, Json::Value& v);
 	~BoolQueryParser();
 
-	void ParseContent(QueryParserRes* query_parser_res);
+	int ParseContent(QueryParserRes* query_parser_res);
 
 private:
-	void DoJobByType(Json::Value& value, uint32_t type, QueryParserRes* query_parser_res);
+	int DoJobByType(Json::Value& value, uint32_t type, QueryParserRes* query_parser_res);
 
 private:
 	uint32_t appid;

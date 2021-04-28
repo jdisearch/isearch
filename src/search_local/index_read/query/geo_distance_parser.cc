@@ -3,6 +3,8 @@
 #include <sstream>
 
 const char* const DISTANCE ="distance";
+const int GEO_PRECISION = 6;
+const int DEFAULT_DISTANCE = 2;
 
 GeoDistanceParser::GeoDistanceParser(uint32_t a, Json::Value& v)
 :appid(a),value(v)
@@ -22,7 +24,7 @@ vector<double> splitDouble(const string& src, string separate_character)
 	int separate_characterLen = separate_character.size();
 	int lastPosition = 0, index = -1;
 	string str;
-	int pos = 0;
+	double pos = 0;
 	while (-1 != (index = src.find(separate_character, lastPosition)))
 	{
 		if (src.substr(lastPosition, index - lastPosition) != " ") {
@@ -33,13 +35,19 @@ vector<double> splitDouble(const string& src, string separate_character)
 		lastPosition = index + separate_characterLen;
 	}
 	string lastString = src.substr(lastPosition);//截取最后一个分隔符后的内容
-	if (!lastString.empty() && lastString != " ")
+	if (!lastString.empty() && lastString != " "){
 		pos = atof(lastString.c_str());
 		strs.push_back(pos);//如果最后一个分隔符后还有内容就入队
+    }
 	return strs;
 }
 
-void GeoDistanceParser::ParseContent(QueryParserRes* query_parser_res){
+void SetErrMsg(QueryParserRes* query_parser_res, string err_msg){
+    log_error(err_msg.c_str());
+    query_parser_res->ErrMsg() = err_msg;
+}
+
+int GeoDistanceParser::ParseContent(QueryParserRes* query_parser_res){
     vector<FieldInfo> fieldInfos;
     double distance = 0;
     string fieldname;
@@ -50,6 +58,9 @@ void GeoDistanceParser::ParseContent(QueryParserRes* query_parser_res){
         if(DISTANCE == *iter){
             if(geo_value.isString()){
                 distance = atof(geo_value.asString().c_str());
+            } else {
+                SetErrMsg(query_parser_res, "GeoDistanceParser distance should be string, the unit is km.");
+                return -RT_PARSE_CONTENT_ERROR;
             }
         } else {
             fieldname = *iter;
@@ -59,6 +70,9 @@ void GeoDistanceParser::ParseContent(QueryParserRes* query_parser_res){
                 if(res.size() >= 2){
                     geo.lat = res[0];
                     geo.lon = res[1];
+                } else {
+                    SetErrMsg(query_parser_res, "GeoDistanceParser format error.");
+		            return -RT_PARSE_CONTENT_ERROR;
                 }
             } else if (geo_value.isArray()){
                 if(geo_value.size() >= 2){
@@ -68,18 +82,33 @@ void GeoDistanceParser::ParseContent(QueryParserRes* query_parser_res){
                     if(geo_value[1].isDouble()){
                         geo.lat = geo_value[1].asDouble();
                     }
+                } else {
+                    SetErrMsg(query_parser_res, "GeoDistanceParser format error.");
+		            return -RT_PARSE_CONTENT_ERROR;
                 }
             } else if (geo_value.isObject()){
                 if(geo_value.isMember("lat") && geo_value["lat"].isDouble()){
                     geo.lat = geo_value["lat"].asDouble();
+                } else {
+                    SetErrMsg(query_parser_res, "GeoDistanceParser lat format error.");
+		            return -RT_PARSE_CONTENT_ERROR;
                 }
                 if(geo_value.isMember("lon") && geo_value["lon"].isDouble()){
                     geo.lon = geo_value["lon"].asDouble();
+                } else {
+                    SetErrMsg(query_parser_res, "GeoDistanceParser lon format error.");
+		            return -RT_PARSE_CONTENT_ERROR;
                 }
+            } else {
+                SetErrMsg(query_parser_res, "GeoDistanceParser error, value is not string/array/object.");
+		        return -RT_PARSE_CONTENT_ERROR;
             }
         }
     }
-    vector<string> gisCode = GetArroundGeoHash(geo, distance, 6);
+    if(distance == 0){
+        distance = DEFAULT_DISTANCE;
+    }
+    vector<string> gisCode = GetArroundGeoHash(geo, distance, GEO_PRECISION);
     if(gisCode.size() > 0){
 		vector<FieldInfo> fieldInfos;
 		uint32_t segment_tag = 0;
@@ -107,5 +136,5 @@ void GeoDistanceParser::ParseContent(QueryParserRes* query_parser_res){
         query_parser_res->Longitude() = sslon.str();
         query_parser_res->Distance() = distance;
 	}
-    return;
+    return 0;
 }

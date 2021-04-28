@@ -52,6 +52,7 @@ enum RetCode{
 	RT_GET_DOC_ERR,
 	RT_ADD_DICT_ERR,
 	RT_GET_FIELD_ERROR,
+	RT_PARSE_CONTENT_ERROR,
 };
 
 typedef enum CMD {

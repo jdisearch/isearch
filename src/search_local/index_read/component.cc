@@ -218,7 +218,7 @@ void Component::InitSwitch()
 	}
 }
 
-void Component::GetQueryWord(uint32_t &m_has_gis){
+int Component::GetQueryWord(uint32_t &m_has_gis, string &err_msg){
 	if(m_query.isObject()){
 		if(m_query.isMember("bool")){
 			query_parser = new BoolQueryParser(m_appid, m_query["bool"]);
@@ -232,7 +232,12 @@ void Component::GetQueryWord(uint32_t &m_has_gis){
 			query_parser = new TermQueryParser(m_appid, m_query["term"]);
 		}
 		query_parser_res = new QueryParserRes();
-		query_parser->ParseContent(query_parser_res);
+		int ret = query_parser->ParseContent(query_parser_res);
+		if(ret != 0){
+			err_msg = query_parser_res->ErrMsg();
+			log_error("query_parser ParseContent error, ret: %d", ret);
+			return ret;
+		}
 		map<uint32_t, vector<FieldInfo> >::iterator field_key_map_iter = query_parser_res->FieldKeysMap().begin();
 		for(; field_key_map_iter != query_parser_res->FieldKeysMap().end(); field_key_map_iter++){
 			AddToFieldList(ANDKEY, field_key_map_iter->second);
@@ -240,6 +245,10 @@ void Component::GetQueryWord(uint32_t &m_has_gis){
 		map<uint32_t, vector<FieldInfo> >::iterator or_key_map_iter = query_parser_res->OrFieldKeysMap().begin();
 		for(; or_key_map_iter != query_parser_res->OrFieldKeysMap().end(); or_key_map_iter++){
 			AddToFieldList(ORKEY, or_key_map_iter->second);
+		}
+		map<uint32_t, vector<FieldInfo> >::iterator invert_key_map_iter = query_parser_res->InvertFieldKeysMap().begin();
+		for(; invert_key_map_iter != query_parser_res->InvertFieldKeysMap().end(); invert_key_map_iter++){
+			AddToFieldList(INVERTKEY, invert_key_map_iter->second);
 		}
 		m_has_gis = query_parser_res->HasGis();
 		if(m_has_gis){
@@ -256,6 +265,7 @@ void Component::GetQueryWord(uint32_t &m_has_gis){
 		GetFieldWords(ANDKEY, m_Data_and, m_appid, m_has_gis);
 		GetFieldWords(INVERTKEY, m_Data_invert, m_appid, m_has_gis);
 	}
+	return 0;
 }
 
 void Component::GetFieldWords(int type, string dataStr, uint32_t appid, uint32_t &m_has_gis){

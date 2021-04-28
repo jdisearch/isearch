@@ -26,8 +26,8 @@ class TermQueryParser : public QueryParser
 public:
     TermQueryParser(uint32_t a, Json::Value& v);
 	~TermQueryParser();
-    void ParseContent(QueryParserRes* query_parser_res);
-    void ParseContent(QueryParserRes* query_parser_res, uint32_t type);
+    int ParseContent(QueryParserRes* query_parser_res);
+    int ParseContent(QueryParserRes* query_parser_res, uint32_t type);
 
 private:
 	uint32_t appid;

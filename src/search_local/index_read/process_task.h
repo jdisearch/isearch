@@ -37,7 +37,7 @@ public:
 	ProcessTask();
 	virtual ~ProcessTask();
 	virtual int Process(CTaskRequest *request);
-	string GenReplyStr(RSPCODE code);
+	string GenReplyStr(RSPCODE code, string err_msg = "");
 };
 
 #endif

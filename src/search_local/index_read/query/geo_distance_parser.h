@@ -27,7 +27,7 @@ class GeoDistanceParser : public QueryParser
 public:
     GeoDistanceParser(uint32_t a, Json::Value& v);
 	~GeoDistanceParser();
-    void ParseContent(QueryParserRes* query_parser_res);
+    int ParseContent(QueryParserRes* query_parser_res);
 
 private:
 	uint32_t appid;

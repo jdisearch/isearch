@@ -597,7 +597,14 @@ int SearchTask::Process(CTaskRequest *request)
 	skipList.InitList();
 	component->InitSwitch();
 	log_debug("m_Data: %s", m_Primary_Data.c_str());
-	component->GetQueryWord(m_has_gis);
+	string err_msg = "";
+	int ret = component->GetQueryWord(m_has_gis, err_msg);
+	if (ret != 0) {
+		string str = GenReplyStr(PARAMETER_ERR, err_msg);
+		request->setResult(str);
+		common::ProfilerMonitor::GetInstance().FunctionError(caller_info);
+		return ret;
+	}
 	if(component->TerminalTag() == 1 && component->TerminalTagValid() == false){
 		log_error("TerminalTag is 1 and TerminalTagValid is false.");
 		common::ProfilerMonitor::GetInstance().FunctionError(caller_info);
@@ -634,7 +641,7 @@ int SearchTask::Process(CTaskRequest *request)
 		}
 	}
 	logical_operate = new LogicalOperate(m_appid, m_sort_type, m_has_gis, component->CacheSwitch());
-	int ret = DoJob(request);
+	ret = DoJob(request);
 	if (ret != 0) {
 		string str = GenReplyStr(PARAMETER_ERR);
 		request->setResult(str);
