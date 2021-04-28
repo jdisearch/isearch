@@ -15,11 +15,6 @@ const char* const MATCH ="match";
 const char* const RANGE ="range";
 const char* const GEODISTANCE ="geo_distance";
 
-void SetErrMsg(QueryParserRes* query_parser_res, string err_msg){
-    log_error(err_msg.c_str());
-    query_parser_res->ErrMsg() = err_msg;
-}
-
 BoolQueryParser::BoolQueryParser(uint32_t a, Json::Value& v)
 :appid(a),value(v)
 {
@@ -55,7 +50,9 @@ int BoolQueryParser::DoJobByType(Json::Value& value, uint32_t type, QueryParserR
 		geo_query_parser = new GeoDistanceParser(appid, value[GEODISTANCE]);
 		return geo_query_parser->ParseContent(query_parser_res);
 	} else {
-		SetErrMsg(query_parser_res, "BoolQueryParser only support term/match/range/geo_distance!");
+		string err_msg = "BoolQueryParser only support term/match/range/geo_distance!";
+		log_error(err_msg.c_str());
+		query_parser_res->ErrMsg() = err_msg;
 		return -RT_PARSE_CONTENT_ERROR;
 	}
 	return 0;
