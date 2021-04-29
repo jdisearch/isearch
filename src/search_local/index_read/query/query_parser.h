@@ -62,15 +62,15 @@ public:
 private:
     uint32_t m_has_gis;
     string latitude;
-	string longitude;
-	double distance;
+    string longitude;
+    double distance;
     string err_msg;
     map<uint32_t, vector<FieldInfo> > field_keys_map;
-	map<uint32_t, vector<FieldInfo> > or_field_keys_map;
+    map<uint32_t, vector<FieldInfo> > or_field_keys_map;
     map<uint32_t, vector<FieldInfo> > invert_field_keys_map;
     vector<ExtraFilterKey> extra_filter_keys;
-	vector<ExtraFilterKey> extra_filter_and_keys;
-	vector<ExtraFilterKey> extra_filter_invert_keys;
+    vector<ExtraFilterKey> extra_filter_and_keys;
+    vector<ExtraFilterKey> extra_filter_invert_keys;
 };
 
 class QueryParser{

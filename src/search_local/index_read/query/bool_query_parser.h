@@ -28,21 +28,21 @@ class GeoDistanceParser;
 class BoolQueryParser : public QueryParser
 {
 public:
-	BoolQueryParser(uint32_t a, Json::Value& v);
-	~BoolQueryParser();
+    BoolQueryParser(uint32_t a, Json::Value& v);
+    ~BoolQueryParser();
 
-	int ParseContent(QueryParserRes* query_parser_res);
-
-private:
-	int DoJobByType(Json::Value& value, uint32_t type, QueryParserRes* query_parser_res);
+    int ParseContent(QueryParserRes* query_parser_res);
 
 private:
-	uint32_t appid;
-	Json::Value value;
-	RangeQueryParser* range_query_parser;
-	TermQueryParser* term_query_parser;
-	MatchQueryParser* match_query_parser;
-	GeoDistanceParser* geo_query_parser;
+    int DoJobByType(Json::Value& value, uint32_t type, QueryParserRes* query_parser_res);
+
+private:
+    uint32_t appid;
+    Json::Value value;
+    RangeQueryParser* range_query_parser;
+    TermQueryParser* term_query_parser;
+    MatchQueryParser* match_query_parser;
+    GeoDistanceParser* geo_query_parser;
 };
 
 #endif

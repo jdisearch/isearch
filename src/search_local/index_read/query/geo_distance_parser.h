@@ -26,12 +26,12 @@ class GeoDistanceParser : public QueryParser
 {
 public:
     GeoDistanceParser(uint32_t a, Json::Value& v);
-	~GeoDistanceParser();
+    ~GeoDistanceParser();
     int ParseContent(QueryParserRes* query_parser_res);
 
 private:
-	uint32_t appid;
-	Json::Value value;
+    uint32_t appid;
+    Json::Value value;
     GeoPoint geo;
     double distance;
 };

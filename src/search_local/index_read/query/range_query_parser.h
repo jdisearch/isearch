@@ -25,13 +25,13 @@ class RangeQueryParser : public QueryParser
 {
 public:
     RangeQueryParser(uint32_t a, Json::Value& v);
-	~RangeQueryParser();
+    ~RangeQueryParser();
     int ParseContent(QueryParserRes* query_parser_res);
     int ParseContent(QueryParserRes* query_parser_res, uint32_t type);
 
 private:
-	uint32_t appid;
-	Json::Value value;
+    uint32_t appid;
+    Json::Value value;
 };
 
 #endif
