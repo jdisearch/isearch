@@ -25,6 +25,7 @@
 #include "query/range_query_parser.h"
 #include "query/match_query_parser.h"
 #include "query/term_query_parser.h"
+#include "query/geo_shape_parser.h"
 #include <sstream>
 using namespace std;
 
@@ -230,6 +231,8 @@ int Component::GetQueryWord(uint32_t &m_has_gis, string &err_msg){
 			query_parser = new MatchQueryParser(m_appid, m_query["match"]);
 		} else if(m_query.isMember("term")){
 			query_parser = new TermQueryParser(m_appid, m_query["term"]);
+		} else if(m_query.isMember("geo_shape")){
+			query_parser = new GeoShapeParser(m_appid, m_query["geo_shape"]);
 		}
 		query_parser_res = new QueryParserRes();
 		int ret = query_parser->ParseContent(query_parser_res);
