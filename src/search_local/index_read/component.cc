@@ -47,6 +47,7 @@ Component::Component(){
 	distance = 0;
 	m_terminal_tag = 0;
 	m_terminal_tag_valid = false;
+	m_query_type = 0;
 }
 
 Component::~Component(){
@@ -222,17 +223,26 @@ void Component::InitSwitch()
 int Component::GetQueryWord(uint32_t &m_has_gis, string &err_msg){
 	if(m_query.isObject()){
 		if(m_query.isMember("bool")){
+			m_query_type = QUERY_TYPE_BOOL;
 			query_parser = new BoolQueryParser(m_appid, m_query["bool"]);
 		} else if(m_query.isMember("geo_distance")){
+			m_query_type = QUERY_TYPE_GEO_DISTANCE;
 			query_parser = new GeoDistanceParser(m_appid, m_query["geo_distance"]);
 		} else if(m_query.isMember("range")){
+			m_query_type = QUERY_TYPE_RANGE;
 			query_parser = new RangeQueryParser(m_appid, m_query["range"]);
 		} else if(m_query.isMember("match")){
+			m_query_type = QUERY_TYPE_MATCH;
 			query_parser = new MatchQueryParser(m_appid, m_query["match"]);
 		} else if(m_query.isMember("term")){
+			m_query_type = QUERY_TYPE_TERM;
 			query_parser = new TermQueryParser(m_appid, m_query["term"]);
 		} else if(m_query.isMember("geo_shape")){
+			m_query_type = QUERY_TYPE_GEO_SHAPE;
 			query_parser = new GeoShapeParser(m_appid, m_query["geo_shape"]);
+		} else {
+			log_error("query type error!");
+			return -RT_QUERY_TYPE_ERROR;
 		}
 		query_parser_res = new QueryParserRes();
 		int ret = query_parser->ParseContent(query_parser_res);

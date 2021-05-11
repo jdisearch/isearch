@@ -53,6 +53,7 @@ enum RetCode{
 	RT_ADD_DICT_ERR,
 	RT_GET_FIELD_ERROR,
 	RT_PARSE_CONTENT_ERROR,
+	RT_QUERY_TYPE_ERROR,
 };
 
 typedef enum CMD {
@@ -294,6 +295,15 @@ struct OrderOpCond{
 struct TerminalRes{
 	string doc_id;
 	double score;
+};
+
+enum QUERYRTPE{
+	QUERY_TYPE_BOOL,
+	QUERY_TYPE_MATCH,
+	QUERY_TYPE_RANGE,
+	QUERY_TYPE_TERM,
+	QUERY_TYPE_GEO_DISTANCE,
+	QUERY_TYPE_GEO_SHAPE,
 };
 
 #endif

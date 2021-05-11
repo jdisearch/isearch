@@ -101,6 +101,7 @@ private:
 	uint32_t m_snapshot_switch;
 	uint32_t m_sort_type;
 	uint32_t m_appid;
+	uint32_t m_query_type;
 	string m_sort_field;
 	string m_last_id;
 	string m_last_score;
