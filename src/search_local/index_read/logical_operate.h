@@ -16,6 +16,9 @@
  * =====================================================================================
  */
 
+#ifndef LOGICAL_OP_H
+#define LOGICAL_OP_H
+
 #include "component.h"
 #include <map>
 #include <set>
@@ -35,7 +38,6 @@ public:
 	void SetFunc(logical_func func);
 	int ProcessTerminal(const vector<vector<FieldInfo> >& and_keys, const TerminalQryCond& query_cond, vector<TerminalRes>& vecs);
 
-private:
 	void CalculateByWord(FieldInfo fieldInfo, const vector<IndexInfo> &doc_info, map<string, vec> &ves, map<string, uint32_t> &key_in_doc);
 	void SetDocIndexCache(const vector<IndexInfo> &doc_info, string& indexJsonStr);
 	bool GetDocIndexCache(string word, uint32_t field, vector<IndexInfo> &doc_info);
@@ -49,3 +51,4 @@ private:
 	logical_func m_func;
 };
 
+#endif

@@ -132,7 +132,7 @@ static int accept_connection(int fd)
 		if (newfd < 0 && errno == EINVAL)
 		{
 			if (getppid() == (pid_t)1)
-			{ // ¸¸½ø³ÌÒÑ¾­ÍË³ö
+			{ // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½Ë³ï¿½
 				log_error("dtc father process not exist. helper[%d] exit now.", getpid());
 				exit(0);
 			}

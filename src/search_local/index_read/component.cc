@@ -749,6 +749,10 @@ bool Component::TerminalTagValid(){
 	return m_terminal_tag_valid;
 }
 
+Json::Value& Component::GetQuery(){
+	return m_query;
+}
+
 void Component::GetKeyFromFieldInfo(const vector<FieldInfo>& field_info_vec, vector<string>& key_vec){
 	vector<FieldInfo>::const_iterator iter = field_info_vec.begin();
 	for(; iter != field_info_vec.end(); iter++){

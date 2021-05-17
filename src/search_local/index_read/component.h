@@ -67,8 +67,8 @@ public:
 	vector<string>& Fields();
 	uint32_t TerminalTag();
 	bool TerminalTagValid();
+	Json::Value& GetQuery();
 
-private:
 	void GetFieldWords(int type, string dataStr, uint32_t appid, uint32_t &m_has_gis);
 	void AddToFieldList(int type, vector<FieldInfo>& fields);
 	void GetKeyFromFieldInfo(const vector<FieldInfo>& field_info_vec, vector<string>& key_vec);

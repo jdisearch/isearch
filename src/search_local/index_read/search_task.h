@@ -32,6 +32,9 @@
 #include <string>
 #include <map>
 #include <vector>
+
+#include "process/query_process.h"
+
 using  namespace std;
 
 typedef vector<KeyInfo> vec;
@@ -68,6 +71,8 @@ private:
 	uint32_t m_has_gis; //该appid是否包含有地理位置gis信息的查询
 	set<string> highlightWord;
 	SkipList skipList;
+	QueryProcess* query_process_;
+	Json::Value m_query_;
 };
 
 
