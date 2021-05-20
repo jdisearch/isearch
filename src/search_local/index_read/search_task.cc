@@ -605,16 +605,23 @@ int SearchTask::Process(CTaskRequest *request)
         if(m_query_.isMember("match")){
             query_process_ = new MatchQueryProcess(m_appid, m_query_["match"], component);
         } else {
-			log_error("query type error.");
-			return -RT_PARSE_JSON_ERR;
-		}
+            log_error("query type error.");
+            string str = GenReplyStr(PARAMETER_ERR, "query type error.");
+            request->setResult(str);
+            common::ProfilerMonitor::GetInstance().FunctionError(caller_info);
+            return -RT_PARSE_JSON_ERR;
+        }
         query_process_->SetSkipList(skipList);
         query_process_->SetRequest(request);
         int ret = query_process_->DoJob();
-		if(ret != 0){
-			log_error("query_process_ DoJob error, ret: %d", ret);
-			return ret;
-		}
+        if(ret != 0){
+            log_error("query_process_ DoJob error, ret: %d", ret);
+            string str = GenReplyStr(PARAMETER_ERR, query_process_->GetErrMsg());
+            request->setResult(str);
+            common::ProfilerMonitor::GetInstance().FunctionError(caller_info);
+            return ret;
+        }
+        common::ProfilerMonitor::GetInstance().RegisterInfoEnd(caller_info);
         return 0;
     }
 

@@ -35,6 +35,8 @@ public:
     int DoJob();
     void SetSkipList(SkipList& skipList);
     void SetRequest(CTaskRequest* request);
+	void SetErrMsg(string err_msg);
+	string GetErrMsg();
 
 protected:
     void TaskBegin();
@@ -51,6 +53,7 @@ protected:
     Json::Value value_;
     SkipList skipList_;
     CTaskRequest* request_;
+	string err_msg_;
 };
 
 #endif

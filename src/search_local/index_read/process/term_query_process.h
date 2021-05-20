@@ -1,12 +1,12 @@
 /*
  * =====================================================================================
  *
- *       Filename:  match_query_process.h
+ *       Filename:  term_query_process.h
  *
- *    Description:  match_query_process class definition.
+ *    Description:  term_query_process class definition.
  *
  *        Version:  1.0
- *        Created:  14/05/2021
+ *        Created:  20/05/2021
  *       Revision:  none
  *       Compiler:  gcc
  *
@@ -16,15 +16,15 @@
  * =====================================================================================
  */
 
-#ifndef __MATCH_QUERY_PROCESS_H__
-#define __MATCH_QUERY_PROCESS_H__
+#ifndef __TERM_QUERY_PROCESS_H__
+#define __TERM_QUERY_PROCESS_H__
 
 #include "query_process.h"
 
-class MatchQueryProcess: public QueryProcess{
+class TermQueryProcess: public QueryProcess{
 public:
-    MatchQueryProcess(uint32_t appid, Json::Value& value, Component* component);
-    ~MatchQueryProcess();
+    TermQueryProcess(uint32_t appid, Json::Value& value, Component* component);
+    ~TermQueryProcess();
     int ParseContent();
     int GetValidDoc();
     int GetScoreAndSort();
