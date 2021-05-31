@@ -42,6 +42,7 @@
 #include "order_op.h"
 
 #include "process/match_query_process.h"
+#include "process/term_query_process.h"
 
 using namespace std;
 #define DOC_CNT 10000
@@ -604,6 +605,8 @@ int SearchTask::Process(CTaskRequest *request)
     if(m_query_.isObject()){
         if(m_query_.isMember("match")){
             query_process_ = new MatchQueryProcess(m_appid, m_query_["match"], component);
+        } else if(m_query_.isMember("term")){
+            query_process_ = new TermQueryProcess(m_appid, m_query_["term"], component);
         } else {
             log_error("query type error.");
             string str = GenReplyStr(PARAMETER_ERR, "query type error.");
