@@ -11,6 +11,7 @@
  *       Compiler:  gcc
  *
  *         Author:  zhulin, shzhulin3@jd.com
+ *        Modified by: chenyujie ,chenyujie28@jd.com
  *        Company:  JD.com, Inc.
  *
  * =====================================================================================
@@ -18,101 +19,72 @@
 
 #ifndef __COMPONENT_H__
 #define __COMPONENT_H__
+
 #include "comm.h"
 #include "json/json.h"
 #include <string>
 #include <vector>
-#include "query/query_parser.h"
-using namespace std;
 
 class Component
 {
 public:
-	Component();
-	~Component();
+    Component();
+    ~Component();
 
-	int GetQueryWord(uint32_t &m_has_gis, string &err_msg);
-	const vector<vector<FieldInfo> >& Keys();
-	const vector<vector<FieldInfo> >& AndKeys();
-	const vector<vector<FieldInfo> >& InvertKeys();
-	const vector<ExtraFilterKey>& ExtraFilterKeys();
-	const vector<ExtraFilterKey>& ExtraFilterAndKeys();
-	const vector<ExtraFilterKey>& ExtraFilterInvertKeys();
-	int ParseJson(const char *sz_json, int json_len, Json::Value &recv_packet);
-	void InitSwitch();
-	string QueryWord();
-	void SetQueryWord(string query_word);
-	string ProbablyData();
-	void SetProbablyData(string probably_data);
-	string Latitude();
-	string Longitude();
-	double Distance();
-	string Data();
-	string DataAnd();
-	string DataInvert();
-	string DataComplete();
-	uint32_t JdqSwitch();
-	uint32_t Appid();
-	uint32_t SortType();
-	uint32_t PageIndex();
-	uint32_t PageSize();
-	uint32_t ReturnAll();
-	uint32_t CacheSwitch();
-	uint32_t TopSwitch();
-	uint32_t SnapshotSwitch();
-	string SortField();
-	string LastId();
-	string LastScore();
-	bool SearchAfter();
-	vector<string>& Fields();
-	uint32_t TerminalTag();
-	bool TerminalTagValid();
-	Json::Value& GetQuery();
+public:
+    int ParseJson(const char* sz_json, int json_len, Json::Value &recv_packet);
+    void InitSwitch();
 
-	void GetFieldWords(int type, string dataStr, uint32_t appid, uint32_t &m_has_gis);
-	void AddToFieldList(int type, vector<FieldInfo>& fields);
-	void GetKeyFromFieldInfo(const vector<FieldInfo>& field_info_vec, vector<string>& key_vec);
-	vector<string> Combination(vector<vector<string> > &dimensionalArr);
+    const vector<vector<FieldInfo> >& OrKeys();
+    const vector<vector<FieldInfo> >& AndKeys();
+    const vector<vector<FieldInfo> >& InvertKeys();
+    const vector<ExtraFilterKey>& ExtraFilterKeys();
+    const vector<ExtraFilterKey>& ExtraFilterAndKeys();
+    const vector<ExtraFilterKey>& ExtraFilterInvertKeys();
+    
+    uint32_t Appid();
+    uint32_t SortType();
+    uint32_t PageIndex();
+    uint32_t PageSize();
+    uint32_t ReturnAll();
+    uint32_t CacheSwitch();
+    uint32_t TopSwitch();
+    uint32_t SnapshotSwitch();
+    std::string SortField();
+    std::string LastId();
+    std::string LastScore();
+    bool SearchAfter();
+    std::vector<std::string>& RequiredFields();
+    uint32_t TerminalTag();
+    Json::Value& GetQuery();
+
+    void AddToFieldList(int type, std::vector<FieldInfo>& fields);
+
+    void SetHasGisFlag(bool bFlag) { has_gis_ = bFlag; };
+    bool GetHasGisFlag() { return has_gis_; };
 
 private:
-	vector<vector<FieldInfo> > keys;
-	vector<vector<FieldInfo> > and_keys;
-	vector<vector<FieldInfo> > invert_keys;
-	vector<ExtraFilterKey> extra_filter_keys;
-	vector<ExtraFilterKey> extra_filter_and_keys;
-	vector<ExtraFilterKey> extra_filter_invert_keys;
+    std::vector<std::vector<FieldInfo> > or_keys_;
+    std::vector<std::vector<FieldInfo> > and_keys_;
+    std::vector<std::vector<FieldInfo> > invert_keys_;
+    std::vector<ExtraFilterKey> extra_filter_keys_;
+    std::vector<ExtraFilterKey> extra_filter_and_keys_;
+    std::vector<ExtraFilterKey> extra_filter_invert_keys_;
 
-	string m_Query_Word;
-	string m_probably_data;
-	string latitude;
-	string longitude;
-	string gisip;
-	double distance;
+    uint32_t page_index_;
+    uint32_t page_size_;
 
-	string m_Data; 	//查询词
-	string m_Data_and; 		// 包含该查询词
-	string m_Data_invert;   // 不包含该查询词
-	string m_Data_complete; // 完整关键词
-	uint32_t m_page_index;
-	uint32_t m_page_size;
-	uint32_t m_return_all;
-	uint32_t m_cache_switch;
-	uint32_t m_top_switch;
-	uint32_t m_snapshot_switch;
-	uint32_t m_sort_type;
-	uint32_t m_appid;
-	uint32_t m_query_type;
-	string m_sort_field;
-	string m_last_id;
-	string m_last_score;
-	bool m_search_after;
-	vector<string> m_fields;
-	string m_default_query;
-	uint32_t m_jdq_switch;
-	uint32_t m_terminal_tag;
-	bool m_terminal_tag_valid;
-	Json::Value m_query;
-	QueryParser* query_parser;
-	QueryParserRes* query_parser_res;
+    uint32_t cache_switch_;
+    uint32_t snapshot_switch_;
+    uint32_t sort_type_;
+    uint32_t appid_;
+    std::string sort_field_;
+    std::string last_id_;
+    std::string last_score_;
+    bool search_after_;
+    std::vector<std::string> required_fields_;
+    uint32_t preterminal_tag_;
+    Json::Value query_value_;
+    bool has_gis_;
 };
 #endif

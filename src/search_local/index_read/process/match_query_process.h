@@ -23,28 +23,15 @@
 
 class MatchQueryProcess: public QueryProcess{
 public:
-    MatchQueryProcess(uint32_t appid, Json::Value& value, Component* component);
-    ~MatchQueryProcess();
-    int ParseContent();
-    int GetValidDoc();
-    int GetScoreAndSort();
-    void TaskEnd();
+    MatchQueryProcess(Json::Value& value);
+    virtual~ MatchQueryProcess();
 
-    int ParseContent(uint32_t type);
-    void AppendHighLightWord(Json::Value& response);
+public:
+    virtual int ParseContent(int logic_type);
 
 private:
-    set<string> highlightWord_;
-    map<string, vec> doc_info_map_;
-    map<string, uint32_t> key_in_doc_;
-    vector<IndexInfo> doc_vec_;
-    hash_double_map distances_;
-    set<string> valid_docs_;
-    uint32_t appid_;
-    uint32_t sort_type_;
-    string sort_field_;
-    bool has_gis_;
-    FIELDTYPE sort_field_type_;
+    virtual int ParseContent();
+    virtual int GetValidDoc();
 };
 
 #endif

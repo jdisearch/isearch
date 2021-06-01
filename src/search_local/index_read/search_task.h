@@ -27,56 +27,27 @@
 #include "task_request.h"
 #include "skiplist.h"
 #include "component.h"
-#include "logical_operate.h"
+#include "valid_doc_filter.h"
 #include "doc_manager.h"
 #include <string>
 #include <map>
 #include <vector>
-
+#include "task_request.h"
 #include "process/query_process.h"
-
-using  namespace std;
-
-typedef vector<KeyInfo> vec;
 
 class SearchTask : public ProcessTask
 {
 public:
-	SearchTask();
-	virtual int Process(CTaskRequest *request);
-	virtual ~SearchTask();
+    SearchTask();
+    virtual ~SearchTask();
+    
+public:
+    virtual int Process(CTaskRequest *request);
 
 private:
-	int DoJob(CTaskRequest *request);
-	int GetTopDocIdSetByWord(FieldInfo fieldInfo, vector<TopDocInfo>& doc_info);
-	int GetTopDocScore(map<string, double>& top_doc_score);
-	int GetDocScore(map<string, double>& top_doc_score);
-	int GetValidDoc(map<string, vec> &ves, vector<string> &word_vec, map<string, uint32_t> &key_in_doc, hash_double_map &distances, set<string> &valid_docs);
-	void AppendHighLightWord(Json::Value& response);
-
-private:
-	Component *component;
-	LogicalOperate *logical_operate;
-	DocManager *doc_manager;
-	vector<FieldInfo> complete_keys;
-
-	string m_Primary_Data;
-	FIELDTYPE m_sort_field_type;
-	uint32_t m_index_set_cnt;
-	uint32_t m_appid;
-	uint32_t m_sort_type;
-	string m_sort_field;
-	vector<string> m_fields;
-
-	uint32_t m_has_gis; //该appid是否包含有地理位置gis信息的查询
-	set<string> highlightWord;
-	SkipList skipList;
-	QueryProcess* query_process_;
-	Json::Value m_query_;
+    Component* component_;
+    DocManager* doc_manager_;
+    QueryProcess* query_process_;
 };
-
-
-
-
 
 #endif

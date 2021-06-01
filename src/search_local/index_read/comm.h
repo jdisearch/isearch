@@ -21,17 +21,34 @@
 #include <string>
 #include <stdint.h>
 #include <vector>
+#include <set>
 #include <tr1/unordered_map>
 #include <limits.h>
-using namespace std;
+#include <map>
 
+#define DOC_CNT 10000
 #define MAX_DOCID_LENGTH 32
+
+const double D_BM25_K = 1.65;
+const double D_BM25_K1 = 1.2;
+const double D_BM25_K2 = 200;
 
 const uint32_t MAX_SEARCH_LEN = 60;
 const uint32_t SINGLE_WORD_LEN = 18;
 const uint32_t MAX_VALUE_LEN = 51200;
+
 typedef std::tr1::unordered_map<string, double> hash_double_map;
 typedef std::tr1::unordered_map<string, string> hash_string_map;
+typedef pair<std::string, double> TopdocScorePair;
+
+struct TopDocScoreCmpFunc {
+    bool operator()(const TopdocScorePair& lhs, const TopdocScorePair& rhs) {
+        if(fabs(lhs.second - rhs.second) < 0.000001){
+            return lhs.first.compare(rhs.first) > 0;
+        }
+        return lhs.second > rhs.second;
+    }
+};
 
 enum RetCode{
 	RT_PARSE_JSON_ERR = 10001,
@@ -305,5 +322,14 @@ enum QUERYRTPE{
 	QUERY_TYPE_GEO_DISTANCE,
 	QUERY_TYPE_GEO_SHAPE,
 };
+
+
+typedef std::set<std::string> ValidDocSet;
+typedef std::set<std::string> HighLightWordSet;
+
+typedef std::vector<KeyInfo> KeyInfoVet;
+typedef std::map<std::string, KeyInfoVet> DocKeyinfosMap;
+
+typedef std::map<std::string, uint32_t> KeywordDoccountMap;
 
 #endif
