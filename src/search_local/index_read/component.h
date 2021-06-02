@@ -38,7 +38,7 @@ public:
     const std::vector<std::vector<FieldInfo> >& OrKeys();
     const std::vector<std::vector<FieldInfo> >& AndKeys();
     const std::vector<std::vector<FieldInfo> >& InvertKeys();
-    const std::vector<ExtraFilterKey>& ExtraFilterKeys();
+    const std::vector<ExtraFilterKey>& ExtraFilterOrKeys();
     const std::vector<ExtraFilterKey>& ExtraFilterAndKeys();
     const std::vector<ExtraFilterKey>& ExtraFilterInvertKeys();
     
@@ -59,6 +59,7 @@ public:
     Json::Value& GetQuery();
 
     void AddToFieldList(int type, std::vector<FieldInfo>& fields);
+    void AddToExtraFieldList(int type , const ExtraFilterKey& extra_field);
 
     void SetHasGisFlag(bool bFlag) { has_gis_ = bFlag; };
     bool GetHasGisFlag() { return has_gis_; };
@@ -67,7 +68,7 @@ private:
     std::vector<std::vector<FieldInfo> > or_keys_;
     std::vector<std::vector<FieldInfo> > and_keys_;
     std::vector<std::vector<FieldInfo> > invert_keys_;
-    std::vector<ExtraFilterKey> extra_filter_keys_;
+    std::vector<ExtraFilterKey> extra_filter_or_keys_;
     std::vector<ExtraFilterKey> extra_filter_and_keys_;
     std::vector<ExtraFilterKey> extra_filter_invert_keys_;
 

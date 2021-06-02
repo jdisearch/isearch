@@ -171,7 +171,7 @@ void QueryProcess::SortByCOrderOp(int& i_rank)
     order_op_cond.limit_start = component_->PageSize() * (component_->PageIndex()-1);
     order_op_cond.count = component_->PageSize();
     order_op_cond.has_extra_filter = false;
-    if(component_->ExtraFilterKeys().size() != 0 || component_->ExtraFilterAndKeys().size() != 0 
+    if(component_->ExtraFilterOrKeys().size() != 0 || component_->ExtraFilterAndKeys().size() != 0 
         || component_->ExtraFilterInvertKeys().size() != 0){
         order_op_cond.has_extra_filter = true;
     }

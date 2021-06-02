@@ -26,7 +26,7 @@ Component::Component()
     : or_keys_()
     , and_keys_()
     , invert_keys_()
-    , extra_filter_keys_()
+    , extra_filter_or_keys_()
     , extra_filter_and_keys_()
     , extra_filter_invert_keys_()
     , page_index_(0)
@@ -107,12 +107,12 @@ int Component::ParseJson(const char *sz_json, int json_len, Json::Value &recv_pa
     }
 
     if (recv_packet.isMember("return_all") && recv_packet["return_all"].isString())
-	{
-		return_all_ = atoi(recv_packet["return_all"].asString().c_str());
-	}
-	else {
-		return_all_ = 0;
-	}
+    {
+        return_all_ = atoi(recv_packet["return_all"].asString().c_str());
+    }
+    else {
+        return_all_ = 0;
+    }
 
     if(recv_packet.isMember("fields") && recv_packet["fields"].isString())
     {
@@ -180,6 +180,17 @@ void Component::AddToFieldList(int type, vector<FieldInfo>& fields)
     return ;
 }
 
+void Component::AddToExtraFieldList(int type , const ExtraFilterKey& extra_field){
+    if (ORKEY == type){
+        extra_filter_or_keys_.push_back(extra_field);
+    }else if (ANDKEY == type){
+        extra_filter_and_keys_.push_back(extra_field);
+    }else if (INVERTKEY == type){
+        extra_filter_invert_keys_.push_back(extra_field);
+    }
+    return;
+}
+
 const std::vector<std::vector<FieldInfo> >& Component::OrKeys(){
     return or_keys_;
 }
@@ -192,8 +203,8 @@ const std::vector<std::vector<FieldInfo> >& Component::InvertKeys(){
     return invert_keys_;
 }
 
-const std::vector<ExtraFilterKey>& Component::ExtraFilterKeys(){
-    return extra_filter_keys_;
+const std::vector<ExtraFilterKey>& Component::ExtraFilterOrKeys(){
+    return extra_filter_or_keys_;
 }
 
 const std::vector<ExtraFilterKey>& Component::ExtraFilterAndKeys(){

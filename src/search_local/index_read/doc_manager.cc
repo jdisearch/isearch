@@ -35,7 +35,7 @@ DocManager::~DocManager(){
 }
 
 bool DocManager::CheckDocByExtraFilterKey(std::string doc_id){
-    std::vector<ExtraFilterKey> extra_filter_vec = component->ExtraFilterKeys();
+    std::vector<ExtraFilterKey> extra_filter_vec = component->ExtraFilterOrKeys();
     std::vector<ExtraFilterKey> extra_filter_and_vec = component->ExtraFilterAndKeys();
     std::vector<ExtraFilterKey> extra_filter_invert_vec = component->ExtraFilterInvertKeys();
     if(extra_filter_vec.size() == 0 && extra_filter_and_vec.size() == 0 && extra_filter_invert_vec.size() == 0){

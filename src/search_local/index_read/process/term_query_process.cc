@@ -9,7 +9,7 @@ TermQueryProcess::~TermQueryProcess(){
 }
 
 int TermQueryProcess::ParseContent(){
-    ParseContent(ORKEY);
+    return ParseContent(ORKEY);
 }
 
 int TermQueryProcess::ParseContent(int logic_type){
@@ -29,7 +29,13 @@ int TermQueryProcess::ParseContent(int logic_type){
     FieldInfo field_info;
     uint32_t uiRet = DBManager::Instance()->GetWordField(segment_tag, component_->Appid()
                     , field_name, field_info);
-    if(uiRet != 0){
+    if(uiRet != 0 && field_info.index_tag == 0){
+        ExtraFilterKey extra_filter_key;
+        extra_filter_key.field_name = field_name;
+        extra_filter_key.field_value = field_value.asString();
+        extra_filter_key.field_type = field_info.field_type;
+        component_->AddToExtraFieldList(logic_type , extra_filter_key);
+    } else if(uiRet != 0){
         field_info.word = field_value.asString();
         field_info_vec.push_back(field_info);
     } else {
