@@ -1,6 +1,6 @@
 #include "geo_shape_query_process.h"
 
-GeoShapeQueryProcess::GeoShapeQueryProcess(Json::Value& value)
+GeoShapeQueryProcess::GeoShapeQueryProcess(const Json::Value& value)
     : GeoDistanceQueryProcess(value)
 { }
 
@@ -31,7 +31,7 @@ int GeoShapeQueryProcess::ParseContent(int logic_type){
             uint32_t uiRet = DBManager::Instance()->GetWordField(segment_tag, component_->Appid()
                         , fieldname, fieldInfo);
             if (uiRet != 0 && SEGMENT_NONE == segment_tag) {
-                component->SetHasGisFlag(true);
+                component_->SetHasGisFlag(true);
                 for (size_t index = 0; index < gisCode.size(); index++) {
                     FieldInfo info;
                     info.field = fieldInfo.field;

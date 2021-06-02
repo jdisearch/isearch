@@ -26,8 +26,8 @@ struct GeoShapeContext
         }
 
         if (oJsonValue.isArray()){
-            for(int i = 0; i < (int)points.size(); i++){
-                GeoPointContext o_geo_point(points[i]);
+            for(int i = 0; i < (int)oJsonValue.size(); i++){
+                GeoPointContext o_geo_point(oJsonValue[i]);
                 oGeoShapeVet.push_back(o_geo_point);
             }
         }
@@ -67,7 +67,7 @@ struct GeoShapeContext
 
 class GeoShapeQueryProcess : public GeoDistanceQueryProcess{
 public:
-    GeoShapeQueryProcess(Json::Value& value);
+    GeoShapeQueryProcess(const Json::Value& value);
     virtual~ GeoShapeQueryProcess();
 
 private:

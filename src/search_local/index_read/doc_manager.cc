@@ -21,8 +21,11 @@
 #include "log.h"
 #include "search_util.h"
 #include "db_manager.h"
+#include "process/geo_distance_query_process.h"
 #include <math.h>
 #include <sstream>
+
+extern CIndexTableManager g_IndexInstance;
 
 DocManager::DocManager(Component *c): component(c){
 }
@@ -31,14 +34,14 @@ DocManager::~DocManager(){
 
 }
 
-bool DocManager::CheckDocByExtraFilterKey(string doc_id){
-    vector<ExtraFilterKey> extra_filter_vec = component->ExtraFilterKeys();
-    vector<ExtraFilterKey> extra_filter_and_vec = component->ExtraFilterAndKeys();
-    vector<ExtraFilterKey> extra_filter_invert_vec = component->ExtraFilterInvertKeys();
+bool DocManager::CheckDocByExtraFilterKey(std::string doc_id){
+    std::vector<ExtraFilterKey> extra_filter_vec = component->ExtraFilterKeys();
+    std::vector<ExtraFilterKey> extra_filter_and_vec = component->ExtraFilterAndKeys();
+    std::vector<ExtraFilterKey> extra_filter_invert_vec = component->ExtraFilterInvertKeys();
     if(extra_filter_vec.size() == 0 && extra_filter_and_vec.size() == 0 && extra_filter_invert_vec.size() == 0){
         return true;
     } else {
-        vector<string> fields;
+        std::vector<std::string> fields;
         for(int i = 0; i < (int)extra_filter_vec.size(); i++){
             fields.push_back(extra_filter_vec[i].field_name);
         }
@@ -54,7 +57,7 @@ bool DocManager::CheckDocByExtraFilterKey(string doc_id){
             doc_version = valid_version[doc_id];
         }
         if(doc_content_map_.find(doc_id) != doc_content_map_.end()){
-            string extend = doc_content_map_[doc_id];
+            std::string extend = doc_content_map_[doc_id];
             Json::Reader r(Json::Features::strictMode());
             int ret2 = r.parse(extend.c_str(), extend.c_str() + extend.length(), value);
             if (0 == ret2){
@@ -91,13 +94,13 @@ bool DocManager::CheckDocByExtraFilterKey(string doc_id){
     }
 }
 
-void DocManager::CheckIfKeyValid(const vector<ExtraFilterKey>& extra_filter_vec, const Json::Value &value, bool flag, bool &key_valid){
+void DocManager::CheckIfKeyValid(const std::vector<ExtraFilterKey>& extra_filter_vec, const Json::Value &value, bool flag, bool &key_valid){
     for(int i = 0; i < (int)extra_filter_vec.size(); i++){
         bool the_same = false;
-        string field_name = extra_filter_vec[i].field_name;
+        std::string field_name = extra_filter_vec[i].field_name;
         if(extra_filter_vec[i].field_type == FIELD_INT){
-            string query = extra_filter_vec[i].field_value;
-            vector<string> query_vec = splitEx(query, "|");
+            std::string query = extra_filter_vec[i].field_value;
+            std::vector<std::string> query_vec = splitEx(query, "|");
             if(query_vec.size() > 1){
                 for(int i = 0 ; i < (int)query_vec.size(); i++){
                     if(atoi(query_vec[i].c_str()) == value[field_name.c_str()].asInt()){
@@ -113,10 +116,10 @@ void DocManager::CheckIfKeyValid(const vector<ExtraFilterKey>& extra_filter_vec,
             double d_extend = value[field_name.c_str()].asDouble();
             the_same = (fabs(d_field_value - d_extend) < 1e-15);
         } else if(extra_filter_vec[i].field_type == FIELD_STRING){
-            string snapshot = value[field_name.c_str()].asString();
-            string query = extra_filter_vec[i].field_value;
-            set<string> snapshot_set = splitStr(snapshot, "|");
-            vector<string> query_vec = splitEx(query, "|");
+            std::string snapshot = value[field_name.c_str()].asString();
+            std::string query = extra_filter_vec[i].field_value;
+            std::set<std::string> snapshot_set = splitStr(snapshot, "|");
+            std::vector<std::string> query_vec = splitEx(query, "|");
             for(int i = 0 ; i < (int)query_vec.size(); i++){
                 if(snapshot_set.find(query_vec[i]) != snapshot_set.end()){
                     the_same = true;
@@ -131,7 +134,7 @@ void DocManager::CheckIfKeyValid(const vector<ExtraFilterKey>& extra_filter_vec,
     }
 }
 
-bool DocManager::GetDocContent(vector<IndexInfo> &doc_id_ver_vec, set<string> &valid_docs){
+bool DocManager::GetDocContent(std::vector<IndexInfo> &doc_id_ver_vec, std::set<std::string> &valid_docs){
     if (!component->GetHasGisFlag() && component->SnapshotSwitch() == 1 && doc_id_ver_vec.size() <= 1000) {
         bool need_version = false;
         if(component->RequiredFields().size() > 0){
@@ -148,7 +151,7 @@ bool DocManager::GetDocContent(vector<IndexInfo> &doc_id_ver_vec, set<string> &v
                 valid_docs.insert(doc_id_ver_vec[i].doc_id);
             }
             if(doc_id_ver_vec[i].extend != ""){
-                doc_content_map_.insert(make_pair(doc_id_ver_vec[i].doc_id, doc_id_ver_vec[i].extend));
+                doc_content_map_.insert(std::make_pair(doc_id_ver_vec[i].doc_id, doc_id_ver_vec[i].extend));
             }
         }
     }
@@ -157,7 +160,7 @@ bool DocManager::GetDocContent(vector<IndexInfo> &doc_id_ver_vec, set<string> &v
     return true;
 }
 
-bool DocManager::GetDocContent(const vector<IndexInfo>& doc_id_ver_vec, const GeoPointContext& geo_point , hash_double_map& distances)
+bool DocManager::GetDocContent(const std::vector<IndexInfo>& doc_id_ver_vec, const GeoPointContext& geo_point , hash_double_map& distances)
 {
     if (component->GetHasGisFlag() || component->SnapshotSwitch() != 1 || doc_id_ver_vec.size() > 1000)
     {
@@ -172,19 +175,19 @@ bool DocManager::GetDocContent(const vector<IndexInfo>& doc_id_ver_vec, const Ge
         if(0 == doc_content_map_.size()){
             g_IndexInstance.GetDocContent(component->Appid(), doc_id_ver_vec, doc_content_map_);
         }
-        GetGisDistance(component->Appid(), geo_point.slatitude
+        GetGisDistance(component->Appid(), geo_point.sLatitude
                 , geo_point.sLongtitude, distances, doc_content_map_);
     }
     return true;
 }
 
-bool DocManager::AppendFieldsToRes(Json::Value &response, vector<string> &m_fields){
+bool DocManager::AppendFieldsToRes(Json::Value &response, std::vector<std::string> &m_fields){
     for(int i = 0; i < (int)response["result"].size(); i++){
         Json::Value doc_info = response["result"][i];
 
-        string doc_id = doc_info["doc_id"].asString();
+        std::string doc_id = doc_info["doc_id"].asString();
         if(doc_content_map_.find(doc_id) != doc_content_map_.end()){
-            string extend = doc_content_map_[doc_id];
+            std::string extend = doc_content_map_[doc_id];
             Json::Reader r(Json::Features::strictMode());
             Json::Value recv_packet;
             int ret2 = r.parse(extend.c_str(), extend.c_str() + extend.length(), recv_packet);
@@ -225,7 +228,7 @@ bool DocManager::AppendFieldsToRes(Json::Value &response, vector<string> &m_fiel
     return true;
 }
 
-bool DocManager::GetScoreMap(string doc_id, uint32_t m_sort_type, string m_sort_field, FIELDTYPE &m_sort_field_type){
+bool DocManager::GetScoreMap(std::string doc_id, uint32_t m_sort_type, std::string m_sort_field, FIELDTYPE &m_sort_field_type){
     if(doc_content_map_.find(doc_id) != doc_content_map_.end()){
         uint32_t field_type = 0;
         bool bRet = DBManager::Instance()->GetFieldType(component->Appid(), m_sort_field, field_type);
@@ -233,25 +236,25 @@ bool DocManager::GetScoreMap(string doc_id, uint32_t m_sort_type, string m_sort_
             log_error("appid[%d] field[%s] not find.", component->Appid(), m_sort_field.c_str());
             return false;
         }
-        string extend = doc_content_map_[doc_id];
+        std::string extend = doc_content_map_[doc_id];
 
         if(field_type == FIELD_INT){
             int len = strlen(m_sort_field.c_str()) + strlen("\":");
             size_t pos1 = extend.find(m_sort_field);
             size_t pos2 = extend.find_first_of(",", pos1);
-            if(pos2 == string::npos){
+            if(pos2 == std::string::npos){
                 pos2 = extend.find_first_of("}", pos1);
             }
-            if(pos1 != string::npos && pos2 != string::npos){
+            if(pos1 != std::string::npos && pos2 != std::string::npos){
                 string field_str = extend.substr(pos1+len, pos2-pos1-len);
                 int field_int;
                 istringstream iss(field_str);
                 iss >> field_int;
                 m_sort_field_type = FIELDTYPE_INT;
-                score_int_map.insert(make_pair(doc_id, field_int));
+                score_int_map.insert(std::make_pair(doc_id, field_int));
             } else {
                 m_sort_field_type = FIELDTYPE_INT;
-                score_int_map.insert(make_pair(doc_id, 0));
+                score_int_map.insert(std::make_pair(doc_id, 0));
             }
         } else {
             Json::Reader r(Json::Features::strictMode());
@@ -301,18 +304,18 @@ bool DocManager::GetScoreMap(string doc_id, uint32_t m_sort_type, string m_sort_
     return true;
 }
 
-map<string, string>& DocManager::ScoreStrMap(){
+std::map<std::string, std::string>& DocManager::ScoreStrMap(){
     return score_str_map;
 }
 
-map<string, int>& DocManager::ScoreIntMap(){
+std::map<std::string, int>& DocManager::ScoreIntMap(){
     return score_int_map;
 }
 
-map<string, double>& DocManager::ScoreDoubleMap(){
+std::map<std::string, double>& DocManager::ScoreDoubleMap(){
     return score_double_map;
 }
 
-map<string, uint32_t>& DocManager::ValidVersion(){
+std::map<std::string, uint32_t>& DocManager::ValidVersion(){
     return valid_version;
 }

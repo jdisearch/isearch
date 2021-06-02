@@ -5,7 +5,7 @@
 #include "term_query_process.h"
 #include "range_query_process.h"
 
-BoolQueryProcess::BoolQueryProcess(Json::Value& value)
+BoolQueryProcess::BoolQueryProcess(const Json::Value& value)
     : QueryProcess(value)
     , query_process_map_()
 {
@@ -37,7 +37,7 @@ BoolQueryProcess::~BoolQueryProcess()
 void BoolQueryProcess::InitQueryMember(){
     std::map<int , QueryProcess*>::iterator iter = query_process_map_.begin();
     for ( ; iter != query_process_map_.end(); ++iter){
-        iter->second->SetResponse(request_);
+        iter->second->SetRequest(request_);
         iter->second->SetComponent(component_);
         iter->second->SetDocManager(doc_manager_);
     }
@@ -71,7 +71,7 @@ int BoolQueryProcess::GetValidDoc(){
     if (component_->TerminalTag()){
         range_query_pre_term_ = dynamic_cast<RangeQueryPreTerminal*>(query_process_map_[E_INDEX_READ_RANGE_PRE_TERM]);
         if (range_query_pre_term_ != NULL){
-            return range_query_pre_term->GetValidDoc();
+            return range_query_pre_term_->GetValidDoc();
         }
     }
 
@@ -115,15 +115,15 @@ int BoolQueryProcess::GetScore(){
 
 void BoolQueryProcess::SortScore(int& i_sequence , int& i_rank){
     if (range_query_pre_term_ != NULL){
-        return range_query_pre_term_->SortScore();
+        return range_query_pre_term_->SortScore(i_sequence , i_rank);
     }
 
     if (geo_distance_query_ != NULL){
-        geo_distance_query_->SortScore();
+        geo_distance_query_->SortScore(i_sequence , i_rank);
     }
 
     if(range_query_ != NULL){
-        range_query_->SortScore();
+        range_query_->SortScore(i_sequence , i_rank);
     }
 }
 
@@ -148,7 +148,7 @@ int BoolQueryProcess::ParseRequest(const Json::Value& request, int logic_type){
     int iret = 0;
     if(request.isArray()){
         for(int i = 0; i < (int)request.size(); i++){
-            iret = InitQueryProcess(logic_type ， request[i]);
+            iret = InitQueryProcess(logic_type , request[i]);
             if(iret != 0){
                 log_error("InitQueryProcess error!");
                 return -RT_PARSE_CONTENT_ERROR;

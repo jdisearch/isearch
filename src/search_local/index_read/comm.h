@@ -37,18 +37,8 @@ const uint32_t MAX_SEARCH_LEN = 60;
 const uint32_t SINGLE_WORD_LEN = 18;
 const uint32_t MAX_VALUE_LEN = 51200;
 
-typedef std::tr1::unordered_map<string, double> hash_double_map;
-typedef std::tr1::unordered_map<string, string> hash_string_map;
-typedef pair<std::string, double> TopdocScorePair;
-
-struct TopDocScoreCmpFunc {
-    bool operator()(const TopdocScorePair& lhs, const TopdocScorePair& rhs) {
-        if(fabs(lhs.second - rhs.second) < 0.000001){
-            return lhs.first.compare(rhs.first) > 0;
-        }
-        return lhs.second > rhs.second;
-    }
-};
+typedef std::tr1::unordered_map<std::string, double> hash_double_map;
+typedef std::tr1::unordered_map<std::string, std::string> hash_string_map;
 
 enum RetCode{
 	RT_PARSE_JSON_ERR = 10001,
@@ -118,6 +108,7 @@ enum FieldType{
 };
 
 enum SEGMENTTAG {
+	SEGMENT_NONE = 0,
 	SEGMENT_DEFAULT = 1,
 	SEGMENT_NGRAM = 2,
 	SEGMENT_CHINESE = 3,
@@ -168,28 +159,28 @@ enum RANGTYPE {
 
 struct Content {
 	uint32_t type;
-	string str;
+	std::string str;
 };
 
 struct Info {
-	string title;
-	string content;
-	string classify;
-	string keywords;
-	string url;
+	std::string title;
+	std::string content;
+	std::string classify;
+	std::string keywords;
+	std::string url;
 };
 
 struct KeyInfo {
-	string word;
+	std::string word;
 	uint32_t field;
 	uint32_t word_freq;
 	uint32_t created_time;
-	vector<int> pos_vec;
+	std::vector<int> pos_vec;
 };
  
 struct FieldInfo
 {
-	string word;
+	std::string word;
 	uint32_t field;
 	uint32_t field_type;
 	uint32_t segment_tag;
@@ -217,14 +208,14 @@ struct AppFieldInfo {
 	uint16_t segment_tag;
 	uint16_t field_value;
 	uint16_t segment_feature;
-	string index_info;
+	std::string index_info;
 };
 
 struct ScoreInfo
 {
 	double score;
 	FIELDTYPE type;
-	string str;
+	std::string str;
 	int i;
 	double d;
 	ScoreInfo(){
@@ -242,8 +233,8 @@ struct CacheQueryInfo
 	uint32_t sort_type;
 	uint32_t page_index;
 	uint32_t page_size;
-	string last_score;
-	string last_id;
+	std::string last_score;
+	std::string last_id;
 	CacheQueryInfo(){
 		appid = 0;
 		sort_field = 0;
@@ -262,13 +253,13 @@ enum KeyType
 
 struct IndexInfo {
 	uint32_t appid;
-	string doc_id;
+	std::string doc_id;
 	uint32_t doc_version;
 	uint32_t field;
 	uint32_t word_freq;
 	uint32_t created_time;
-	string pos;
-	string extend;
+	std::string pos;
+	std::string extend;
 
 	IndexInfo(){
 		appid = 0;
@@ -288,29 +279,29 @@ struct IndexInfo {
 
 struct ExtraFilterKey
 {
-	string field_name;
-	string field_value;
+	std::string field_name;
+	std::string field_value;
 	uint16_t field_type;
 };
 
 struct TerminalQryCond{
 	uint32_t sort_type;
-	string sort_field;
-	string last_id;
-	string last_score;
+	std::string sort_field;
+	std::string last_id;
+	std::string last_score;
 	uint32_t limit_start;
 	uint32_t page_size;
 };
 
 struct OrderOpCond{
-	string last_id;
+	std::string last_id;
 	uint32_t limit_start;
 	uint32_t count;
 	bool has_extra_filter;
 };
 
 struct TerminalRes{
-	string doc_id;
+	std::string doc_id;
 	double score;
 };
 

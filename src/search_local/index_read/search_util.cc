@@ -1258,7 +1258,9 @@ bool GetGisCode(const vector<string>& lng_arr, const vector<string>& lat_arr, ve
 			lat_min = atof(lat_arr[i].c_str());
 		}
 	}
-	gisCode = GetArroundGeoHash(lng_max, lng_min, lat_max, lat_min, 6);
+	EnclosingRectangle enclose_rectangle(lng_max , lng_min , lat_max , lat_min);
+
+	gisCode = GetArroundGeoHash(enclose_rectangle, 6);
 	return true;
 }
 

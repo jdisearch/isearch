@@ -1,6 +1,6 @@
 #include "term_query_process.h"
 
-TermQueryProcess::TermQueryProcess(Json::Value& value)
+TermQueryProcess::TermQueryProcess(const Json::Value& value)
     : QueryProcess(value)
 {}
 
@@ -20,7 +20,7 @@ int TermQueryProcess::ParseContent(int logic_type){
     Json::Value field_value;
     if(iter != member.end()){ // 一个term下只对应一个字段
         field_name = *iter;
-        field_value = value_[field_name];
+        field_value = parse_value_[field_name];
     } else {
         log_error("TermQueryProcess error, value is null");
         return -RT_PARSE_CONTENT_ERROR;

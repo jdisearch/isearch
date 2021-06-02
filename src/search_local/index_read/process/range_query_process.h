@@ -12,7 +12,7 @@ const char* const LT ="lt";
 
 class RangeQueryProcess: public QueryProcess{
 public:
-    RangeQueryProcess(Json::Value& value);
+    RangeQueryProcess(const Json::Value& value);
     virtual~ RangeQueryProcess();
 
 public:
@@ -27,7 +27,7 @@ private:
 
 class RangeQueryPreTerminal : public RangeQueryProcess{
 public:
-    RangeQueryPreTerminal(Json::Value& value);
+    RangeQueryPreTerminal(const Json::Value& value);
     virtual~ RangeQueryPreTerminal();
 
 private:

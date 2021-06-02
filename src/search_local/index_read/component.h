@@ -35,12 +35,12 @@ public:
     int ParseJson(const char* sz_json, int json_len, Json::Value &recv_packet);
     void InitSwitch();
 
-    const vector<vector<FieldInfo> >& OrKeys();
-    const vector<vector<FieldInfo> >& AndKeys();
-    const vector<vector<FieldInfo> >& InvertKeys();
-    const vector<ExtraFilterKey>& ExtraFilterKeys();
-    const vector<ExtraFilterKey>& ExtraFilterAndKeys();
-    const vector<ExtraFilterKey>& ExtraFilterInvertKeys();
+    const std::vector<std::vector<FieldInfo> >& OrKeys();
+    const std::vector<std::vector<FieldInfo> >& AndKeys();
+    const std::vector<std::vector<FieldInfo> >& InvertKeys();
+    const std::vector<ExtraFilterKey>& ExtraFilterKeys();
+    const std::vector<ExtraFilterKey>& ExtraFilterAndKeys();
+    const std::vector<ExtraFilterKey>& ExtraFilterInvertKeys();
     
     uint32_t Appid();
     uint32_t SortType();
@@ -78,6 +78,7 @@ private:
     uint32_t snapshot_switch_;
     uint32_t sort_type_;
     uint32_t appid_;
+    uint32_t return_all_;
     std::string sort_field_;
     std::string last_id_;
     std::string last_score_;

@@ -1,12 +1,13 @@
 #include "query_process.h"
-#include "valid_doc_filter.h"
-#include "order_op.h"
-#include "result_cache.h"
+#include <assert.h>
+#include "../valid_doc_filter.h"
+#include "../order_op.h"
+#include "../result_cache.h"
 #include "cachelist_unit.h"
 
 extern CCacheListUnit* cachelist;
 
-QueryProcess::QueryProcess(Json::Value& value)
+QueryProcess::QueryProcess(const Json::Value& value)
     : component_(NULL)
     , doc_manager_(NULL)
     , request_(NULL)
@@ -51,9 +52,6 @@ void QueryProcess::SetResponse()
 {
     log_debug("search result begin.");
     response_["code"] = 0;
-    int page_size = component_->PageSize();
-    int limit_start = page_size * (component_->PageIndex()-1);
-    int limit_end = page_size * (component_->PageIndex()-1) + page_size - 1;
 
     int sequence = -1;
     int rank = 0;
@@ -132,7 +130,7 @@ int QueryProcess::GetScore()
             std::set<std::string>::iterator valid_docs_iter = valid_docs_.begin();
             for(; valid_docs_iter != valid_docs_.end(); valid_docs_iter++){
                 std::string doc_id = *valid_docs_iter;
-                skipList.InsertNode(1, doc_id.c_str());
+                skipList_.InsertNode(1, doc_id.c_str());
             }
         }
         break;
@@ -142,7 +140,7 @@ int QueryProcess::GetScore()
             std::set<std::string>::iterator valid_docs_iter = valid_docs_.begin();
             for(; valid_docs_iter != valid_docs_.end(); valid_docs_iter++){
                 std::string doc_id = *valid_docs_iter;
-                doc_manager->GetScoreMap(doc_id, component_->SortType()
+                doc_manager_->GetScoreMap(doc_id, component_->SortType()
                         , component_->SortField(), sort_field_type_);
             }
         }
@@ -158,15 +156,15 @@ void QueryProcess::SortScore(int& i_sequence , int& i_rank)
 {
     if ((SORT_FIELD_DESC == component_->SortType() || SORT_FIELD_ASC == component_->SortType())
         && 0 == skipList_.GetSize()){
-        SortByCOrderOp();
-    }else (SORT_FIELD_ASC == component_->SortType()){
+        SortByCOrderOp(i_rank);
+    }else if(SORT_FIELD_ASC == component_->SortType()){
         SortForwardBySkipList(i_sequence , i_rank);
     }else{
         SortBackwardBySkipList(i_sequence, i_rank);
     }
 }
 
-void QueryProcess::SortByCOrderOp()
+void QueryProcess::SortByCOrderOp(int& i_rank)
 {
     OrderOpCond order_op_cond;
     order_op_cond.last_id = component_->LastId();
@@ -178,17 +176,17 @@ void QueryProcess::SortByCOrderOp()
         order_op_cond.has_extra_filter = true;
     }
     if(sort_field_type_ == FIELDTYPE_INT){
-        rank += doc_manager->ScoreIntMap().size();
+        i_rank += doc_manager_->ScoreIntMap().size();
         COrderOp<int> orderOp(FIELDTYPE_INT, component_->SearchAfter(), component_->SortType());
-        orderOp.Process(doc_manager->ScoreIntMap(), atoi(component_->LastScore().c_str()), order_op_cond, response_, doc_manager_);
+        orderOp.Process(doc_manager_->ScoreIntMap(), atoi(component_->LastScore().c_str()), order_op_cond, response_, doc_manager_);
     } else if(sort_field_type_ == FIELDTYPE_DOUBLE) {
-        rank += doc_manager->ScoreDoubleMap().size();
+        i_rank += doc_manager_->ScoreDoubleMap().size();
         COrderOp<double> orderOp(FIELDTYPE_DOUBLE, component_->SearchAfter(), component_->SortType());
-        orderOp.Process(doc_manager->ScoreDoubleMap(), atof(component_->LastScore().c_str()), order_op_cond, response_, doc_manager_);
+        orderOp.Process(doc_manager_->ScoreDoubleMap(), atof(component_->LastScore().c_str()), order_op_cond, response_, doc_manager_);
     } else {
-        rank += doc_manager->ScoreStrMap().size();
+        i_rank += doc_manager_->ScoreStrMap().size();
         COrderOp<std::string> orderOp(FIELDTYPE_STRING, component_->SearchAfter(), component_->SortType());
-        orderOp.Process(doc_manager->ScoreStrMap(), component_->LastScore(), order_op_cond, response_, doc_manager_);
+        orderOp.Process(doc_manager_->ScoreStrMap(), component_->LastScore(), order_op_cond, response_, doc_manager_);
     }
 }
 
@@ -202,7 +200,7 @@ void QueryProcess::SortForwardBySkipList(int& i_sequence , int& i_rank)
 
     while (tmp->level[0].forward != NULL) {
         // 通过extra_filter_keys进行额外过滤（针对区分度不高的字段）
-        if(doc_manager->CheckDocByExtraFilterKey(tmp->value) == false){
+        if(doc_manager_->CheckDocByExtraFilterKey(tmp->value) == false){
             log_debug("CheckDocByExtraFilterKey failed, %s", tmp->value);
             tmp = tmp->level[0].forward;
             continue;
@@ -228,15 +226,15 @@ void QueryProcess::SortBackwardBySkipList(int& i_sequence , int& i_rank)
     int i_limit_start = component_->PageSize() * (component_->PageIndex() - 1);
     int i_limit_end = component_->PageSize() * component_->PageIndex() - 1;
 
-    SkipListNode *tmp = skipList.GetFooter()->backward;
+    SkipListNode *tmp = skipList_.GetFooter()->backward;
     while(tmp->backward != NULL) {
-        if(doc_manager->CheckDocByExtraFilterKey(tmp->value) == false){
+        if(doc_manager_->CheckDocByExtraFilterKey(tmp->value) == false){
             tmp = tmp->backward;
             continue;
         }
         i_sequence++;
         i_rank++;
-        if (component->ReturnAll() == 0){
+        if (component_->ReturnAll() == 0){
             if (i_sequence < i_limit_start || i_sequence > i_limit_end) {
                 tmp = tmp->backward;
                 continue;

@@ -66,6 +66,7 @@ enum FieldType{
 };
 
 enum SEGMENTTAG {
+	SEGMENT_NONE = 0,
 	SEGMENT_DEFAULT = 1,
 	SEGMENT_NGRAM = 2,
 	SEGMENT_CHINESE = 3,

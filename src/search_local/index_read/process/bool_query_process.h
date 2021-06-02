@@ -3,27 +3,13 @@
 
 #include "query_process.h"
 
-const char* const NAME ="bool";
-const char* const MUST ="must";
-const char* const SHOULD ="should";
-const char* const MUST_NOT ="must_not";
-const char* const TERM ="term";
-const char* const MATCH ="match";
-const char* const RANGE ="range";
-const char* const GEODISTANCE ="geo_distance";
-
-enum E_INDEX_READ_QUERY_PROCESS{
-    E_INDEX_READ_GEO_DISTANCE,
-    E_INDEX_READ_GEO_SHAPE,
-    E_INDEX_READ_MATCH,
-    E_INDEX_READ_TERM,
-    E_INDEX_READ_RANGE,
-    E_INDEX_READ_RANGE_PRE_TERM
-};
+class RangeQueryProcess;
+class RangeQueryPreTerminal;
+class GeoDistanceQueryProcess;
 
 class BoolQueryProcess : public QueryProcess{
 public:
-    BoolQueryProcess(Json::Value& value);
+    BoolQueryProcess(const Json::Value& value);
     virtual ~BoolQueryProcess();
 
 private:

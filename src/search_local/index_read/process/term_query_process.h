@@ -5,7 +5,7 @@
 
 class TermQueryProcess : public QueryProcess{
 public:
-    TermQueryProcess(Json::Value& value);
+    TermQueryProcess(const Json::Value& value);
     virtual ~TermQueryProcess();
 
 public:

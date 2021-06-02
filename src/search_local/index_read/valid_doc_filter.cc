@@ -41,39 +41,39 @@ ValidDocFilter::ValidDocFilter()
 ValidDocFilter::~ValidDocFilter()
 { }
 
-int ValidDocFilter::GetTopDocScore(std::map<std::string, double>& top_doc_score)
-{
-    std::vector<TopDocInfo> doc_info;
-    for (size_t index = 0; index < p_data_base_->OrKeys().size(); index++) {
-        vector<FieldInfo> topInfos = p_data_base_->OrKeys()[index];
-        vector<FieldInfo>::iterator iter;
-        for (iter = topInfos.begin(); iter != topInfos.end(); iter++) {
-            int ret = GetTopDocIdSetByWord(*iter, doc_info);
-            if (ret != 0) {
-                return -RT_GET_DOC_ERR;
-            }
-        }
-    }
+// int ValidDocFilter::GetTopDocScore(std::map<std::string, double>& top_doc_score)
+// {
+//     std::vector<TopDocInfo> doc_info;
+//     for (size_t index = 0; index < p_data_base_->OrKeys().size(); index++) {
+//         vector<FieldInfo> topInfos = p_data_base_->OrKeys()[index];
+//         vector<FieldInfo>::iterator iter;
+//         for (iter = topInfos.begin(); iter != topInfos.end(); iter++) {
+//             int ret = GetTopDocIdSetByWord(*iter, doc_info);
+//             if (ret != 0) {
+//                 return -RT_GET_DOC_ERR;
+//             }
+//         }
+//     }
 
-    double score = 0;
-    for(size_t i = 0; i < doc_info.size(); i++)
-    {
-        score = (double)doc_info[i].weight;
-        if (p_data_base_->SortType() == DONT_SORT) {
-            score = 1;
-        } else if (p_data_base_->SortType() == SORT_TIMESTAMP) {
-            score = (double)doc_info[i].created_time;
-        }
+//     double score = 0;
+//     for(size_t i = 0; i < doc_info.size(); i++)
+//     {
+//         score = (double)doc_info[i].weight;
+//         if (p_data_base_->SortType() == DONT_SORT) {
+//             score = 1;
+//         } else if (p_data_base_->SortType() == SORT_TIMESTAMP) {
+//             score = (double)doc_info[i].created_time;
+//         }
 
-        top_doc_score[doc_info[i].doc_id] = score;
-    }
+//         top_doc_score[doc_info[i].doc_id] = score;
+//     }
 
-    return 0;
-}
+//     return 0;
+// }
 
-int ValidDocFilter::OrAndInvertKeyFilter(vector<IndexInfo>& index_info_vet
-            , set<string>& highlightWord, map<string, KeyInfoVet>& docid_keyinfo_map
-            , map<string, uint32_t>& key_doccount_map){
+int ValidDocFilter::OrAndInvertKeyFilter(std::vector<IndexInfo>& index_info_vet
+            , std::set<std::string>& highlightWord, std::map<std::string, KeyInfoVet>& docid_keyinfo_map
+            , std::map<std::string, uint32_t>& key_doccount_map){
         int iret = 0;
         if (!p_data_base_->OrKeys().empty()){
             iret = OrKeyFilter(index_info_vet , highlightWord , docid_keyinfo_map , key_doccount_map);
@@ -96,46 +96,46 @@ int ValidDocFilter::OrAndInvertKeyFilter(vector<IndexInfo>& index_info_vet
         return iret;
 }
 
-int ValidDocFilter::GetTopDocIdSetByWord(FieldInfo fieldInfo, std::vector<TopDocInfo>& doc_info){
-    if (DataManager::Instance()->IsSensitiveWord(fieldInfo.word)) {
-        log_debug("%s is a sensitive word.", fieldInfo.word.c_str());
-        return 0;
-    }
+// int ValidDocFilter::GetTopDocIdSetByWord(FieldInfo fieldInfo, std::vector<TopDocInfo>& doc_info){
+//     if (DataManager::Instance()->IsSensitiveWord(fieldInfo.word)) {
+//         log_debug("%s is a sensitive word.", fieldInfo.word.c_str());
+//         return 0;
+//     }
 
-    std::string word_new = stem(fieldInfo.word);
-    std::vector<TopDocInfo> no_filter_docs;
-    bool bRet = g_IndexInstance.GetTopDocInfo(p_data_base_->Appid(), word_new, no_filter_docs);
-    if (false == bRet) {
-        log_error("GetTopDocInfo error.");
-        return -RT_DTC_ERR;
-    }
+//     std::string word_new = stem(fieldInfo.word);
+//     std::vector<TopDocInfo> no_filter_docs;
+//     bool bRet = g_IndexInstance.GetTopDocInfo(p_data_base_->Appid(), word_new, no_filter_docs);
+//     if (false == bRet) {
+//         log_error("GetTopDocInfo error.");
+//         return -RT_DTC_ERR;
+//     }
 
-    if (0 == no_filter_docs.size())
-        return 0;
+//     if (0 == no_filter_docs.size())
+//         return 0;
 
-    if (1 == p_data_base_->SnapshotSwitch()) {
-        bRet = g_IndexInstance.TopDocValid(p_data_base_->Appid(), no_filter_docs, doc_info);
-        if (false == bRet) {
-            log_error("GetTopDocInfo by snapshot error.");
-            return -RT_DTC_ERR;
-        }
-    }
-    else {
-        doc_info.swap(no_filter_docs);
-        // for (size_t i = 0; i < no_filter_docs.size(); i++)
-        // {
-        //     TopDocInfo info = no_filter_docs[i];
-        //     doc_info.push_back(info);
-        // }
-    }
-    return 0;
-}
+//     if (1 == p_data_base_->SnapshotSwitch()) {
+//         bRet = g_IndexInstance.TopDocValid(p_data_base_->Appid(), no_filter_docs, doc_info);
+//         if (false == bRet) {
+//             log_error("GetTopDocInfo by snapshot error.");
+//             return -RT_DTC_ERR;
+//         }
+//     }
+//     else {
+//         doc_info.swap(no_filter_docs);
+//         // for (size_t i = 0; i < no_filter_docs.size(); i++)
+//         // {
+//         //     TopDocInfo info = no_filter_docs[i];
+//         //     doc_info.push_back(info);
+//         // }
+//     }
+//     return 0;
+// }
 
-int ValidDocFilter::OrKeyFilter(vector<IndexInfo>& index_info_vet
-            , set<string>& highlightWord, map<string, KeyInfoVet>& docid_keyinfo_map
-            , map<string, uint32_t>& key_doccount_map)
+int ValidDocFilter::OrKeyFilter(std::vector<IndexInfo>& index_info_vet
+            , std::set<std::string>& highlightWord, std::map<std::string, KeyInfoVet>& docid_keyinfo_map
+            , std::map<std::string, uint32_t>& key_doccount_map)
 {
-    vector<IndexInfo> or_vecs;
+    std::vector<IndexInfo> or_vecs;
     o_or_and_not_functor_ = std::bind(vec_union , std::placeholders::_1, std::placeholders::_2);
 
     int ret = Process(p_data_base_->OrKeys(), or_vecs, highlightWord, docid_keyinfo_map, key_doccount_map);
@@ -153,11 +153,11 @@ int ValidDocFilter::OrKeyFilter(vector<IndexInfo>& index_info_vet
     return 0;
 }
 
-int ValidDocFilter::AndKeyFilter(vector<IndexInfo>& index_info_vet
-            , set<string>& highlightWord, map<string, KeyInfoVet>& docid_keyinfo_map
-            , map<string, uint32_t>& key_doccount_map)
+int ValidDocFilter::AndKeyFilter(std::vector<IndexInfo>& index_info_vet
+            , std::set<std::string>& highlightWord, std::map<std::string, KeyInfoVet>& docid_keyinfo_map
+            , std::map<std::string, uint32_t>& key_doccount_map)
 {
-    vector<IndexInfo> and_vecs;
+    std::vector<IndexInfo> and_vecs;
     o_or_and_not_functor_ = std::bind(vec_intersection , std::placeholders::_1, std::placeholders::_2);
 
     int ret = Process(p_data_base_->AndKeys(), and_vecs, highlightWord, docid_keyinfo_map, key_doccount_map);
@@ -180,11 +180,11 @@ int ValidDocFilter::AndKeyFilter(vector<IndexInfo>& index_info_vet
     return 0;
 }
 
-int ValidDocFilter::InvertKeyFilter(vector<IndexInfo>& index_info_vet
-            , set<string>& highlightWord, map<string, KeyInfoVet>& docid_keyinfo_map
-            , map<string, uint32_t>& key_doccount_map)
+int ValidDocFilter::InvertKeyFilter(std::vector<IndexInfo>& index_info_vet
+            , std::set<std::string>& highlightWord, std::map<std::string, KeyInfoVet>& docid_keyinfo_map
+            , std::map<std::string, uint32_t>& key_doccount_map)
 {
-    vector<IndexInfo> invert_vecs;
+    std::vector<IndexInfo> invert_vecs;
     o_or_and_not_functor_ = std::bind(vec_union , std::placeholders::_1, std::placeholders::_2);
 
     int ret = Process(p_data_base_->InvertKeys(), invert_vecs, highlightWord, docid_keyinfo_map, key_doccount_map);
@@ -199,22 +199,22 @@ int ValidDocFilter::InvertKeyFilter(vector<IndexInfo>& index_info_vet
     return 0;
 }
 
-int ValidDocFilter::Process(const vector<vector<FieldInfo> >& keys, vector<IndexInfo>& index_info_vet
-        , set<string>& highlightWord, map<string, KeyInfoVet>& docid_keyinfo_map, map<string, uint32_t>& key_doccount_map){
+int ValidDocFilter::Process(const std::vector<std::vector<FieldInfo> >& keys, std::vector<IndexInfo>& index_info_vet
+        , std::set<std::string>& highlightWord, std::map<std::string, KeyInfoVet>& docid_keyinfo_map, std::map<std::string, uint32_t>& key_doccount_map){
     for (size_t index = 0; index < keys.size(); index++)
     {
-        vector<IndexInfo> doc_id_vec;
-        vector<FieldInfo> fieldInfos = keys[index];
-        vector<FieldInfo>::iterator it;
+        std::vector<IndexInfo> doc_id_vec;
+        std::vector<FieldInfo> fieldInfos = keys[index];
+        std::vector<FieldInfo>::iterator it;
         for (it = fieldInfos.begin(); it != fieldInfos.end(); it++) {
-            vector<IndexInfo> doc_info;
+            std::vector<IndexInfo> doc_info;
             if ((*it).segment_tag == SEGMENT_CHINESE) {
                 int ret = GetDocByShiftWord(*it, doc_info, p_data_base_->Appid(), highlightWord);
                 if (ret != 0) {
                     doc_id_vec.clear();
                     return -RT_GET_DOC_ERR;
                 }
-                sort(doc_info.begin(), doc_info.end());
+                std::sort(doc_info.begin(), doc_info.end());
                 for (size_t doc_info_idx = 0; doc_info_idx < doc_info.size(); doc_info_idx++){
                     KeyInfo info;
                     info.word_freq = 1;
@@ -228,7 +228,7 @@ int ValidDocFilter::Process(const vector<vector<FieldInfo> >& keys, vector<Index
                     doc_id_vec.clear();
                     return -RT_GET_DOC_ERR;
                 }
-                sort(doc_info.begin(), doc_info.end());
+                std::sort(doc_info.begin(), doc_info.end());
                 for (size_t doc_info_idx = 0; doc_info_idx < doc_info.size(); doc_info_idx++){
                     KeyInfo info;
                     info.word_freq = 1;
@@ -237,7 +237,7 @@ int ValidDocFilter::Process(const vector<vector<FieldInfo> >& keys, vector<Index
                     docid_keyinfo_map[doc_info[doc_info_idx].doc_id].push_back(info);
                 }
             } else if ((*it).segment_tag == SEGMENT_RANGE && (*it).word == "") { // 范围查询
-                stringstream ss;
+                std::stringstream ss;
                 ss << p_data_base_->Appid();
                 InvertIndexEntry startEntry(ss.str(), (*it).field, (double)(*it).start);
                 InvertIndexEntry endEntry(ss.str(), (*it).field, (double)(*it).end);
@@ -275,24 +275,24 @@ int ValidDocFilter::Process(const vector<vector<FieldInfo> >& keys, vector<Index
     return 0;
 }
 
-int ValidDocFilter::PureTextInvertIndexSearch(const vector<vector<FieldInfo> >& keys
-                    , vector<IndexInfo>& index_info_vet
+int ValidDocFilter::PureTextInvertIndexSearch(const std::vector<std::vector<FieldInfo> >& keys
+                    , std::vector<IndexInfo>& index_info_vet
                     , std::set<std::string>& highlightWord
-                    , map<string, KeyInfoVet>& docid_keyinfo_map){
+                    , std::map<std::string, KeyInfoVet>& docid_keyinfo_map){
         if (keys.empty() || keys.size() > 1){
             return -RT_GET_DOC_ERR;
         }
         const std::vector<FieldInfo>& key_field_info_vet = keys[0];
-        std::vector<FieldInfo>::iterator iter = key_field_info_vet.begin();
-        for (; iter != key_field_info_vet.end(); ++iter){
-            vector<IndexInfo> doc_info;
+        std::vector<FieldInfo>::const_iterator iter = key_field_info_vet.cbegin();
+        for (; iter != key_field_info_vet.cend(); ++iter){
+            std::vector<IndexInfo> doc_info;
             if ((iter->segment_tag) == SEGMENT_CHINESE) {
                 int ret = GetDocByShiftWord(*iter, doc_info, p_data_base_->Appid(), highlightWord);
                 if (ret != 0) {
                     index_info_vet.clear();
                     return -RT_GET_DOC_ERR;
                 }
-                sort(doc_info.begin(), doc_info.end());
+                std::sort(doc_info.begin(), doc_info.end());
                 for (size_t doc_info_idx = 0; doc_info_idx < doc_info.size(); doc_info_idx++){
                     KeyInfo info;
                     info.word_freq = 1;
@@ -306,7 +306,7 @@ int ValidDocFilter::PureTextInvertIndexSearch(const vector<vector<FieldInfo> >& 
                     index_info_vet.clear();
                     return -RT_GET_DOC_ERR;
                 }
-                sort(doc_info.begin(), doc_info.end());
+                std::sort(doc_info.begin(), doc_info.end());
                 for (size_t doc_info_idx = 0; doc_info_idx < doc_info.size(); doc_info_idx++){
                     KeyInfo info;
                     info.word_freq = 1;
@@ -320,15 +320,15 @@ int ValidDocFilter::PureTextInvertIndexSearch(const vector<vector<FieldInfo> >& 
         return 0;
 }
 
-int ValidDocFilter::RangeQueryInvertIndexSearch(const vector<vector<FieldInfo> >& keys
-                    , vector<IndexInfo>& index_info_vet){
+int ValidDocFilter::RangeQueryInvertIndexSearch(const std::vector<std::vector<FieldInfo> >& keys
+                    , std::vector<IndexInfo>& index_info_vet){
         if (keys.empty() || keys.size() > 1){
             return -RT_GET_DOC_ERR;
         }
         const std::vector<FieldInfo>& key_field_info_vet = keys[0];
-        std::vector<FieldInfo>::iterator iter = key_field_info_vet.begin();
-        for (; iter != key_field_info_vet.end(); ++iter){
-            vector<IndexInfo> doc_info;
+        std::vector<FieldInfo>::const_iterator iter = key_field_info_vet.cbegin();
+        for (; iter != key_field_info_vet.cend(); ++iter){
+            std::vector<IndexInfo> doc_info;
             if (SEGMENT_RANGE == (iter->segment_tag) && (iter->word).empty()){
                 std::stringstream ss;
                 ss << p_data_base_->Appid();
@@ -350,17 +350,17 @@ int ValidDocFilter::RangeQueryInvertIndexSearch(const vector<vector<FieldInfo> >
         return 0;
 }
 
-int ValidDocFilter::MixTextInvertIndexSearch(const vector<vector<FieldInfo> >& keys
-                    , vector<IndexInfo>& index_info_vet
+int ValidDocFilter::MixTextInvertIndexSearch(const std::vector<std::vector<FieldInfo> >& keys
+                    , std::vector<IndexInfo>& index_info_vet
                     , std::set<std::string>& highlightWord
-                    , map<string, KeyInfoVet>& docid_keyinfo_map
-                    , map<string, uint32_t>& key_doccount_map){
+                    , std::map<std::string, KeyInfoVet>& docid_keyinfo_map
+                    , std::map<std::string, uint32_t>& key_doccount_map){
         if (keys.empty() || keys.size() > 1){
             return -RT_GET_DOC_ERR;
         }
         const std::vector<FieldInfo>& key_field_info_vet = keys[0];
-        std::vector<FieldInfo>::iterator iter = key_field_info_vet.begin();
-        for (; iter != key_field_info_vet.end(); ++iter){
+        std::vector<FieldInfo>::const_iterator iter = key_field_info_vet.cbegin();
+        for (; iter != key_field_info_vet.cend(); ++iter){
             std::vector<IndexInfo> doc_info;
             int ret = GetDocIdSetByWord(*iter, doc_info);
             if (ret != 0){
@@ -378,11 +378,11 @@ int ValidDocFilter::MixTextInvertIndexSearch(const vector<vector<FieldInfo> >& k
         return 0;
 }
 
-int ValidDocFilter::ProcessTerminal(const vector<vector<FieldInfo> >& and_keys, const TerminalQryCond& query_cond, vector<TerminalRes>& vecs){
+int ValidDocFilter::ProcessTerminal(const std::vector<std::vector<FieldInfo> >& and_keys, const TerminalQryCond& query_cond, std::vector<TerminalRes>& vecs){
     if(and_keys.size() != 1){
         return 0;
     }
-    vector<FieldInfo> field_vec = and_keys[0];
+    std::vector<FieldInfo> field_vec = and_keys[0];
     if(field_vec.size() != 1){
         return 0;
     }
@@ -391,7 +391,7 @@ int ValidDocFilter::ProcessTerminal(const vector<vector<FieldInfo> >& and_keys, 
         return 0;
     }
 
-    stringstream ss;
+    std::stringstream ss;
     ss << p_data_base_->Appid();
     InvertIndexEntry beginEntry(ss.str(), field_info.field, (double)field_info.start);
     InvertIndexEntry endEntry(ss.str(), field_info.field, (double)field_info.end);
@@ -407,7 +407,8 @@ int ValidDocFilter::ProcessTerminal(const vector<vector<FieldInfo> >& and_keys, 
     return 0;
 }
 
-void ValidDocFilter::CalculateByWord(FieldInfo fieldInfo, const vector<IndexInfo> &doc_info, map<string, vec> &ves, map<string, uint32_t> &key_in_doc) {
+void ValidDocFilter::CalculateByWord(FieldInfo fieldInfo, const std::vector<IndexInfo> &doc_info
+                , std::map<std::string, KeyInfoVet> &ves, std::map<std::string, uint32_t> &key_in_doc) {
     std::string doc_id;
     uint32_t word_freq = 0;
     uint32_t field = 0;
@@ -419,7 +420,7 @@ void ValidDocFilter::CalculateByWord(FieldInfo fieldInfo, const vector<IndexInfo
         field = doc_info[i].field;
         created_time = doc_info[i].created_time;
         pos_str = doc_info[i].pos;
-        vector<int> pos_vec;
+        std::vector<int> pos_vec;
         if (pos_str != "" && pos_str.size() > 2) {
             pos_str = pos_str.substr(1, pos_str.size() - 2);
             pos_vec = splitInt(pos_str, ",");
@@ -436,7 +437,7 @@ void ValidDocFilter::CalculateByWord(FieldInfo fieldInfo, const vector<IndexInfo
 }
 
 
-bool ValidDocFilter::GetDocIndexCache(std::string word, uint32_t field, vector<IndexInfo> &doc_info) {
+bool ValidDocFilter::GetDocIndexCache(std::string word, uint32_t field, std::vector<IndexInfo> &doc_info) {
     log_debug("get doc index start");
     bool res = false;
     uint8_t value[MAX_VALUE_LEN] = { 0 };
@@ -494,7 +495,7 @@ bool ValidDocFilter::GetDocIndexCache(std::string word, uint32_t field, vector<I
     return res;
 }
 
-void ValidDocFilter::SetDocIndexCache(const vector<IndexInfo> &doc_info, string& indexJsonStr) {
+void ValidDocFilter::SetDocIndexCache(const std::vector<IndexInfo> &doc_info, std::string& indexJsonStr) {
     Json::Value indexJson;
     Json::FastWriter writer;
     for (size_t i = 0; i < doc_info.size(); i++) {
@@ -512,18 +513,18 @@ void ValidDocFilter::SetDocIndexCache(const vector<IndexInfo> &doc_info, string&
 }
 
 
-int ValidDocFilter::GetDocIdSetByWord(FieldInfo fieldInfo, vector<IndexInfo> &doc_info) {
+int ValidDocFilter::GetDocIdSetByWord(FieldInfo fieldInfo, std::vector<IndexInfo> &doc_info) {
     bool bRet = false;
     if (DataManager::Instance()->IsSensitiveWord(fieldInfo.word)) {
         log_debug("%s is a sensitive word.", fieldInfo.word.c_str());
         return 0;
     }
 
-    stringstream ss_key;
+    std::stringstream ss_key;
     ss_key << p_data_base_->Appid();
     ss_key << "#00#";
     if(fieldInfo.segment_tag == 5){
-        stringstream ss;
+        std::stringstream ss;
         ss << setw(20) << setfill('0') << fieldInfo.word;
         ss_key << ss.str();
     }
@@ -557,7 +558,7 @@ int ValidDocFilter::GetDocIdSetByWord(FieldInfo fieldInfo, vector<IndexInfo> &do
 
     if (p_data_base_->CacheSwitch() == 1 && p_data_base_->GetHasGisFlag() == 1 
                 && doc_info.size() > 0 && doc_info.size() <= 1000) {
-        string index_str;
+        std::string index_str;
         SetDocIndexCache(doc_info, index_str);
         if (index_str != "" && index_str.size() < MAX_VALUE_LEN) {
             std::string indexCache = ss_key.str() + "|" + ToString(fieldInfo.field);

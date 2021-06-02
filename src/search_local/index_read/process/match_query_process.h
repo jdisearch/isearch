@@ -23,7 +23,7 @@
 
 class MatchQueryProcess: public QueryProcess{
 public:
-    MatchQueryProcess(Json::Value& value);
+    MatchQueryProcess(const Json::Value& value);
     virtual~ MatchQueryProcess();
 
 public:

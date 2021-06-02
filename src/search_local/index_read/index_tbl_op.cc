@@ -420,7 +420,7 @@ bool CIndexTableManager::TopDocValid(uint32_t appid, vector<TopDocInfo>& no_filt
 	return true;
 }
 
-bool CIndexTableManager::GetDocContent(uint32_t appid, vector<IndexInfo> &docs, hash_string_map& doc_content)
+bool CIndexTableManager::GetDocContent(uint32_t appid, const vector<IndexInfo> &docs, hash_string_map& doc_content)
 {
 	int numbers = 32; //DTC批量查找的上限为32个
 	int docSize = docs.size();
@@ -442,7 +442,7 @@ bool CIndexTableManager::GetDocContent(uint32_t appid, vector<IndexInfo> &docs, 
 	return true;
 }
 
-bool CIndexTableManager::GetSnapshotContent(int left, int right, uint32_t appid, vector<IndexInfo>& docs, hash_string_map& doc_content)
+bool CIndexTableManager::GetSnapshotContent(int left, int right, uint32_t appid, const vector<IndexInfo>& docs, hash_string_map& doc_content)
 {
 	int ret = 0;
 	if (left == right) {

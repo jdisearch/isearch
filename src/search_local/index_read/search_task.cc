@@ -17,13 +17,17 @@
  * =====================================================================================
  */
 
+#include "search_task.h"
 #include "split_manager.h"
+#include "monitor.h"
 #include "index_tbl_op.h"
 #include "valid_doc_filter.h"
 #include "process/geo_distance_query_process.h"
 #include "process/geo_shape_query_process.h"
 #include "process/match_query_process.h"
 #include "process/range_query_process.h"
+#include "process/term_query_process.h"
+#include "process/bool_query_process.h"
 
 SearchTask::SearchTask()
     : ProcessTask()
@@ -63,42 +67,49 @@ int SearchTask::Process(CTaskRequest *request)
 
     Json::Value query = component_->GetQuery();
     if(query.isObject()){
-        if(query.isMember("match")){
-            query_process_ = new MatchQueryProcess(query["match"]);
+        if(query.isMember(MATCH)){
+            query_process_ = new MatchQueryProcess(query[MATCH]);
         } else {
             log_error("Match query init error.");
             return -RT_PARSE_JSON_ERR;
         }
 
-        if (query.isMember("geo_distance")){
-            query_process_ = new GeoDistanceQueryProcess(query["geo_distance"]);
+        if(query.isMember(TERM)){
+            query_process_ = new TermQueryProcess(query[TERM]);
+        } else {
+            log_error("Match query init error.");
+            return -RT_PARSE_JSON_ERR;
+        }
+
+        if (query.isMember(GEODISTANCE)){
+            query_process_ = new GeoDistanceQueryProcess(query[GEODISTANCE]);
         }else{
             log_error("GeoDistance query init error.");
             return -RT_PARSE_JSON_ERR;
         }
 
-        if (query.isMember("geo_polygon")){
-            query_process_ = new GeoShapeQueryProcess(query["geo_polygon"]);
+        if (query.isMember(GEOSHAPE)){
+            query_process_ = new GeoShapeQueryProcess(query[GEOSHAPE]);
         }else{
             log_error("GeoShape query init error.");
             return -RT_PARSE_JSON_ERR;
         }
 
-        if (query.isMember("range")){
+        if (query.isMember(RANGE)){
             if (component_->TerminalTag()){
                 query_process_ = RangeQueryGenerator::Instance()->GetRangeQueryProcess(E_INDEX_READ_RANGE_PRE_TERM 
-                                        , query["range"]);
+                                        , query[RANGE]);
             }else{
                 query_process_ = RangeQueryGenerator::Instance()->GetRangeQueryProcess(E_INDEX_READ_RANGE 
-                                        , query["range"]);
+                                        , query[RANGE]);
             }
         }else{
             log_error("Range query init error.");
             return -RT_PARSE_JSON_ERR;
         }
 
-        if (query.isMember("bool")){
-            query_process_ = new BoolQueryProcess(query["bool"]);
+        if (query.isMember(BOOL)){
+            query_process_ = new BoolQueryProcess(query[BOOL]);
         }else{
             log_error("Bool query init error.");
             return -RT_PARSE_JSON_ERR;

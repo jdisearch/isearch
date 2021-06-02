@@ -19,6 +19,7 @@
 #define GEO_DISTANCE_QUERY_PROCESS_H_
 
 #include "query_process.h"
+#include "geohash.h"
 
 const double DEFAULT_DISTANCE = 2.0;
 const int GEO_PRECISION = 6;
@@ -35,6 +36,10 @@ struct GeoPointContext
         , d_distance(DEFAULT_DISTANCE)
     {}
 
+    GeoPointContext(const Json::Value& oJsonValue){
+         ParseJson(oJsonValue);
+    }
+
     GeoPointContext(const std::string& sLat, const std::string& sLng
             , double dDis = DEFAULT_DISTANCE)
         : sLatitude(sLat)
@@ -44,6 +49,24 @@ struct GeoPointContext
 
     void operator()(const Json::Value& oJsonValue)
     {
+        ParseJson(oJsonValue);
+    }
+
+    void SetDistance(const double& dDis){
+        d_distance = dDis;
+    }
+
+    bool IsGeoPointFormat(){
+        return ((!sLatitude.empty()) && (!sLongtitude.empty()));
+    }
+
+    void Clear(){
+        sLatitude.clear();
+        sLongtitude.clear();
+    }
+
+private:
+    void ParseJson(const Json::Value& oJsonValue){
         if (oJsonValue.isString()){
             std::string sValue = oJsonValue.asString();
             std::size_t iPos = sValue.find(",");
@@ -69,24 +92,11 @@ struct GeoPointContext
             }
         }
     }
-
-    void SetDistance(const double& dDis){
-        d_distance = dDis;
-    }
-
-    bool IsGeoPointFormat(){
-        return ((!sLatitude.empty()) && (!sLongtitude.empty()));
-    }
-
-    void Clear(){
-        sLatitude.clear();
-        sLongtitude.clear();
-    }
 };
 
 class GeoDistanceQueryProcess: public QueryProcess{
 public:
-    GeoDistanceQueryProcess(Json::Value& value);
+    GeoDistanceQueryProcess(const Json::Value& value);
     virtual ~GeoDistanceQueryProcess();
 
 public:

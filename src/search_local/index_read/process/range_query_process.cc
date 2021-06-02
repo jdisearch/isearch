@@ -1,7 +1,7 @@
 #include "range_query_process.h"
-#include "valid_doc_filter.h"
+#include "../valid_doc_filter.h"
 
-RangeQueryProcess::RangeQueryProcess(Json::Value& value)
+RangeQueryProcess::RangeQueryProcess(const Json::Value& value)
     : QueryProcess(value)
 { }
 
@@ -106,7 +106,7 @@ int RangeQueryProcess::GetValidDoc()
 
 
 
-RangeQueryPreTerminal::RangeQueryPreTerminal(Json::Value& value)
+RangeQueryPreTerminal::RangeQueryPreTerminal(const Json::Value& value)
     : RangeQueryProcess(value)
     , candidate_doc_()
 {}
@@ -139,7 +139,7 @@ int RangeQueryPreTerminal::GetValidDoc(){
         }
         for(int i = 0; i < (int)and_vecs.size(); i++){
             std::string doc_id = and_vecs[i].doc_id;
-            stringstream ss;
+            std::stringstream ss;
             ss << (int)and_vecs[i].score;
             std::string ss_key = ss.str();
             log_debug("last_score: %s, ss_key: %s, score: %lf", query_cond.last_score.c_str(), ss_key.c_str(), and_vecs[i].score);
@@ -151,7 +151,7 @@ int RangeQueryPreTerminal::GetValidDoc(){
                     continue;
                 }
             }
-            if(doc_manager->CheckDocByExtraFilterKey(doc_id) == true){
+            if(doc_manager_->CheckDocByExtraFilterKey(doc_id) == true){
                 count++;
                 candidate_doc_.push_back(and_vecs[i]);
             }

@@ -1,9 +1,7 @@
 #include "geo_distance_query_process.h"
-#include "valid_doc_filter.h"
+#include "../valid_doc_filter.h"
 
-const char* const DISTANCE = "distance";
-
-GeoDistanceQueryProcess::GeoDistanceQueryProcess(Json::Value& value)
+GeoDistanceQueryProcess::GeoDistanceQueryProcess(const Json::Value& value)
     : QueryProcess(value)
     , o_geo_point_()
     , o_distance_()
@@ -40,15 +38,15 @@ int GeoDistanceQueryProcess::ParseContent(int logic_type){
     // component_->SetGeoPoint(o_geo_point_);
 
     GeoPoint geo;
-    geo.lon = o_geo_point_.sLongtitude;
-    geo.lat = o_geo_point_.sLatitude;
+    geo.lon = atof(o_geo_point_.sLongtitude.c_str());
+    geo.lat = atof(o_geo_point_.sLatitude.c_str());
     double d_distance = o_geo_point_.d_distance;
 
     std::vector<std::string> gisCode = GetArroundGeoHash(geo, d_distance, GEO_PRECISION);
     if(!gisCode.empty()){
         uint32_t segment_tag = SEGMENT_NONE;
         FieldInfo fieldInfo;
-        uint32_t uiRet = DBManager::Instance()->GetWordField(segment_tag, component->Appid()
+        uint32_t uiRet = DBManager::Instance()->GetWordField(segment_tag, component_->Appid()
             , s_geo_distance_fieldname , fieldInfo);
 
         std::vector<FieldInfo> fieldInfos;

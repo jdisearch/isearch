@@ -20,12 +20,6 @@
 #include "split_manager.h"
 #include "db_manager.h"
 #include "utf8_str.h"
-#include "query/bool_query_parser.h"
-#include "query/geo_distance_parser.h"
-#include "query/range_query_parser.h"
-#include "query/match_query_parser.h"
-#include "query/term_query_parser.h"
-#include "query/geo_shape_parser.h"
 #include <sstream>
 
 Component::Component()
@@ -41,6 +35,7 @@ Component::Component()
     , snapshot_switch_(0)
     , sort_type_(SORT_RELEVANCE)
     , appid_(10001)
+    , return_all_(0)
     , sort_field_("")
     , last_id_("")
     , last_score_("")
@@ -111,6 +106,14 @@ int Component::ParseJson(const char *sz_json, int json_len, Json::Value &recv_pa
         sort_field_ = "";
     }
 
+    if (recv_packet.isMember("return_all") && recv_packet["return_all"].isString())
+	{
+		return_all_ = atoi(recv_packet["return_all"].asString().c_str());
+	}
+	else {
+		return_all_ = 0;
+	}
+
     if(recv_packet.isMember("fields") && recv_packet["fields"].isString())
     {
         std::string fields = recv_packet["fields"].asString();
@@ -177,27 +180,27 @@ void Component::AddToFieldList(int type, vector<FieldInfo>& fields)
     return ;
 }
 
-const vector<vector<FieldInfo> >& Component::OrKeys(){
+const std::vector<std::vector<FieldInfo> >& Component::OrKeys(){
     return or_keys_;
 }
 
-const vector<vector<FieldInfo> >& Component::AndKeys(){
+const std::vector<std::vector<FieldInfo> >& Component::AndKeys(){
     return and_keys_;
 }
 
-const vector<vector<FieldInfo> >& Component::InvertKeys(){
+const std::vector<std::vector<FieldInfo> >& Component::InvertKeys(){
     return invert_keys_;
 }
 
-const vector<ExtraFilterKey>& Component::ExtraFilterKeys(){
+const std::vector<ExtraFilterKey>& Component::ExtraFilterKeys(){
     return extra_filter_keys_;
 }
 
-const vector<ExtraFilterKey>& Component::ExtraFilterAndKeys(){
+const std::vector<ExtraFilterKey>& Component::ExtraFilterAndKeys(){
     return extra_filter_and_keys_;
 }
 
-const vector<ExtraFilterKey>& Component::ExtraFilterInvertKeys(){
+const std::vector<ExtraFilterKey>& Component::ExtraFilterInvertKeys(){
     return extra_filter_invert_keys_;
 }
 
@@ -214,6 +217,10 @@ uint32_t Component::PageIndex(){
 }
 uint32_t Component::PageSize(){
     return page_size_;
+}
+
+uint32_t Component::ReturnAll(){
+    return return_all_;
 }
 
 uint32_t Component::CacheSwitch(){

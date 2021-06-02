@@ -5,7 +5,7 @@
 
 #define DOC_CNT 10000
 
-MatchQueryProcess::MatchQueryProcess(Json::Value& value)
+MatchQueryProcess::MatchQueryProcess(const Json::Value& value)
     : QueryProcess(value)
 { }
 

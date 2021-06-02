@@ -160,14 +160,14 @@ vector<string> GetArroundGeoHash(GeoPoint& circle_center, double distance, int p
     return list;
 }
 
-vector<string> GetArroundGeoHash(double lng_max, double lng_min, double lat_max, double lat_min, int precision)
+vector<string> GetArroundGeoHash(const EnclosingRectangle& oEnclosingRectangle, int precision)
 {
     vector<string> list;
     GeoPoint top_left, bottom_right;
-    top_left.lat = lat_max;
-    top_left.lon = lng_min;
-    bottom_right.lat = lat_min;
-    bottom_right.lon = lng_max;
+    top_left.lat = oEnclosingRectangle.dlatMax;
+    top_left.lon = oEnclosingRectangle.dlngMin;
+    bottom_right.lat = oEnclosingRectangle.dlatMin;
+    bottom_right.lon = oEnclosingRectangle.dlngMax;
     double  min_lat, min_lon;
     std::set <std::string> result;
     getMinLatLng(precision, min_lat, min_lon);
@@ -181,7 +181,7 @@ vector<string> GetArroundGeoHash(double lng_max, double lng_min, double lat_max,
                 list.push_back(geohash);
             }
         }
-        top_left.lon = lng_min;
+        top_left.lon = oEnclosingRectangle.dlngMin;
     }
     return list;
 }
