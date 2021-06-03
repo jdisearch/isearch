@@ -51,6 +51,9 @@ int MatchQueryProcess::ParseContent(int logic_type){
     {
         fieldInfo.word = field_value.asString();
         fieldInfos.push_back(fieldInfo);
+    }else{
+        log_error("field_name:%s error, not in the app_field_define", fieldname.c_str());
+        return -RT_PARSE_CONTENT_ERROR;
     }
 
     component_->AddToFieldList(logic_type, fieldInfos);

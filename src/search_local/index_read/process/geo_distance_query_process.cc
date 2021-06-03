@@ -35,8 +35,6 @@ int GeoDistanceQueryProcess::ParseContent(int logic_type){
         }
     }
 
-    // component_->SetGeoPoint(o_geo_point_);
-
     GeoPoint geo;
     geo.lon = atof(o_geo_point_.sLongtitude.c_str());
     geo.lat = atof(o_geo_point_.sLatitude.c_str());

@@ -36,7 +36,7 @@ public:
     void InitSwitch();
 
     const std::vector<std::vector<FieldInfo> >& OrKeys();
-    const std::vector<std::vector<FieldInfo> >& AndKeys();
+    std::vector<std::vector<FieldInfo> >& AndKeys();
     const std::vector<std::vector<FieldInfo> >& InvertKeys();
     const std::vector<ExtraFilterKey>& ExtraFilterOrKeys();
     const std::vector<ExtraFilterKey>& ExtraFilterAndKeys();

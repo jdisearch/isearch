@@ -24,6 +24,9 @@ private:
     int ParseRequest(const Json::Value& request, int logic_type);
     int InitQueryProcess(uint32_t type , const Json::Value& value);
     void InitQueryMember();
+    void HandleUnifiedIndex();
+    void GetKeyFromFieldInfo(const std::vector<FieldInfo>& field_info_vec, std::vector<std::string>& key_vec);
+    std::vector<std::string> Combination(std::vector<std::vector<std::string> >& dimensionalArr);
 
 private:
     std::map<int , QueryProcess*> query_process_map_;

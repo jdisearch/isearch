@@ -43,6 +43,58 @@ void BoolQueryProcess::InitQueryMember(){
     }
 }
 
+void BoolQueryProcess::HandleUnifiedIndex(){
+    std::vector<std::vector<FieldInfo> >& and_keys = component_->AndKeys();
+
+    std::map<uint32_t , std::vector<FieldInfo> > fieldid_fieldinfos_map;
+    std::vector<std::vector<FieldInfo> >::iterator iter = and_keys.begin();
+    for (; iter != and_keys.end(); ++iter){
+        fieldid_fieldinfos_map.insert(std::make_pair(((*iter)[0]).field , *iter));
+    }
+    component_->AndKeys().clear();
+
+    std::vector<std::string> union_key_vec;
+    DBManager::Instance()->GetUnionKeyField(component_->Appid() , union_key_vec);
+    std::vector<std::string>::iterator union_key_iter = union_key_vec.begin();
+    for(; union_key_iter != union_key_vec.end(); union_key_iter++){
+        std::string union_key = *union_key_iter;
+        std::vector<int> union_field_vec = splitInt(union_key, ",");
+        std::vector<int>::iterator union_field_iter = union_field_vec.begin();
+        bool hit_union_key = true;
+        for(; union_field_iter != union_field_vec.end(); union_field_iter++){
+            if(fieldid_fieldinfos_map.find(*union_field_iter) == fieldid_fieldinfos_map.end()){
+                hit_union_key = false;
+                break;
+            }
+        }
+        if(hit_union_key == true){
+            std::vector<std::vector<std::string> > keys_vvec;
+            std::vector<FieldInfo> unionFieldInfos;
+            for(union_field_iter = union_field_vec.begin(); union_field_iter != union_field_vec.end(); union_field_iter++){
+                std::vector<FieldInfo> field_info_vec = fieldid_fieldinfos_map.at(*union_field_iter);
+                std::vector<std::string> key_vec;
+                GetKeyFromFieldInfo(field_info_vec, key_vec);
+                keys_vvec.push_back(key_vec);
+                fieldid_fieldinfos_map.erase(*union_field_iter);  // 命中union_key的需要从fieldid_fieldinfos_map中删除
+            }
+            std::vector<std::string> union_keys = Combination(keys_vvec);
+            for(int m = 0 ; m < (int)union_keys.size(); m++){
+                FieldInfo info;
+                info.field = 0;
+                info.field_type = FIELD_STRING;
+                info.segment_tag = 1;
+                info.word = union_keys[m];
+                unionFieldInfos.push_back(info);
+            }
+            component_->AddToFieldList(ANDKEY, unionFieldInfos);
+        }
+    }
+    std::map<uint32_t, std::vector<FieldInfo> >::iterator field_key_map_iter = fieldid_fieldinfos_map.begin();
+    for(; field_key_map_iter != fieldid_fieldinfos_map.end(); field_key_map_iter++){
+        component_->AddToFieldList(ANDKEY, field_key_map_iter->second);
+    }
+}
+
 int BoolQueryProcess::ParseContent(){
     InitQueryMember();
     int ret = 0;
@@ -50,6 +102,7 @@ int BoolQueryProcess::ParseContent(){
         ret = ParseRequest(parse_value_[MUST] , ANDKEY);
         if (ret != 0) { return ret; }
     }
+    HandleUnifiedIndex();
     if (parse_value_.isMember(SHOULD)){
         ret = ParseRequest(parse_value_[SHOULD] , ORKEY);
         if (ret != 0) { return ret; }
@@ -196,4 +249,41 @@ int BoolQueryProcess::InitQueryProcess(uint32_t type , const Json::Value& value)
     query_process_map_[query_type]->SetParseJsonValue(parse_value);
     query_process_map_[query_type]->ParseContent(type);
     return 0;
+}
+
+void BoolQueryProcess::GetKeyFromFieldInfo(const std::vector<FieldInfo>& field_info_vec, std::vector<std::string>& key_vec){
+    std::vector<FieldInfo>::const_iterator iter = field_info_vec.cbegin();
+    for(; iter != field_info_vec.end(); iter++){
+        key_vec.push_back((*iter).word);
+    }
+}
+
+/*
+** 通过递归求出二维vector每一维vector中取一个数的各种组合
+** 输入：[[a],[b1,b2],[c1,c2,c3]]
+** 输出：[a_b1_c1,a_b1_c2,a_b1_c3,a_b2_c1,a_b2_c2,a_b2_c3]
+*/
+std::vector<std::string> BoolQueryProcess::Combination(std::vector<std::vector<std::string> >& dimensionalArr){
+    int FLength = dimensionalArr.size();
+    if(FLength >= 2){
+        int SLength1 = dimensionalArr[0].size();
+        int SLength2 = dimensionalArr[1].size();
+        int DLength = SLength1 * SLength2;
+        std::vector<std::string> temporary(DLength);
+        int index = 0;
+        for(int i = 0; i < SLength1; i++){
+            for (int j = 0; j < SLength2; j++) {
+                temporary[index] = dimensionalArr[0][i] +"_"+ dimensionalArr[1][j];
+                index++;
+            }
+        }
+        std::vector<std::vector<std::string> > new_arr;
+        new_arr.push_back(temporary);
+        for(int i = 2; i < (int)dimensionalArr.size(); i++){
+            new_arr.push_back(dimensionalArr[i]);
+        }
+        return Combination(new_arr);
+    } else {
+        return dimensionalArr[0];
+    }
 }

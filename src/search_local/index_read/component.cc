@@ -195,7 +195,7 @@ const std::vector<std::vector<FieldInfo> >& Component::OrKeys(){
     return or_keys_;
 }
 
-const std::vector<std::vector<FieldInfo> >& Component::AndKeys(){
+std::vector<std::vector<FieldInfo> >& Component::AndKeys(){
     return and_keys_;
 }
 
