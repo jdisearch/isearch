@@ -69,33 +69,13 @@ int SearchTask::Process(CTaskRequest *request)
     if(query.isObject()){
         if(query.isMember(MATCH)){
             query_process_ = new MatchQueryProcess(query[MATCH]);
-        } else {
-            log_error("Match query init error.");
-            return -RT_PARSE_JSON_ERR;
-        }
-
-        if(query.isMember(TERM)){
+        }else if(query.isMember(TERM)){
             query_process_ = new TermQueryProcess(query[TERM]);
-        } else {
-            log_error("Match query init error.");
-            return -RT_PARSE_JSON_ERR;
-        }
-
-        if (query.isMember(GEODISTANCE)){
+        }else if (query.isMember(GEODISTANCE)){
             query_process_ = new GeoDistanceQueryProcess(query[GEODISTANCE]);
-        }else{
-            log_error("GeoDistance query init error.");
-            return -RT_PARSE_JSON_ERR;
-        }
-
-        if (query.isMember(GEOSHAPE)){
+        }else if (query.isMember(GEOSHAPE)){
             query_process_ = new GeoShapeQueryProcess(query[GEOSHAPE]);
-        }else{
-            log_error("GeoShape query init error.");
-            return -RT_PARSE_JSON_ERR;
-        }
-
-        if (query.isMember(RANGE)){
+        }else if (query.isMember(RANGE)){
             if (component_->TerminalTag()){
                 query_process_ = RangeQueryGenerator::Instance()->GetRangeQueryProcess(E_INDEX_READ_RANGE_PRE_TERM 
                                         , query[RANGE]);
@@ -103,15 +83,10 @@ int SearchTask::Process(CTaskRequest *request)
                 query_process_ = RangeQueryGenerator::Instance()->GetRangeQueryProcess(E_INDEX_READ_RANGE 
                                         , query[RANGE]);
             }
-        }else{
-            log_error("Range query init error.");
-            return -RT_PARSE_JSON_ERR;
-        }
-
-        if (query.isMember(BOOL)){
+        }else if (query.isMember(BOOL)){
             query_process_ = new BoolQueryProcess(query[BOOL]);
         }else{
-            log_error("Bool query init error.");
+            log_error("no suit query process.");
             return -RT_PARSE_JSON_ERR;
         }
         
