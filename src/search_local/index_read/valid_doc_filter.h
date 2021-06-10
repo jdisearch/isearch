@@ -52,7 +52,7 @@ public:
             , std::set<std::string>& highlightWord, std::map<std::string, KeyInfoVet>& docid_keyinfo_map
             , std::map<std::string, uint32_t>& key_doccount_map);
 
-    int PureTextInvertIndexSearch(const std::vector<std::vector<FieldInfo> >& keys
+    int HanPinTextInvertIndexSearch(const std::vector<std::vector<FieldInfo> >& keys
                     , std::vector<IndexInfo>& index_info_vet 
                     , std::set<std::string>& highlightWord
                     , std::map<std::string, KeyInfoVet>& docid_keyinfo_map);
@@ -60,7 +60,7 @@ public:
     int RangeQueryInvertIndexSearch(const std::vector<std::vector<FieldInfo> >& keys
                     , std::vector<IndexInfo>& index_info_vet);
 
-    int MixTextInvertIndexSearch(const std::vector<std::vector<FieldInfo> >& keys
+    int TextInvertIndexSearch(const std::vector<std::vector<FieldInfo> >& keys
                     , std::vector<IndexInfo>& index_info_vet
                     , std::set<std::string>& highlightWord
                     , std::map<std::string, KeyInfoVet>& docid_keyinfo_map

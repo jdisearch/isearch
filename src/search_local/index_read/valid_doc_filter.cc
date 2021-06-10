@@ -275,12 +275,12 @@ int ValidDocFilter::Process(const std::vector<std::vector<FieldInfo> >& keys, st
     return 0;
 }
 
-int ValidDocFilter::PureTextInvertIndexSearch(const std::vector<std::vector<FieldInfo> >& keys
+int ValidDocFilter::HanPinTextInvertIndexSearch(const std::vector<std::vector<FieldInfo> >& keys
                     , std::vector<IndexInfo>& index_info_vet
                     , std::set<std::string>& highlightWord
                     , std::map<std::string, KeyInfoVet>& docid_keyinfo_map){
         if (keys.empty() || keys.size() > 1){
-            return -RT_GET_DOC_ERR;
+            return -RT_GET_FIELD_ERROR;
         }
         const std::vector<FieldInfo>& key_field_info_vet = keys[0];
         std::vector<FieldInfo>::const_iterator iter = key_field_info_vet.cbegin();
@@ -350,13 +350,13 @@ int ValidDocFilter::RangeQueryInvertIndexSearch(const std::vector<std::vector<Fi
         return 0;
 }
 
-int ValidDocFilter::MixTextInvertIndexSearch(const std::vector<std::vector<FieldInfo> >& keys
+int ValidDocFilter::TextInvertIndexSearch(const std::vector<std::vector<FieldInfo> >& keys
                     , std::vector<IndexInfo>& index_info_vet
                     , std::set<std::string>& highlightWord
                     , std::map<std::string, KeyInfoVet>& docid_keyinfo_map
                     , std::map<std::string, uint32_t>& key_doccount_map){
         if (keys.empty() || keys.size() > 1){
-            return -RT_GET_DOC_ERR;
+            return -RT_GET_FIELD_ERROR;
         }
         const std::vector<FieldInfo>& key_field_info_vet = keys[0];
         std::vector<FieldInfo>::const_iterator iter = key_field_info_vet.cbegin();

@@ -2,26 +2,20 @@
 #include <assert.h>
 #include "../valid_doc_filter.h"
 #include "../order_op.h"
-#include "../result_cache.h"
-#include "cachelist_unit.h"
-
-extern CCacheListUnit* cachelist;
 
 QueryProcess::QueryProcess(const Json::Value& value)
     : component_(NULL)
     , doc_manager_(NULL)
     , request_(NULL)
     , parse_value_(value)
-    , skipList_()
+    , scoredocid_set_()
     , response_()
     , valid_docs_()
     , high_light_word_()
     , docid_keyinfovet_map_()
     , key_doccount_map_()
     , sort_field_type_()
-{
-    skipList_.InitList();
-}
+{ }
 
 QueryProcess::~QueryProcess()
 { }
@@ -73,13 +67,13 @@ int QueryProcess::GetScore()
 {
     switch (component_->SortType())
     {
-    case SORT_RELEVANCE:
+    case SORT_RELEVANCE: // 按照相关度得分，并以此排序
         {
             // 范围查的时候如果不指定排序类型，需要在这里对skipList进行赋值
-            if (docid_keyinfovet_map_.empty() && skipList_.GetSize() == 0) {
+            if (docid_keyinfovet_map_.empty() && scoredocid_set_.empty()) {
                 std::set<std::string>::iterator iter = valid_docs_.begin();
                 for(; iter != valid_docs_.end(); iter++){
-                    skipList_.InsertNode(1, (*iter).c_str());
+                    scoredocid_set_.insert(ScoreDocIdNode(1,*iter));
                 }
                 break;
             }
@@ -101,11 +95,11 @@ int QueryProcess::GetScore()
                     score += log((DOC_CNT - ui_doc_count + 0.5) / (ui_doc_count + 0.5)) * ((D_BM25_K1 + 1)*ui_word_freq)  \
                             / (D_BM25_K + ui_word_freq) * (D_BM25_K2 + 1) * 1 / (D_BM25_K2 + 1);
                 }
-                skipList_.InsertNode(score, doc_id.c_str());
+                scoredocid_set_.insert(ScoreDocIdNode(score , doc_id));
             }
         }
         break;
-    case SORT_TIMESTAMP:
+    case SORT_TIMESTAMP: // 按照时间戳得分，并以此排序
         {
             std::map<std::string, KeyInfoVet>::iterator docid_keyinfovet_iter = docid_keyinfovet_map_.begin();
             for (; docid_keyinfovet_iter != docid_keyinfovet_map_.end(); ++ docid_keyinfovet_iter){
@@ -121,20 +115,20 @@ int QueryProcess::GetScore()
                 }
 
                 double score = (double)key_info[0].created_time;
-                skipList_.InsertNode(score, doc_id.c_str());
+                scoredocid_set_.insert(ScoreDocIdNode(score , doc_id));
             }
         }
         break;
-    case DONT_SORT:
+    case DONT_SORT: // 不排序，docid有序
         {
             std::set<std::string>::iterator valid_docs_iter = valid_docs_.begin();
             for(; valid_docs_iter != valid_docs_.end(); valid_docs_iter++){
                 std::string doc_id = *valid_docs_iter;
-                skipList_.InsertNode(1, doc_id.c_str());
+                scoredocid_set_.insert(ScoreDocIdNode(1 , doc_id));
             }
         }
         break;
-    case SORT_FIELD_ASC:
+    case SORT_FIELD_ASC: // 按照指定字段进行升降排序
     case SORT_FIELD_DESC:
         {
             std::set<std::string>::iterator valid_docs_iter = valid_docs_.begin();
@@ -155,12 +149,10 @@ int QueryProcess::GetScore()
 void QueryProcess::SortScore(int& i_sequence , int& i_rank)
 {
     if ((SORT_FIELD_DESC == component_->SortType() || SORT_FIELD_ASC == component_->SortType())
-        && 0 == skipList_.GetSize()){
+        && scoredocid_set_.empty()){
         SortByCOrderOp(i_rank);
-    }else if(SORT_FIELD_ASC == component_->SortType()){
-        SortForwardBySkipList(i_sequence , i_rank);
-    }else{
-        SortBackwardBySkipList(i_sequence, i_rank);
+    }else{ // 默认降序，分高的在前（地理位置查询除外）
+        DescSort(i_sequence, i_rank);
     }
 }
 
@@ -190,61 +182,54 @@ void QueryProcess::SortByCOrderOp(int& i_rank)
     }
 }
 
-void QueryProcess::SortForwardBySkipList(int& i_sequence , int& i_rank)
+void QueryProcess::AscSort(int& i_sequence , int& i_rank)
 {
-    log_debug("m_has_gis, size:%d ", skipList_.GetSize());
-    SkipListNode* tmp = skipList_.GetHeader()->level[0].forward;
-
+    log_debug("m_has_gis, size:%d ", scoredocid_set_.size());
     int i_limit_start = component_->PageSize() * (component_->PageIndex() - 1);
     int i_limit_end = component_->PageSize() * component_->PageIndex() - 1;
 
-    while (tmp->level[0].forward != NULL) {
+    std::set<ScoreDocIdNode>::iterator iter = scoredocid_set_.begin();
+    for( ;iter != scoredocid_set_.end(); ++iter){
         // 通过extra_filter_keys进行额外过滤（针对区分度不高的字段）
-        if(doc_manager_->CheckDocByExtraFilterKey(tmp->value) == false){
-            log_debug("CheckDocByExtraFilterKey failed, %s", tmp->value);
-            tmp = tmp->level[0].forward;
+        if(doc_manager_->CheckDocByExtraFilterKey(iter->s_docid) == false){
+            log_debug("CheckDocByExtraFilterKey failed, %s", iter->s_docid);
             continue;
         }
         i_sequence ++;
         i_rank ++;
         if(component_->ReturnAll() == 0){
             if (i_sequence < i_limit_start || i_sequence > i_limit_end) {
-                tmp = tmp->level[0].forward;
                 continue;
             }
         }
         Json::Value doc_info;
-        doc_info["doc_id"] = Json::Value(tmp->value);
-        doc_info["score"] = Json::Value(tmp->key);
+        doc_info["doc_id"] = Json::Value(iter->s_docid);
+        doc_info["score"] = Json::Value(iter->d_score);
         response_["result"].append(doc_info);
-        tmp = tmp->level[0].forward;
     }
 }
 
-void QueryProcess::SortBackwardBySkipList(int& i_sequence , int& i_rank)
+void QueryProcess::DescSort(int& i_sequence , int& i_rank)
 {
     int i_limit_start = component_->PageSize() * (component_->PageIndex() - 1);
     int i_limit_end = component_->PageSize() * component_->PageIndex() - 1;
 
-    SkipListNode *tmp = skipList_.GetFooter()->backward;
-    while(tmp->backward != NULL) {
-        if(doc_manager_->CheckDocByExtraFilterKey(tmp->value) == false){
-            tmp = tmp->backward;
+    std::set<ScoreDocIdNode>::iterator riter = scoredocid_set_.rbegin();
+    for( ;riter != scoredocid_set_.rend(); ++riter){
+        if(doc_manager_->CheckDocByExtraFilterKey(riter->s_docid) == false){
             continue;
         }
         i_sequence++;
         i_rank++;
         if (component_->ReturnAll() == 0){
             if (i_sequence < i_limit_start || i_sequence > i_limit_end) {
-                tmp = tmp->backward;
                 continue;
             }
         }
         Json::Value doc_info;
-        doc_info["doc_id"] = Json::Value(tmp->value);
-        doc_info["score"] = Json::Value(tmp->key);
+        doc_info["doc_id"] = Json::Value(riter->s_docid);
+        doc_info["score"] = Json::Value(riter->d_score);
         response_["result"].append(doc_info);
-        tmp = tmp->backward;
     }
 }
 

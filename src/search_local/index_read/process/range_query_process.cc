@@ -106,15 +106,25 @@ int RangeQueryProcess::GetValidDoc()
 
 
 
-RangeQueryPreTerminal::RangeQueryPreTerminal(const Json::Value& value)
-    : RangeQueryProcess(value)
+PreTerminal::PreTerminal(const Json::Value& value)
+    : QueryProcess(value)
     , candidate_doc_()
 {}
 
-RangeQueryPreTerminal::~RangeQueryPreTerminal()
+PreTerminal::~PreTerminal()
 {}
 
-int RangeQueryPreTerminal::GetValidDoc(){
+int PreTerminal::ParseContent(int logic_type){
+    log_info("PreTerminal do not need parse content");
+    return 0;
+ }
+
+int PreTerminal::ParseContent(){
+    log_info("PreTerminal do not need parse content");
+    return 0;
+ }
+
+int PreTerminal::GetValidDoc(){
     uint32_t count = 0;
     uint32_t N = 2;
     uint32_t limit_start = 0;
@@ -162,12 +172,12 @@ int RangeQueryPreTerminal::GetValidDoc(){
     return 0;
 }
 
-int RangeQueryPreTerminal::GetScore(){
+int PreTerminal::GetScore(){
     log_info("RangeQueryPreTerminal do not need get score");
     return 0;
 }
 
-void RangeQueryPreTerminal::SetResponse(){
+void PreTerminal::SetResponse(){
     response_["code"] = 0;
     int sequence = -1;
     int rank = 0;

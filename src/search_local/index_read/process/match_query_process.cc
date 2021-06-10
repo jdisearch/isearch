@@ -62,8 +62,24 @@ int MatchQueryProcess::ParseContent(int logic_type){
 
 int MatchQueryProcess::GetValidDoc(){
     std::vector<IndexInfo> index_info_vet;
-    int iret = ValidDocFilter::Instance()->PureTextInvertIndexSearch(component_->OrKeys()
-                , index_info_vet , high_light_word_, docid_keyinfovet_map_);
+    if (component_->OrKeys().empty()){
+        return -RT_GET_FIELD_ERROR;
+    }
+
+    int iret = 0;
+    if (SEGMENT_DEFAULT == component_->OrKeys()[FIRST_TEST_INDEX][FIRST_SPLIT_WORD_INDEX].segment_tag){
+        iret = ValidDocFilter::Instance()->TextInvertIndexSearch(component_->OrKeys()
+                                                , index_info_vet
+                                                , high_light_word_
+                                                , docid_keyinfovet_map_
+                                                , key_doccount_map_);
+    }else{
+        iret = ValidDocFilter::Instance()->HanPinTextInvertIndexSearch(component_->OrKeys()
+                                                , index_info_vet 
+                                                , high_light_word_
+                                                , docid_keyinfovet_map_);
+    }
+    
     if (iret != 0) { return iret; }
 
     bool bRet = doc_manager_->GetDocContent(index_info_vet , valid_docs_);

@@ -18,9 +18,9 @@ BoolQueryProcess::BoolQueryProcess(const Json::Value& value)
     query_process_map_.insert(std::make_pair(E_INDEX_READ_TERM 
                     , new TermQueryProcess(parse_value_ )));
     query_process_map_.insert(std::make_pair(E_INDEX_READ_RANGE
-                    , RangeQueryGenerator::Instance()->GetRangeQueryProcess(E_INDEX_READ_RANGE , parse_value_)));
-    query_process_map_.insert(std::make_pair(E_INDEX_READ_RANGE_PRE_TERM 
-                    , RangeQueryGenerator::Instance()->GetRangeQueryProcess(E_INDEX_READ_RANGE_PRE_TERM , parse_value_)));
+                    , new RangeQueryProcess(parse_value_ )));
+    query_process_map_.insert(std::make_pair(E_INDEX_READ_PRE_TERM 
+                    , new PreTerminal(parse_value_ )));
 }
 
 BoolQueryProcess::~BoolQueryProcess()
@@ -122,7 +122,7 @@ int BoolQueryProcess::ParseContent(int logic_type){
 int BoolQueryProcess::GetValidDoc(){
     bool bRet = false;
     if (component_->TerminalTag()){
-        range_query_pre_term_ = dynamic_cast<RangeQueryPreTerminal*>(query_process_map_[E_INDEX_READ_RANGE_PRE_TERM]);
+        range_query_pre_term_ = dynamic_cast<PreTerminal*>(query_process_map_[E_INDEX_READ_PRE_TERM]);
         if (range_query_pre_term_ != NULL){
             return range_query_pre_term_->GetValidDoc();
         }
@@ -230,7 +230,7 @@ int BoolQueryProcess::InitQueryProcess(uint32_t type , const Json::Value& value)
     } else if(value.isMember(RANGE)){
         parse_value = parse_value_[RANGE];
         if (component_->TerminalTag()){
-            query_type = E_INDEX_READ_RANGE_PRE_TERM;
+            query_type = E_INDEX_READ_PRE_TERM;
             
         }else{
             query_type = E_INDEX_READ_RANGE;

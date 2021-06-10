@@ -4,7 +4,7 @@
 #include "query_process.h"
 
 class RangeQueryProcess;
-class RangeQueryPreTerminal;
+class PreTerminal;
 class GeoDistanceQueryProcess;
 
 class BoolQueryProcess : public QueryProcess{
@@ -31,7 +31,7 @@ private:
 private:
     std::map<int , QueryProcess*> query_process_map_;
     RangeQueryProcess* range_query_;
-    RangeQueryPreTerminal* range_query_pre_term_;
+    PreTerminal* range_query_pre_term_;
     GeoDistanceQueryProcess* geo_distance_query_;
 };
 

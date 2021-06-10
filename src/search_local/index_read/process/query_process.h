@@ -47,7 +47,7 @@ enum E_INDEX_READ_QUERY_PROCESS{
     E_INDEX_READ_MATCH,
     E_INDEX_READ_TERM,
     E_INDEX_READ_RANGE,
-    E_INDEX_READ_RANGE_PRE_TERM
+    E_INDEX_READ_PRE_TERM
 };
 
 class QueryProcess{
@@ -81,8 +81,8 @@ protected:
 
 protected:
     void SortByCOrderOp(int& i_rank);
-    void SortForwardBySkipList(int& i_sequence , int& i_rank);
-    void SortBackwardBySkipList(int& i_sequence , int& i_rank);
+    void AscSort(int& i_sequence , int& i_rank);
+    void DescSort(int& i_sequence , int& i_rank);
     void AppendHighLightWord();
 
 protected:
@@ -91,7 +91,7 @@ protected:
     CTaskRequest* request_;
 
     Json::Value parse_value_;
-    SkipList skipList_;
+    std::set<ScoreDocIdNode> scoredocid_set_;
     Json::Value response_;
 
     ValidDocSet valid_docs_;

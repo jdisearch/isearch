@@ -57,7 +57,7 @@ set<string> sets_intersection(set<string> v1, set<string> v2); // 集合求交�
 set<string> sets_union(set<string> v1, set<string> v2); // 集合求并集
 set<string> sets_difference(set<string> v1, set<string> v2); // 集合求差集
 double strToDouble(const string& str);
-bool GetGisDistance(uint32_t appid, const string& latLeft, const string& lngLeft, hash_double_map& distances, hash_string_map& doc_content);
+bool GetGisDistance(uint32_t appid, const string& Latitude, const string& Longtitude, hash_double_map& distances, hash_string_map& doc_content);
 void ConvertCharIntelligent(const string word, IntelligentInfo &info, int &len);
 void ConvertIntelligent(const vector<Content> &result, IntelligentInfo &info, bool &flag);
 bool GetGisCode(string lng, string lat, string ip, double distance, vector<string>& gisCode);

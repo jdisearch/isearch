@@ -69,7 +69,7 @@ int GeoDistanceQueryProcess::ParseContent(int logic_type){
 
 int GeoDistanceQueryProcess::GetValidDoc(){
     std::vector<IndexInfo> index_info_vet;
-    int iret = ValidDocFilter::Instance()->MixTextInvertIndexSearch(component_->AndKeys(), index_info_vet 
+    int iret = ValidDocFilter::Instance()->TextInvertIndexSearch(component_->AndKeys(), index_info_vet 
             , high_light_word_, docid_keyinfovet_map_ , key_doccount_map_);
     if (iret != 0) { return iret; }
 
@@ -86,6 +86,8 @@ int GeoDistanceQueryProcess::GetScore(){
     {
     case SORT_RELEVANCE:
     case SORT_TIMESTAMP:
+    case SORT_FIELD_ASC:
+    case SORT_FIELD_DESC:
         {
             hash_double_map::iterator dis_iter = o_distance_.begin();
             for(; dis_iter != o_distance_.end(); ++dis_iter){
@@ -93,17 +95,23 @@ int GeoDistanceQueryProcess::GetScore(){
                 double score = dis_iter->second;
                 if ((o_geo_point_.d_distance > -0.0001 && o_geo_point_.d_distance < 0.0001) 
                     || (score + 1e-6 <= o_geo_point_.d_distance)){
-                    skipList_.InsertNode(score, doc_id.c_str());
+                    scoredocid_set_.insert(ScoreDocIdNode(score , doc_id));
                 }
             }
         }
         break;
     case DONT_SORT:
-    case SORT_FIELD_ASC:
-    case SORT_FIELD_DESC:
         {
-            // do nothing
+            hash_double_map::iterator dis_iter = o_distance_.begin();
+            for(; dis_iter != o_distance_.end(); ++dis_iter){
+                std::string doc_id = dis_iter->first;
+                if ((o_geo_point_.d_distance > -0.0001 && o_geo_point_.d_distance < 0.0001) 
+                    || (dis_iter->second + 1e-6 <= o_geo_point_.d_distance)){
+                    scoredocid_set_.insert(ScoreDocIdNode(1 , doc_id));
+                }
+            }
         }
+        break;
     default:
         break;
     }
@@ -113,5 +121,10 @@ int GeoDistanceQueryProcess::GetScore(){
 
 void GeoDistanceQueryProcess::SortScore(int& i_sequence , int& i_rank)
 {
-    SortForwardBySkipList(i_sequence , i_rank);
+    // 默认升序，距离近在前
+    if (SORT_FIELD_ASC == component_->SortType()){
+        AscSort(i_sequence , i_rank);
+    }else { // 降序和不排序处理
+        DescSort(i_sequence , i_rank);
+    }
 }

@@ -21,6 +21,9 @@
 
 #include "query_process.h"
 
+#define FIRST_TEST_INDEX 0
+#define FIRST_SPLIT_WORD_INDEX 0
+
 class MatchQueryProcess: public QueryProcess{
 public:
     MatchQueryProcess(const Json::Value& value);

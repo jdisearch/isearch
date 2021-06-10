@@ -48,7 +48,7 @@ int TermQueryProcess::ParseContent(int logic_type){
 
 int TermQueryProcess::GetValidDoc(){
     std::vector<IndexInfo> index_info_vet;
-    int iret = ValidDocFilter::Instance()->MixTextInvertIndexSearch(component_->OrKeys()
+    int iret = ValidDocFilter::Instance()->TextInvertIndexSearch(component_->OrKeys()
                 , index_info_vet , high_light_word_, docid_keyinfovet_map_ , key_doccount_map_);
     if (iret != 0) { return iret; }
 

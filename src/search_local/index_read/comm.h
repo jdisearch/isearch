@@ -25,6 +25,7 @@
 #include <tr1/unordered_map>
 #include <limits.h>
 #include <map>
+#include <cmath>
 
 #define DOC_CNT 10000
 #define MAX_DOCID_LENGTH 32
@@ -36,6 +37,8 @@ const double D_BM25_K2 = 200;
 const uint32_t MAX_SEARCH_LEN = 60;
 const uint32_t SINGLE_WORD_LEN = 18;
 const uint32_t MAX_VALUE_LEN = 51200;
+
+const double DOUBLE_EPS = 1e-3;
 
 typedef std::tr1::unordered_map<std::string, double> hash_double_map;
 typedef std::tr1::unordered_map<std::string, std::string> hash_string_map;
@@ -91,20 +94,20 @@ enum SORTTYPE {
 };
 
 enum FieldType{
-	FIELD_INT = 1,
-	FIELD_STRING,
-	FIELD_TEXT,
-	FIELD_IP,
-	FIELD_LNG,
-	FIELD_LAT,
-	FIELD_GIS,
-	FIELD_DISTANCE,
-	FIELD_DOUBLE,
-	FIELD_LONG,
-	FIELD_INDEX = 11,
-	FIELD_LNG_ARRAY,
-	FIELD_LAT_ARRAY,
-	FIELD_WKT,
+    FIELD_INT = 1,
+    FIELD_STRING = 2,
+    FIELD_TEXT = 3,
+    FIELD_IP = 4,
+    FIELD_GEO_POINT = 5,
+    FIELD_LAT = 6,
+    FIELD_GIS = 7,
+    FIELD_DISTANCE = 8,
+    FIELD_DOUBLE = 9,
+    FIELD_LONG = 10,
+    FIELD_INDEX = 11,
+    FIELD_LNG_ARRAY = 12,
+    FIELD_LAT_ARRAY = 13,
+    FIELD_GEO_SHAPE = 14
 };
 
 enum SEGMENTTAG {
@@ -249,6 +252,23 @@ enum KeyType
 	ORKEY,
 	ANDKEY,
 	INVERTKEY,
+};
+
+struct ScoreDocIdNode{
+	double d_score;
+	std::string s_docid;
+
+	ScoreDocIdNode(double score , std::string docid)
+		: d_score(score)
+		, s_docid(docid)
+	{ }
+	
+	bool operator<(const ScoreDocIdNode& score_docid_node) const {
+		if (fabs(d_score - score_docid_node.d_score) < DOUBLE_EPS){
+			return s_docid.compare(score_docid_node.s_docid) < 0;
+		}
+		return (d_score + DOUBLE_EPS) < score_docid_node.d_score;
+	}
 };
 
 struct IndexInfo {
