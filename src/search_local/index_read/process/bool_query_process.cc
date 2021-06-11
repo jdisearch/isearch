@@ -68,22 +68,22 @@ void BoolQueryProcess::HandleUnifiedIndex(){
             }
         }
         if(hit_union_key == true){
-            std::vector<std::vector<std::string> > keys_vvec;
+            std::vector<std::vector<MemCompUnionNode> > keys_vvec;
             std::vector<FieldInfo> unionFieldInfos;
             for(union_field_iter = union_field_vec.begin(); union_field_iter != union_field_vec.end(); union_field_iter++){
                 std::vector<FieldInfo> field_info_vec = fieldid_fieldinfos_map.at(*union_field_iter);
-                std::vector<std::string> key_vec;
+                std::vector<MemCompUnionNode> key_vec;
                 GetKeyFromFieldInfo(field_info_vec, key_vec);
                 keys_vvec.push_back(key_vec);
                 fieldid_fieldinfos_map.erase(*union_field_iter);  // 命中union_key的需要从fieldid_fieldinfos_map中删除
             }
-            std::vector<std::string> union_keys = Combination(keys_vvec);
+            std::vector<MemCompUnionNode> union_keys = Combination(keys_vvec);
             for(int m = 0 ; m < (int)union_keys.size(); m++){
                 FieldInfo info;
                 info.field = 0;
-                info.field_type = FIELD_STRING;
-                info.segment_tag = 1;
-                info.word = union_keys[m];
+                info.field_type = FIELD_INDEX;
+                info.segment_tag = SEGMENT_DEFAULT;
+                info.word = union_keys[m].s_key;
                 unionFieldInfos.push_back(info);
             }
             component_->AddToFieldList(ANDKEY, unionFieldInfos);
@@ -251,10 +251,10 @@ int BoolQueryProcess::InitQueryProcess(uint32_t type , const Json::Value& value)
     return 0;
 }
 
-void BoolQueryProcess::GetKeyFromFieldInfo(const std::vector<FieldInfo>& field_info_vec, std::vector<std::string>& key_vec){
+void BoolQueryProcess::GetKeyFromFieldInfo(const std::vector<FieldInfo>& field_info_vec, std::vector<MemCompUnionNode>& key_vec){
     std::vector<FieldInfo>::const_iterator iter = field_info_vec.cbegin();
     for(; iter != field_info_vec.end(); iter++){
-        key_vec.push_back((*iter).word);
+        key_vec.push_back(MemCompUnionNode(iter->field_type , iter->word));
     }
 }
 
@@ -263,21 +263,27 @@ void BoolQueryProcess::GetKeyFromFieldInfo(const std::vector<FieldInfo>& field_i
 ** 输入：[[a],[b1,b2],[c1,c2,c3]]
 ** 输出：[a_b1_c1,a_b1_c2,a_b1_c3,a_b2_c1,a_b2_c2,a_b2_c3]
 */
-std::vector<std::string> BoolQueryProcess::Combination(std::vector<std::vector<std::string> >& dimensionalArr){
+std::vector<MemCompUnionNode> BoolQueryProcess::Combination(std::vector<std::vector<MemCompUnionNode> >& dimensionalArr){
     int FLength = dimensionalArr.size();
     if(FLength >= 2){
         int SLength1 = dimensionalArr[0].size();
         int SLength2 = dimensionalArr[1].size();
         int DLength = SLength1 * SLength2;
-        std::vector<std::string> temporary(DLength);
+        std::vector<MemCompUnionNode> temporary(DLength);
         int index = 0;
         for(int i = 0; i < SLength1; i++){
             for (int j = 0; j < SLength2; j++) {
-                temporary[index] = dimensionalArr[0][i] +"_"+ dimensionalArr[1][j];
+                KeyFormat::UnionKey o_keyinfo_vet;
+                o_keyinfo_vet.push_back(std::make_pair(dimensionalArr[0][i].ui_field_type , dimensionalArr[0][i].s_key));
+                o_keyinfo_vet.push_back(std::make_pair(dimensionalArr[1][j].ui_field_type , dimensionalArr[1][j].s_key));
+                std::string s_format_key = KeyFormat::Encode(o_keyinfo_vet);
+
+                temporary[index].s_key = s_format_key;
+                temporary[index].ui_field_type = FIELD_STRING;
                 index++;
             }
         }
-        std::vector<std::vector<std::string> > new_arr;
+        std::vector<std::vector<MemCompUnionNode> > new_arr;
         new_arr.push_back(temporary);
         for(int i = 2; i < (int)dimensionalArr.size(); i++){
             new_arr.push_back(dimensionalArr[i]);

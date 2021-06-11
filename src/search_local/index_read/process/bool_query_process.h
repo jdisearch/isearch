@@ -7,6 +7,16 @@ class RangeQueryProcess;
 class PreTerminal;
 class GeoDistanceQueryProcess;
 
+struct MemCompUnionNode{
+    uint32_t ui_field_type;
+    std::string s_key;
+
+    MemCompUnionNode(uint32_t field_type , std::string key)
+        : ui_field_type(field_type)
+        , s_key(key)
+    { }
+};
+
 class BoolQueryProcess : public QueryProcess{
 public:
     BoolQueryProcess(const Json::Value& value);
@@ -25,8 +35,8 @@ private:
     int InitQueryProcess(uint32_t type , const Json::Value& value);
     void InitQueryMember();
     void HandleUnifiedIndex();
-    void GetKeyFromFieldInfo(const std::vector<FieldInfo>& field_info_vec, std::vector<std::string>& key_vec);
-    std::vector<std::string> Combination(std::vector<std::vector<std::string> >& dimensionalArr);
+    void GetKeyFromFieldInfo(const std::vector<FieldInfo>& field_info_vec, std::vector<MemCompUnionNode>& key_vec);
+    std::vector<MemCompUnionNode> Combination(std::vector<std::vector<MemCompUnionNode> >& dimensionalArr);
 
 private:
     std::map<int , QueryProcess*> query_process_map_;

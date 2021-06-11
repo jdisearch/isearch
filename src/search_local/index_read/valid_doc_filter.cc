@@ -27,6 +27,7 @@
 #include "index_sync/sync_index_timer.h"
 #include "index_sync/sequence_search_index.h"
 #include "stem.h"
+#include "key_format.h"
 #include <sstream>
 #include <iomanip>
 
@@ -275,6 +276,7 @@ int ValidDocFilter::Process(const std::vector<std::vector<FieldInfo> >& keys, st
     return 0;
 }
 
+//汉拼无需memcomparable format
 int ValidDocFilter::HanPinTextInvertIndexSearch(const std::vector<std::vector<FieldInfo> >& keys
                     , std::vector<IndexInfo>& index_info_vet
                     , std::set<std::string>& highlightWord
@@ -523,26 +525,23 @@ int ValidDocFilter::GetDocIdSetByWord(FieldInfo fieldInfo, std::vector<IndexInfo
     std::stringstream ss_key;
     ss_key << p_data_base_->Appid();
     ss_key << "#00#";
-    if(fieldInfo.segment_tag == 5){
-        std::stringstream ss;
-        ss << setw(20) << setfill('0') << fieldInfo.word;
-        ss_key << ss.str();
-    }
-    else if (fieldInfo.field_type == FIELD_INT || fieldInfo.field_type == FIELD_DOUBLE || fieldInfo.field_type == FIELD_LONG) {
-        ss_key << fieldInfo.word;
-    }
-    else if (fieldInfo.field_type == FIELD_IP) {
+
+    if (FIELD_IP == fieldInfo.field_type) {
         uint32_t word_id = GetIpNum(fieldInfo.word);
-        if (word_id == 0)
-            return 0;
-        ss_key << word_id;
+        if (word_id == 0) { return 0; }
+        std::stringstream stream_ip;
+        stream_ip << word_id;
+        fieldInfo.word = stream_ip.str();
     }
-    else if (fieldInfo.word.find("_") != string::npos) { // 联合索引
+    
+    // 联合索引MemFormat在拼接的时候已经完成，此处无需再次编码
+    if(FIELD_INDEX == fieldInfo.field_type){
         ss_key << fieldInfo.word;
-    }
-    else {
-        std::string word_new = stem(fieldInfo.word);
-        ss_key << word_new;
+    }else {
+        KeyFormat::UnionKey o_keyinfo_vet;
+        o_keyinfo_vet.push_back(std::make_pair(fieldInfo.field_type , fieldInfo.word));
+        std::string s_format_key = KeyFormat::Encode(o_keyinfo_vet);
+        ss_key << s_format_key;
     }
 
     log_debug("appid [%u], key[%s]", p_data_base_->Appid(), ss_key.str().c_str());
