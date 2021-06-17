@@ -56,4 +56,7 @@ void CustomSegment::ConcreteSplit(iutf8string& phrase, uint32_t appid, vector<st
             tmp = "";
         }
     }
+    if(tmp != ""){
+        vec.push_back(tmp);
+    }
 }

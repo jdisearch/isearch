@@ -24,14 +24,14 @@ void FmmSegment::ConcreteSplit(iutf8string& phrase, uint32_t appid, vector<strin
             iutf8string key = phrase_sub.utf8substr(0, j);
             if (wordValid(key.stlstring(), appid) == true) {
                 fmm_list.push_back(key.stlstring());
-                i += key.length() - 1;
+                i += key.length();
                 break;
             }
         }
         if (j == 1) {
             fmm_list.push_back(phrase_sub[0]);
+            i++;
         }
-        i += 1;
     }
     return;
 }
