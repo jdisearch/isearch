@@ -13,12 +13,34 @@ iutf8string::iutf8string(const char* str)
 	refresh();
 }
 
+iutf8string::iutf8string(const iutf8string& str){
+	data = str.stlstring();
+	refresh();
+}
+
+iutf8string& iutf8string::operator=(const iutf8string& str){
+	if(this != &str){
+		if(offerset != NULL){
+			delete[] offerset;
+			offerset = NULL;
+		}
+		data = str.stlstring();
+		refresh();
+	}
+	return *this;
+}
+
 iutf8string::~iutf8string()
 {
 	delete[] offerset;
 }
 
 string iutf8string::stlstring()
+{
+	return data;
+}
+
+string iutf8string::stlstring() const
 {
 	return data;
 }
