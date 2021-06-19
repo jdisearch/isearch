@@ -22,7 +22,7 @@
 #include "utf8_str.h"
 #include <sstream>
 
-Component::Component()
+RequestContext::RequestContext()
     : or_keys_()
     , and_keys_()
     , invert_keys_()
@@ -46,11 +46,11 @@ Component::Component()
     , has_gis_(false)
 { }
 
-Component::~Component(){
+RequestContext::~RequestContext(){
 
 }
 
-int Component::ParseJson(const char *sz_json, int json_len, Json::Value &recv_packet)
+int RequestContext::ParseJson(const char *sz_json, int json_len, Json::Value &recv_packet)
 {
     Json::Reader r(Json::Features::strictMode());
     int ret;
@@ -156,7 +156,7 @@ int Component::ParseJson(const char *sz_json, int json_len, Json::Value &recv_pa
     return 0;
 }
 
-void Component::InitSwitch()
+void RequestContext::InitSwitch()
 {
     AppInfo app_info;
     bool res = SearchConf::Instance()->GetAppInfo(appid_, app_info);
@@ -166,7 +166,7 @@ void Component::InitSwitch()
     }
 }
 
-void Component::AddToFieldList(int type, vector<FieldInfo>& fields)
+void RequestContext::AddToFieldList(int type, vector<FieldInfo>& fields)
 {
     if (fields.size() == 0)
         return ;
@@ -180,7 +180,17 @@ void Component::AddToFieldList(int type, vector<FieldInfo>& fields)
     return ;
 }
 
-void Component::AddToExtraFieldList(int type , const ExtraFilterKey& extra_field){
+const std::vector<std::vector<FieldInfo> >& RequestContext::GetFieldList(int logic_type){
+    if (ORKEY == logic_type){
+        return or_keys_;
+    }else if (ANDKEY == logic_type){
+        return and_keys_;
+    }else if (INVERTKEY == logic_type){
+        return invert_keys_;
+    }
+}
+
+void RequestContext::AddToExtraFieldList(int type , const ExtraFilterKey& extra_field){
     if (ORKEY == type){
         extra_filter_or_keys_.push_back(extra_field);
     }else if (ANDKEY == type){
@@ -191,81 +201,81 @@ void Component::AddToExtraFieldList(int type , const ExtraFilterKey& extra_field
     return;
 }
 
-const std::vector<std::vector<FieldInfo> >& Component::OrKeys(){
+const std::vector<std::vector<FieldInfo> >& RequestContext::OrKeys(){
     return or_keys_;
 }
 
-std::vector<std::vector<FieldInfo> >& Component::AndKeys(){
+std::vector<std::vector<FieldInfo> >& RequestContext::AndKeys(){
     return and_keys_;
 }
 
-const std::vector<std::vector<FieldInfo> >& Component::InvertKeys(){
+const std::vector<std::vector<FieldInfo> >& RequestContext::InvertKeys(){
     return invert_keys_;
 }
 
-const std::vector<ExtraFilterKey>& Component::ExtraFilterOrKeys(){
+const std::vector<ExtraFilterKey>& RequestContext::ExtraFilterOrKeys(){
     return extra_filter_or_keys_;
 }
 
-const std::vector<ExtraFilterKey>& Component::ExtraFilterAndKeys(){
+const std::vector<ExtraFilterKey>& RequestContext::ExtraFilterAndKeys(){
     return extra_filter_and_keys_;
 }
 
-const std::vector<ExtraFilterKey>& Component::ExtraFilterInvertKeys(){
+const std::vector<ExtraFilterKey>& RequestContext::ExtraFilterInvertKeys(){
     return extra_filter_invert_keys_;
 }
 
-uint32_t Component::Appid(){
+uint32_t RequestContext::Appid(){
     return appid_;
 }
 
-uint32_t Component::SortType(){
+uint32_t RequestContext::SortType(){
     return sort_type_;
 }
 
-uint32_t Component::PageIndex(){
+uint32_t RequestContext::PageIndex(){
     return page_index_;
 }
-uint32_t Component::PageSize(){
+uint32_t RequestContext::PageSize(){
     return page_size_;
 }
 
-uint32_t Component::ReturnAll(){
+uint32_t RequestContext::ReturnAll(){
     return return_all_;
 }
 
-uint32_t Component::CacheSwitch(){
+uint32_t RequestContext::CacheSwitch(){
     return cache_switch_;
 }
 
-uint32_t Component::SnapshotSwitch(){
+uint32_t RequestContext::SnapshotSwitch(){
     return snapshot_switch_;
 }
 
-string Component::SortField(){
+string RequestContext::SortField(){
     return sort_field_;
 }
 
-string Component::LastId(){
+string RequestContext::LastId(){
     return last_id_;
 }
 
-string Component::LastScore(){
+string RequestContext::LastScore(){
     return last_score_;
 }
 
-bool Component::SearchAfter(){
+bool RequestContext::SearchAfter(){
     return search_after_;
 }
 
-vector<string>& Component::RequiredFields(){
+vector<string>& RequestContext::RequiredFields(){
     return required_fields_;
 }
 
-uint32_t Component::TerminalTag(){
+uint32_t RequestContext::TerminalTag(){
     return preterminal_tag_;
 }
 
-Json::Value& Component::GetQuery(){
+Json::Value& RequestContext::GetQuery(){
     return query_value_;
 }

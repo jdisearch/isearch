@@ -29,8 +29,10 @@ int MatchQueryProcess::ParseContent(int logic_type){
         log_error("MatchQueryProcess error, value is null");
         return -RT_PARSE_CONTENT_ERROR;
     }
-    uint32_t segment_tag = SEGMENT_NONE;
     FieldInfo fieldInfo;
+    fieldInfo.query_type = E_INDEX_READ_MATCH;
+
+    uint32_t segment_tag = SEGMENT_NONE;
     uint32_t uiRet = DBManager::Instance()->GetWordField(segment_tag, component_->Appid()
             , fieldname, fieldInfo);
     if (uiRet != 0 && SEGMENT_DEFAULT == segment_tag)
@@ -39,12 +41,8 @@ int MatchQueryProcess::ParseContent(int logic_type){
         log_debug("split_data: %s", split_data.c_str());
         std::vector<std::string> split_datas = splitEx(split_data, "|");
         for(size_t index = 0; index < split_datas.size(); index++){
-            FieldInfo info;
-            info.field = fieldInfo.field;
-            info.field_type = fieldInfo.field_type;
-            info.word = split_datas[index];
-            info.segment_tag = fieldInfo.segment_tag;
-            fieldInfos.push_back(info);
+            fieldInfo.word = split_datas[index];
+            fieldInfos.push_back(fieldInfo);
         }
     }
     else if (uiRet != 0)
@@ -61,31 +59,28 @@ int MatchQueryProcess::ParseContent(int logic_type){
 }
 
 int MatchQueryProcess::GetValidDoc(){
-    std::vector<IndexInfo> index_info_vet;
-    if (component_->OrKeys().empty()){
-        return -RT_GET_FIELD_ERROR;
-    }
+    return GetValidDoc(ORKEY , component_->GetFieldList(ORKEY)[FIRST_TEST_INDEX]);
+}
 
+int MatchQueryProcess::GetValidDoc(int logic_type, const std::vector<FieldInfo>& keys){
+    std::vector<IndexInfo> index_info_vet;
     int iret = 0;
-    if (SEGMENT_DEFAULT == component_->OrKeys()[FIRST_TEST_INDEX][FIRST_SPLIT_WORD_INDEX].segment_tag){
-        iret = ValidDocFilter::Instance()->TextInvertIndexSearch(component_->OrKeys()
-                                                , index_info_vet
-                                                , high_light_word_
-                                                , docid_keyinfovet_map_
-                                                , key_doccount_map_);
-    }else{
-        iret = ValidDocFilter::Instance()->HanPinTextInvertIndexSearch(component_->OrKeys()
-                                                , index_info_vet 
-                                                , high_light_word_
-                                                , docid_keyinfovet_map_);
+    uint32_t segment_tag = keys[FIRST_SPLIT_WORD_INDEX].segment_tag;
+    if (SEGMENT_DEFAULT == segment_tag 
+        || SEGMENT_NONE == segment_tag){
+        iret = ValidDocFilter::Instance()->TextInvertIndexSearch(keys , index_info_vet);
+    }else if(SEGMENT_CHINESE == segment_tag 
+        || SEGMENT_ENGLISH == segment_tag){
+        iret = ValidDocFilter::Instance()->HanPinTextInvertIndexSearch(keys , index_info_vet);
     }
-    
     if (iret != 0) { return iret; }
 
-    bool bRet = doc_manager_->GetDocContent(index_info_vet , valid_docs_);
+    ValidDocSet valid_docs;
+    bool bRet = doc_manager_->GetDocContent(index_info_vet , valid_docs);
     if (false == bRet){
         log_error("GetDocContent error.");
         return -RT_DTC_ERR;
     }
+    ResultContext::Instance()->SetValidDocs(logic_type , valid_docs);
     return 0;
 }

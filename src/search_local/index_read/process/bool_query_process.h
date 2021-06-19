@@ -2,8 +2,10 @@
 #define BOOL_QUERY_PROCESS_H_
 
 #include "query_process.h"
+#include <bitset>
+#include <algorithm>
 
-class RangeQueryProcess;
+class QueryProcess;
 class PreTerminal;
 class GeoDistanceQueryProcess;
 
@@ -35,14 +37,13 @@ private:
     int InitQueryProcess(uint32_t type , const Json::Value& value);
     void InitQueryMember();
     void HandleUnifiedIndex();
-    void GetKeyFromFieldInfo(const std::vector<FieldInfo>& field_info_vec, std::vector<MemCompUnionNode>& key_vec);
+    void GetKeyFromFieldInfo(const std::vector<FieldInfo>& field_info_vec, std::vector<MemCompUnionNode>& key_vec , bool& b_has_range);
     std::vector<MemCompUnionNode> Combination(std::vector<std::vector<MemCompUnionNode> >& dimensionalArr);
 
 private:
     std::map<int , QueryProcess*> query_process_map_;
-    RangeQueryProcess* range_query_;
+    std::bitset<E_INDEX_READ_TOTAL_NUM> query_bitset_;
     PreTerminal* range_query_pre_term_;
-    GeoDistanceQueryProcess* geo_distance_query_;
 };
 
 #endif

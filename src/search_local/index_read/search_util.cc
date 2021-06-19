@@ -1285,10 +1285,10 @@ double distanceSimplify(double lat1, double lng1, double lat2, double lng2) {
     return sqrt(Lx * Lx + Ly * Ly);  // 用平面的矩形对角距离公式计算总距离
 }
 
-bool GetGisDistance(uint32_t appid, const string& Latitude, const string& Longtitude, hash_double_map& distances, hash_string_map& doc_content)
+bool GetGisDistance(uint32_t appid, const GeoPointContext& geo_point, const hash_string_map& doc_content, hash_double_map& distances , std::set<std::string>& valid_docs)
 {
-    double d_query_lat = strToDouble(Latitude);
-    double d_query_lng = strToDouble(Longtitude);
+    double d_query_lat = strToDouble(geo_point.Latitude);
+    double d_query_lng = strToDouble(geo_point.Longtitude);
 
     hash_string_map::iterator doc_it = doc_content.begin();
     for ( ; doc_it != doc_content.end(); doc_it++) {
@@ -1312,13 +1312,18 @@ bool GetGisDistance(uint32_t appid, const string& Latitude, const string& Longti
             FieldInfo field_info;
             uint32_t uiret = DBManager::Instance()->GetWordField(segment_tag, appid, *iter, field_info);
             if (FIELD_GEO_POINT == field_info.field_type){
-                GeoPointContext geo_point(snap_json[*iter]);
-                double d_target_lat = strToDouble(geo_point.sLatitude);
-                double d_target_lng = strToDouble(geo_point.sLongtitude);
-                double dis = distanceSimplify(d_query_lat, d_query_lng, d_target_lat, d_target_lng);
-                distances[doc_it->first] = round(dis * 1000)/1000;
+                GeoPointContext target_geo_point(snap_json[*iter]);
+                double d_target_lat = strToDouble(target_geo_point.sLatitude);
+                double d_target_lng = strToDouble(target_geo_point.sLongtitude);
+                double dis = round(distanceSimplify(d_query_lat, d_query_lng, d_target_lat, d_target_lng)* 1000) / 1000;
+                if ((geo_point.d_distance > -0.0001 && geo_point.d_distance < 0.0001) 
+                    || (dis + 1e-6 <= geo_point.d_distance)){
+                    valid_docs.insert(doc_it->first);
+                    distances[doc_it->first] = dis;
+                }
             }else if (FIELD_GEO_SHAPE == field_info.field_type){
                 // temp no handle ,latter add
+                valid_docs.insert(doc_it->first);
                 distances[doc_it->first] = 1;
             }
         }

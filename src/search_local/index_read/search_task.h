@@ -45,7 +45,7 @@ public:
     virtual int Process(CTaskRequest *request);
 
 private:
-    Component* component_;
+    RequestContext* component_;
     DocManager* doc_manager_;
     QueryProcess* query_process_;
 };

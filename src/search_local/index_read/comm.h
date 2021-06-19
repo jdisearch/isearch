@@ -192,6 +192,7 @@ struct FieldInfo
 	uint32_t end;
 	uint32_t index_tag;
 	RANGTYPE range_type;
+	uint32_t query_type;
 	FieldInfo() {
 		field = 1;
 		field_type = 0;
@@ -201,6 +202,7 @@ struct FieldInfo
 		end = 0;
 		range_type = RANGE_INIT;
 		index_tag = 0;
+		query_type = -1;
 	}
 };
 
@@ -252,13 +254,14 @@ enum KeyType
 	ORKEY,
 	ANDKEY,
 	INVERTKEY,
+	KEYTOTALNUM
 };
 
 struct ScoreDocIdNode{
 	double d_score;
 	std::string s_docid;
 
-	ScoreDocIdNode(double score , std::string docid)
+	ScoreDocIdNode(double score , const std::string& docid)
 		: d_score(score)
 		, s_docid(docid)
 	{ }

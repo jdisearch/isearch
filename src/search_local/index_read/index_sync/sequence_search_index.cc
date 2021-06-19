@@ -21,6 +21,7 @@
 #include "log.h"
 #include "../index_tbl_op.h"
 #include "rocksdb_direct_context.h"
+#include "key_format.h"
 #include <algorithm>
 #include <iomanip>
 
@@ -34,10 +35,9 @@ const char *MAX_BORDER_SYMBOL = "10";
 const char *MIN_BORDER_SYMBOL = "00";
 
 static string gen_dtc_key_string(string appid, string type, double key) {
-	stringstream ssKey;
-	ssKey << setw(20) << setfill('0') << (int)key;
+	std::string sskey = KeyFormat::EncodeBytes(key);
 	stringstream ss;
-	ss << appid << "#" << type << "#" << ssKey.str();
+	ss << appid << "#" << type << "#" << ssKey;
 	return ss.str();
 }
 

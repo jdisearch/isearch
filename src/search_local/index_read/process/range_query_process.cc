@@ -1,8 +1,9 @@
 #include "range_query_process.h"
 #include "../valid_doc_filter.h"
 
-RangeQueryProcess::RangeQueryProcess(const Json::Value& value)
+RangeQueryProcess::RangeQueryProcess(const Json::Value& value, uint32_t ui_query_type)
     : QueryProcess(value)
+    , ui_query_type_(ui_query_type)
 { }
 
 RangeQueryProcess::~RangeQueryProcess()
@@ -21,6 +22,8 @@ int RangeQueryProcess::ParseContent(int logic_type)
         std::string fieldname = *iter;
         uint32_t segment_tag = 0;
         FieldInfo fieldInfo;
+        fieldInfo.query_type = ui_query_type_;
+
         uint32_t uiRet = DBManager::Instance()->GetWordField(segment_tag, component_->Appid()
                         , fieldname, fieldInfo);
         if (0 == uiRet){
@@ -86,18 +89,23 @@ int RangeQueryProcess::ParseContent(int logic_type)
     return 0;
 }
 
-int RangeQueryProcess::GetValidDoc()
+int RangeQueryProcess::GetValidDoc(){
+    return GetValidDoc(ORKEY , component_->GetFieldList(ORKEY)[FIRST_TEST_INDEX]);
+}
+
+int RangeQueryProcess::GetValidDoc(int logic_type, const std::vector<FieldInfo>& keys)
 {
     std::vector<IndexInfo> index_info_vet;
-    int iret = ValidDocFilter::Instance()->RangeQueryInvertIndexSearch(component_->OrKeys()
-                    , index_info_vet);
+    int iret = ValidDocFilter::Instance()->RangeQueryInvertIndexSearch(keys, index_info_vet);
     if (iret != 0) { return iret;}
 
-    bool bRet = doc_manager_->GetDocContent(index_info_vet , valid_docs_);
+    ValidDocSet valid_docs;
+    bool bRet = doc_manager_->GetDocContent(index_info_vet , valid_docs);
     if (false == bRet){
         log_error("GetDocContent error.");
         return -RT_DTC_ERR;
     }
+    ResultContext::Instance()->SetValidDocs(logic_type , valid_docs);
     return iret;
 }
 
@@ -106,23 +114,17 @@ int RangeQueryProcess::GetValidDoc()
 
 
 
-PreTerminal::PreTerminal(const Json::Value& value)
-    : QueryProcess(value)
+PreTerminal::PreTerminal(const Json::Value& value, uint32_t ui_query_type)
+    : RangeQueryProcess(value , ui_query_type)
     , candidate_doc_()
 {}
 
 PreTerminal::~PreTerminal()
 {}
 
-int PreTerminal::ParseContent(int logic_type){
-    log_info("PreTerminal do not need parse content");
+int PreTerminal::GetValidDoc(int logic_type, const std::vector<FieldInfo>& keys){
     return 0;
- }
-
-int PreTerminal::ParseContent(){
-    log_info("PreTerminal do not need parse content");
-    return 0;
- }
+}
 
 int PreTerminal::GetValidDoc(){
     uint32_t count = 0;
@@ -177,7 +179,7 @@ int PreTerminal::GetScore(){
     return 0;
 }
 
-void PreTerminal::SetResponse(){
+const Json::Value& PreTerminal::SetResponse(){
     response_["code"] = 0;
     int sequence = -1;
     int rank = 0;
@@ -195,4 +197,5 @@ void PreTerminal::SetResponse(){
     }
     response_["type"] = 0;
     response_["count"] = rank;  // TODO 这里的count并不是实际的总数
+    return response_;
 }

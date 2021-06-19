@@ -10,6 +10,7 @@ public:
 
 public:
     virtual int ParseContent(int logic_type);
+    virtual int GetValidDoc(int logic_type, const std::vector<FieldInfo>& keys);
 
 private:
     virtual int ParseContent();

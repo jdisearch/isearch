@@ -23,17 +23,17 @@
 #include <map>
 #include <set>
 
-class Component;
+class RequestContext;
 struct GeoPointContext;
 
 class DocManager{
 public:
-    DocManager(Component *c);
+    DocManager(RequestContext *c);
     ~DocManager();
 
     bool CheckDocByExtraFilterKey(std::string doc_id);
     bool GetDocContent(std::vector<IndexInfo>& doc_id_ver_vec, std::set<std::string>& valid_docs);
-    bool GetDocContent(const std::vector<IndexInfo>& doc_id_ver_vec, const GeoPointContext& geo_point , hash_double_map& distances);
+    bool GetDocContent(const std::vector<IndexInfo>& doc_id_ver_vec, const GeoPointContext& geo_point , std::set<std::string>& valid_docs);
 
     bool AppendFieldsToRes(Json::Value &response, std::vector<std::string> &m_fields);
     bool GetScoreMap(std::string doc_id, uint32_t m_sort_type, std::string m_sort_field, FIELDTYPE &m_sort_field_type);
@@ -41,6 +41,7 @@ public:
     std::map<std::string, int>& ScoreIntMap();
     std::map<std::string, double>& ScoreDoubleMap();
     std::map<std::string, uint32_t>& ValidVersion();
+    const hash_double_map& GetDocDistance() const { return doc_distance_map_;};
 
 private:
     void CheckIfKeyValid(const std::vector<ExtraFilterKey>& extra_filter_vec, const Json::Value &value, bool flag, bool &key_valid);
@@ -49,9 +50,10 @@ private:
     std::map<std::string, std::string> score_str_map;
     std::map<std::string, int> score_int_map;
     std::map<std::string, double> score_double_map;
-    std::map<std::string, uint32_t> valid_version;
+    std::map<std::string, uint32_t> valid_version_;
     hash_string_map doc_content_map_;
-    Component* component;
+    hash_double_map doc_distance_map_;
+    RequestContext* component;
 };
 
 #endif

@@ -28,6 +28,8 @@ int GeoShapeQueryProcess::ParseContent(int logic_type){
             vector<FieldInfo> fieldInfos;
             uint32_t segment_tag = SEGMENT_NONE;
             FieldInfo fieldInfo;
+            field_info.query_type = E_INDEX_READ_GEO_SHAPE;
+
             uint32_t uiRet = DBManager::Instance()->GetWordField(segment_tag, component_->Appid()
                         , fieldname, fieldInfo);
             if (uiRet != 0 && SEGMENT_NONE == segment_tag) {

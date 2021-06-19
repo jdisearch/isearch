@@ -25,11 +25,11 @@
 #include <string>
 #include <vector>
 
-class Component
+class RequestContext
 {
 public:
-    Component();
-    ~Component();
+    RequestContext();
+    ~RequestContext();
 
 public:
     int ParseJson(const char* sz_json, int json_len, Json::Value &recv_packet);
@@ -59,6 +59,8 @@ public:
     Json::Value& GetQuery();
 
     void AddToFieldList(int type, std::vector<FieldInfo>& fields);
+    const std::vector<std::vector<FieldInfo> >& GetFieldList(int logic_type);
+
     void AddToExtraFieldList(int type , const ExtraFilterKey& extra_field);
 
     void SetHasGisFlag(bool bFlag) { has_gis_ = bFlag; };

@@ -27,8 +27,10 @@
 
 extern CIndexTableManager g_IndexInstance;
 
-DocManager::DocManager(Component *c): component(c){
-}
+DocManager::DocManager(RequestContext *c)
+    : component(c)
+    , doc_distance_map_()
+{ }
 
 DocManager::~DocManager(){
 
@@ -53,8 +55,8 @@ bool DocManager::CheckDocByExtraFilterKey(std::string doc_id){
         }
         Json::Value value;
         uint32_t doc_version = 0;
-        if(valid_version.find(doc_id) != valid_version.end()){
-            doc_version = valid_version[doc_id];
+        if(valid_version_.find(doc_id) != valid_version_.end()){
+            doc_version = valid_version_[doc_id];
         }
         if(doc_content_map_.find(doc_id) != doc_content_map_.end()){
             std::string extend = doc_content_map_[doc_id];
@@ -135,21 +137,19 @@ void DocManager::CheckIfKeyValid(const std::vector<ExtraFilterKey>& extra_filter
 }
 
 bool DocManager::GetDocContent(std::vector<IndexInfo> &doc_id_ver_vec, std::set<std::string> &valid_docs){
-    if (!component->GetHasGisFlag() && component->SnapshotSwitch() == 1 && doc_id_ver_vec.size() <= 1000) {
+    if (component->SnapshotSwitch() == 1 && doc_id_ver_vec.size() <= 1000) {
         bool need_version = false;
         if(component->RequiredFields().size() > 0){
             need_version = true;
         }
-        bool bRet = g_IndexInstance.DocValid(component->Appid(), doc_id_ver_vec, valid_docs, need_version, valid_version, doc_content_map_);
+        bool bRet = g_IndexInstance.DocValid(component->Appid(), doc_id_ver_vec, valid_docs, need_version, valid_version_, doc_content_map_);
         if (false == bRet) {
             log_error("GetDocInfo by snapshot error.");
             return false;
         }
     } else {
         for(size_t i = 0 ; i < doc_id_ver_vec.size(); i++){
-            if(!component->GetHasGisFlag()){
-                valid_docs.insert(doc_id_ver_vec[i].doc_id);
-            }
+            valid_docs.insert(doc_id_ver_vec[i].doc_id);
             if(doc_id_ver_vec[i].extend != ""){
                 doc_content_map_.insert(std::make_pair(doc_id_ver_vec[i].doc_id, doc_id_ver_vec[i].extend));
             }
@@ -160,10 +160,9 @@ bool DocManager::GetDocContent(std::vector<IndexInfo> &doc_id_ver_vec, std::set<
     return true;
 }
 
-bool DocManager::GetDocContent(const std::vector<IndexInfo>& doc_id_ver_vec, const GeoPointContext& geo_point , hash_double_map& distances)
+bool DocManager::GetDocContent(const std::vector<IndexInfo>& doc_id_ver_vec, const GeoPointContext& geo_point , std::set<std::string>& valid_docs)
 {
-    if (component->GetHasGisFlag() || component->SnapshotSwitch() != 1 || doc_id_ver_vec.size() > 1000)
-    {
+    if (component->SnapshotSwitch() != 1 || doc_id_ver_vec.size() > 1000){
         for(size_t i = 0 ; i < doc_id_ver_vec.size(); i++){
             if(doc_id_ver_vec[i].extend != ""){
                 doc_content_map_.insert(make_pair(doc_id_ver_vec[i].doc_id, doc_id_ver_vec[i].extend));
@@ -171,13 +170,11 @@ bool DocManager::GetDocContent(const std::vector<IndexInfo>& doc_id_ver_vec, con
         }
     }
 
-    if (component->GetHasGisFlag()) {
-        if(0 == doc_content_map_.size()){
-            g_IndexInstance.GetDocContent(component->Appid(), doc_id_ver_vec, doc_content_map_);
-        }
-        GetGisDistance(component->Appid(), geo_point.sLatitude
-                , geo_point.sLongtitude, distances, doc_content_map_);
+    if(doc_content_map_.empty()){
+        g_IndexInstance.GetDocContent(component->Appid(), doc_id_ver_vec, doc_content_map_);
     }
+    GetGisDistance(component->Appid(), geo_point, doc_content_map_, doc_distance_map_ , valid_docs);
+
     return true;
 }
 
@@ -215,8 +212,8 @@ bool DocManager::AppendFieldsToRes(Json::Value &response, std::vector<std::strin
             }
         } else {
             uint32_t doc_version = 0;
-            if(valid_version.find(doc_info["doc_id"].asString()) != valid_version.end()){
-                doc_version = valid_version[doc_info["doc_id"].asString()];
+            if(valid_version_.find(doc_info["doc_id"].asString()) != valid_version_.end()){
+                doc_version = valid_version_[doc_info["doc_id"].asString()];
             }
             bool bRet = g_IndexInstance.GetContentByField(component->Appid(), doc_info["doc_id"].asString(), doc_version, m_fields, response["result"][i]);
             if(bRet == false){
@@ -317,5 +314,5 @@ std::map<std::string, double>& DocManager::ScoreDoubleMap(){
 }
 
 std::map<std::string, uint32_t>& DocManager::ValidVersion(){
-    return valid_version;
+    return valid_version_;
 }

@@ -352,17 +352,13 @@ int ValidDocFilter::RangeQueryInvertIndexSearch(const std::vector<std::vector<Fi
         return 0;
 }
 
-int ValidDocFilter::TextInvertIndexSearch(const std::vector<std::vector<FieldInfo> >& keys
-                    , std::vector<IndexInfo>& index_info_vet
-                    , std::set<std::string>& highlightWord
-                    , std::map<std::string, KeyInfoVet>& docid_keyinfo_map
-                    , std::map<std::string, uint32_t>& key_doccount_map){
-        if (keys.empty() || keys.size() > 1){
+int ValidDocFilter::TextInvertIndexSearch(const std::vector<FieldInfo>& keys, std::vector<IndexInfo>& index_info_vet){
+        if (keys.empty()){
             return -RT_GET_FIELD_ERROR;
         }
-        const std::vector<FieldInfo>& key_field_info_vet = keys[0];
-        std::vector<FieldInfo>::const_iterator iter = key_field_info_vet.cbegin();
-        for (; iter != key_field_info_vet.cend(); ++iter){
+
+        std::vector<FieldInfo>::const_iterator iter = keys.cbegin();
+        for (; iter != keys.cend(); ++iter){
             std::vector<IndexInfo> doc_info;
             int ret = GetDocIdSetByWord(*iter, doc_info);
             if (ret != 0){
@@ -370,10 +366,11 @@ int ValidDocFilter::TextInvertIndexSearch(const std::vector<std::vector<FieldInf
             }
             if (doc_info.size() == 0)
                 continue;
-            if (!p_data_base_->GetHasGisFlag() || !isAllNumber(iter->word))
-                highlightWord.insert(iter->word);
+            if (!p_data_base_->GetHasGisFlag() || !isAllNumber(iter->word)){
+                ResultContext::Instance()->SetHighLightWordSet(iter->word);
+            }
             if(!p_data_base_->GetHasGisFlag() && (SORT_RELEVANCE == p_data_base_->SortType() || SORT_TIMESTAMP == p_data_base_->SortType())){
-                CalculateByWord(*iter, doc_info, docid_keyinfo_map, key_doccount_map);
+                CalculateByWord(*iter, doc_info);
             }
             index_info_vet = vec_union(index_info_vet, doc_info);
         }
@@ -409,8 +406,7 @@ int ValidDocFilter::ProcessTerminal(const std::vector<std::vector<FieldInfo> >& 
     return 0;
 }
 
-void ValidDocFilter::CalculateByWord(FieldInfo fieldInfo, const std::vector<IndexInfo> &doc_info
-                , std::map<std::string, KeyInfoVet> &ves, std::map<std::string, uint32_t> &key_in_doc) {
+void ValidDocFilter::CalculateByWord(FieldInfo fieldInfo, const std::vector<IndexInfo> &doc_info) {
     std::string doc_id;
     uint32_t word_freq = 0;
     uint32_t field = 0;
@@ -433,9 +429,9 @@ void ValidDocFilter::CalculateByWord(FieldInfo fieldInfo, const std::vector<Inde
         info.word = fieldInfo.word;
         info.created_time = created_time;
         info.pos_vec = pos_vec;
-        ves[doc_id].push_back(info);
+        ResultContext::Instance()->SetDocKeyinfoMap(doc_id , info);
     }
-    key_in_doc[fieldInfo.word] = doc_info.size();
+    ResultContext::Instance()->SetWordDoccountMap(fieldInfo.word , doc_info.size());
 }
 
 

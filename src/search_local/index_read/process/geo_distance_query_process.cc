@@ -44,6 +44,8 @@ int GeoDistanceQueryProcess::ParseContent(int logic_type){
     if(!gisCode.empty()){
         uint32_t segment_tag = SEGMENT_NONE;
         FieldInfo fieldInfo;
+        field_info.query_type = E_INDEX_READ_GEO_DISTANCE;
+        
         uint32_t uiRet = DBManager::Instance()->GetWordField(segment_tag, component_->Appid()
             , s_geo_distance_fieldname , fieldInfo);
 
@@ -68,16 +70,21 @@ int GeoDistanceQueryProcess::ParseContent(int logic_type){
 }
 
 int GeoDistanceQueryProcess::GetValidDoc(){
+    return GetValidDoc(ANDKEY , component_->GetFieldList(ANDKEY)[FIRST_TEST_INDEX]);
+}
+
+int GeoDistanceQueryProcess::GetValidDoc(int logic_type, const std::vector<FieldInfo>& keys){
     std::vector<IndexInfo> index_info_vet;
-    int iret = ValidDocFilter::Instance()->TextInvertIndexSearch(component_->AndKeys(), index_info_vet 
-            , high_light_word_, docid_keyinfovet_map_ , key_doccount_map_);
+    int iret = ValidDocFilter::Instance()->TextInvertIndexSearch(keys, index_info_vet);
     if (iret != 0) { return iret; }
 
-    bool bRet = doc_manager_->GetDocContent(index_info_vet , o_geo_point_ , o_distance_);
+    ValidDocSet valid_docs;
+    bool bRet = doc_manager_->GetDocContent(index_info_vet , o_geo_point_ , valid_docs);
     if (false == bRet){
         log_error("GetDocContent error.");
         return -RT_DTC_ERR;
     }
+    ResultContext::Instance()->SetValidDocs(logic_type , valid_docs);
     return 0;
 }
 
@@ -89,26 +96,17 @@ int GeoDistanceQueryProcess::GetScore(){
     case SORT_FIELD_ASC:
     case SORT_FIELD_DESC:
         {
-            hash_double_map::iterator dis_iter = o_distance_.begin();
-            for(; dis_iter != o_distance_.end(); ++dis_iter){
-                std::string doc_id = dis_iter->first;
-                double score = dis_iter->second;
-                if ((o_geo_point_.d_distance > -0.0001 && o_geo_point_.d_distance < 0.0001) 
-                    || (score + 1e-6 <= o_geo_point_.d_distance)){
-                    scoredocid_set_.insert(ScoreDocIdNode(score , doc_id));
-                }
+            hash_double_map::iterator dis_iter = doc_manager_->GetDocDistance().begin();
+            for(; dis_iter != doc_manager_->GetDocDistance().end(); ++dis_iter){
+                scoredocid_set_.insert(ScoreDocIdNode(dis_iter->second , dis_iter->first));
             }
         }
         break;
     case DONT_SORT:
         {
-            hash_double_map::iterator dis_iter = o_distance_.begin();
-            for(; dis_iter != o_distance_.end(); ++dis_iter){
-                std::string doc_id = dis_iter->first;
-                if ((o_geo_point_.d_distance > -0.0001 && o_geo_point_.d_distance < 0.0001) 
-                    || (dis_iter->second + 1e-6 <= o_geo_point_.d_distance)){
-                    scoredocid_set_.insert(ScoreDocIdNode(1 , doc_id));
-                }
+            std::set<std::string>::iterator valid_docs_iter = p_valid_docs_set_->begin();
+            for(; valid_docs_iter != p_valid_docs_set_->end(); valid_docs_iter++){
+                scoredocid_set_.insert(ScoreDocIdNode(1 , *valid_docs_iter));
             }
         }
         break;
@@ -121,10 +119,11 @@ int GeoDistanceQueryProcess::GetScore(){
 
 void GeoDistanceQueryProcess::SortScore(int& i_sequence , int& i_rank)
 {
-    // 默认升序，距离近在前
-    if (SORT_FIELD_ASC == component_->SortType()){
-        AscSort(i_sequence , i_rank);
-    }else { // 降序和不排序处理
+    // 降序和不排序处理 
+    if (SORT_FIELD_DESC == component_->SortType()
+        || DONT_SORT == component_->SortType()){
         DescSort(i_sequence , i_rank);
+    }else { // 不指定情况下，默认升序，距离近在前
+        AscSort(i_sequence , i_rank);
     }
 }

@@ -12,32 +12,36 @@ const char* const LT ="lt";
 
 class RangeQueryProcess: public QueryProcess{
 public:
-    RangeQueryProcess(const Json::Value& value);
+    RangeQueryProcess(const Json::Value& value , uint32_t ui_query_type);
     virtual~ RangeQueryProcess();
 
 public:
     virtual int ParseContent(int logic_type);
+    virtual int GetValidDoc(int logic_type, const std::vector<FieldInfo>& keys);
 
 private:
     virtual int ParseContent();
     virtual int GetValidDoc();
+
+private:
+    uint32_t ui_query_type_;
+
 private:
     friend class BoolQueryProcess;
 };
 
-class PreTerminal : public QueryProcess{
+class PreTerminal : public RangeQueryProcess{
 public:
-    PreTerminal(const Json::Value& value);
+    PreTerminal(const Json::Value& value, uint32_t ui_query_type);
     virtual~ PreTerminal();
 
 public:
-    virtual int ParseContent(int logic_type);
+    virtual int GetValidDoc(int logic_type, const std::vector<FieldInfo>& keys);
 
 private:
-    virtual int ParseContent();
     virtual int GetValidDoc();
     virtual int GetScore();
-    virtual void SetResponse();
+    virtual const Json::Value& SetResponse();
 
 private:
     std::vector<TerminalRes> candidate_doc_;
@@ -46,39 +50,39 @@ private:
     friend class BoolQueryProcess;
 };
 
-// class RangeQueryGenerator : private noncopyable{
-// public:
-//     RangeQueryGenerator() { };
-//     virtual~ RangeQueryGenerator() { };
+class RangeQueryGenerator : private noncopyable{
+public:
+    RangeQueryGenerator() { };
+    virtual~ RangeQueryGenerator() { };
 
-// public:
-//     static RangeQueryGenerator* Instance(){
-//         return CSingleton<RangeQueryGenerator>::Instance();
-//     };
+public:
+    static RangeQueryGenerator* Instance(){
+        return CSingleton<RangeQueryGenerator>::Instance();
+    };
 
-//     static void Destroy(){
-//         CSingleton<RangeQueryGenerator>::Destroy();
-//     };
+    static void Destroy(){
+        CSingleton<RangeQueryGenerator>::Destroy();
+    };
 
-// public:
-//     // 内存释放由调用方处理
-//     QueryProcess* GetRangeQueryProcess(int iType , const Json::Value& parse_value){
-//         QueryProcess* current_range_query = NULL;
-//         switch (iType){
-//         case E_INDEX_READ_RANGE:{
-//             current_range_query = new RangeQueryProcess(parse_value);
-//             }
-//             break;
-//         case E_INDEX_READ_PRE_TERM:{
-//              current_range_query = new PreTerminal(parse_value);
-//             }
-//             break;
-//         default:
-//             break;
-//         }
+public:
+    // 内存释放由调用方处理
+    QueryProcess* GetRangeQueryProcess(int iType , const Json::Value& parse_value){
+        QueryProcess* current_range_query = NULL;
+        switch (iType){
+        case E_INDEX_READ_RANGE:{
+            current_range_query = new RangeQueryProcess(parse_value , E_INDEX_READ_RANGE);
+            }
+            break;
+        case E_INDEX_READ_PRE_TERM:{
+             current_range_query = new PreTerminal(parse_value , E_INDEX_READ_PRE_TERM);
+            }
+            break;
+        default:
+            break;
+        }
 
-//         return current_range_query;
-//     }
-// };
+        return current_range_query;
+    }
+};
 
 #endif

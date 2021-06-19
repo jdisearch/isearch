@@ -31,7 +31,7 @@
 
 SearchTask::SearchTask()
     : ProcessTask()
-    , component_(new Component())
+    , component_(new RequestContext())
     , doc_manager_(new DocManager(component_))
     , query_process_(NULL)
 { 
@@ -76,7 +76,7 @@ int SearchTask::Process(CTaskRequest *request)
         }else if (query.isMember(GEOSHAPE)){
             query_process_ = new GeoShapeQueryProcess(query[GEOSHAPE]);
         }else if (query.isMember(RANGE)){
-            query_process_ = new RangeQueryProcess(query[RANGE]);
+            query_process_ = RangeQueryGenerator::Instance->GetRangeQueryProcess(E_INDEX_READ_RANGE , query[RANGE]);
         }else if (query.isMember(BOOL)){
             query_process_ = new BoolQueryProcess(query[BOOL]);
         }else{
@@ -98,7 +98,7 @@ int SearchTask::Process(CTaskRequest *request)
             return ret;
         }
     }
-
+    ResultContext::Instance()->Clear();
     common::ProfilerMonitor::GetInstance().RegisterInfoEnd(caller_info);
     return 0;
 }

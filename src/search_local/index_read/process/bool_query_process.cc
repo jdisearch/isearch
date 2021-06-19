@@ -8,20 +8,11 @@
 BoolQueryProcess::BoolQueryProcess(const Json::Value& value)
     : QueryProcess(value)
     , query_process_map_()
-{
-    query_process_map_.insert(std::make_pair(E_INDEX_READ_GEO_DISTANCE 
-                    , new GeoDistanceQueryProcess(parse_value_)));
-    query_process_map_.insert(std::make_pair(E_INDEX_READ_GEO_SHAPE 
-                    , new GeoShapeQueryProcess(parse_value_ )));
-    query_process_map_.insert(std::make_pair(E_INDEX_READ_MATCH 
-                    , new MatchQueryProcess(parse_value_ )));
-    query_process_map_.insert(std::make_pair(E_INDEX_READ_TERM 
-                    , new TermQueryProcess(parse_value_ )));
-    query_process_map_.insert(std::make_pair(E_INDEX_READ_RANGE
-                    , new RangeQueryProcess(parse_value_ )));
-    query_process_map_.insert(std::make_pair(E_INDEX_READ_PRE_TERM 
-                    , new PreTerminal(parse_value_ )));
-}
+    , query_bitset_()
+    , query_process_base_(NULL)
+    , range_query_pre_term_(NULL)
+    , geo_distance_query_(NULL)
+{ }
 
 BoolQueryProcess::~BoolQueryProcess()
 { 
@@ -70,10 +61,11 @@ void BoolQueryProcess::HandleUnifiedIndex(){
         if(hit_union_key == true){
             std::vector<std::vector<MemCompUnionNode> > keys_vvec;
             std::vector<FieldInfo> unionFieldInfos;
+            bool b_has_range = false;
             for(union_field_iter = union_field_vec.begin(); union_field_iter != union_field_vec.end(); union_field_iter++){
                 std::vector<FieldInfo> field_info_vec = fieldid_fieldinfos_map.at(*union_field_iter);
                 std::vector<MemCompUnionNode> key_vec;
-                GetKeyFromFieldInfo(field_info_vec, key_vec);
+                GetKeyFromFieldInfo(field_info_vec, key_vec , b_has_range);
                 keys_vvec.push_back(key_vec);
                 fieldid_fieldinfos_map.erase(*union_field_iter);  // 命中union_key的需要从fieldid_fieldinfos_map中删除
             }
@@ -82,7 +74,8 @@ void BoolQueryProcess::HandleUnifiedIndex(){
                 FieldInfo info;
                 info.field = 0;
                 info.field_type = FIELD_INDEX;
-                info.segment_tag = SEGMENT_DEFAULT;
+                info.query_type= (b_has_range ? E_INDEX_READ_RANGE : E_INDEX_READ_TERM);
+                info.segment_tag = (b_has_range ? SEGMENT_RANGE : SEGMENT_DEFAULT);
                 info.word = union_keys[m].s_key;
                 unionFieldInfos.push_back(info);
             }
@@ -121,79 +114,83 @@ int BoolQueryProcess::ParseContent(int logic_type){
 
 int BoolQueryProcess::GetValidDoc(){
     bool bRet = false;
-    if (component_->TerminalTag()){
+    if (query_bitset_.test(E_INDEX_READ_PRE_TERM) && query_bitset_.test(E_INDEX_READ_TERM)){
         range_query_pre_term_ = dynamic_cast<PreTerminal*>(query_process_map_[E_INDEX_READ_PRE_TERM]);
         if (range_query_pre_term_ != NULL){
             return range_query_pre_term_->GetValidDoc();
         }
     }
 
-    std::vector<IndexInfo> index_info_vet;
-    int iret = ValidDocFilter::Instance()->OrAndInvertKeyFilter(index_info_vet , high_light_word_ 
-            , docid_keyinfovet_map_ , key_doccount_map_);
-    if (iret != 0) { return iret; }
-    
-    if (component_->GetHasGisFlag()){
-        geo_distance_query_ = dynamic_cast<GeoDistanceQueryProcess*>(query_process_map_[E_INDEX_READ_GEO_DISTANCE]);
-        if (geo_distance_query_ != NULL){
-            bRet = doc_manager_->GetDocContent(index_info_vet 
-                        , geo_distance_query_->o_geo_point_ 
-                        , geo_distance_query_->o_distance_);
-            geo_distance_query_->SetQueryContext(valid_docs_ , high_light_word_ 
-                        , docid_keyinfovet_map_ , key_doccount_map_);
-        }
-    }else{
-        range_query_ = dynamic_cast<RangeQueryProcess*>(query_process_map_[E_INDEX_READ_RANGE]);
-        if (range_query_ != NULL){
-            bRet = doc_manager_->GetDocContent(index_info_vet , valid_docs_);
-            range_query_->SetQueryContext(valid_docs_ , high_light_word_ 
-                        , docid_keyinfovet_map_ , key_doccount_map_);
+    for (uint32_t ui_key_type = ORKEY; ui_key_type < KEYTOTALNUM; ++ui_key_type){
+        std::vector<std::vector<FieldInfo> >::iterator iter = component_->GetFieldList(ui_key_type).cbegin();
+        for (; iter != component_->GetFieldList(ui_key_type).cend(); ++iter){
+            std::vector<FieldInfo>::iterator field_info_iter = iter->cbegin();
+            for (; field_info_iter != iter->cend(); ++field_info_iter){
+                query_process_map_[field_info_iter->query_type]->GetValidDoc(ui_key_type , *iter);
+            }
         }
     }
+    return 0;
 }
 
 int BoolQueryProcess::GetScore(){
-    if (range_query_pre_term_ != NULL){
+    if(query_bitset_.test(E_INDEX_READ_PRE_TERM)){
         return range_query_pre_term_->GetScore();
     }
 
-    if (geo_distance_query_ != NULL){
-        return geo_distance_query_->GetScore();
-    }
+    for (uint32_t ui_query_type = E_INDEX_READ_GEO_DISTANCE
+        ; ui_query_type < E_INDEX_READ_TOTAL_NUM
+        ; ++ui_query_type){
+        if (!query_bitset_.test(ui_query_type)){
+            continue;
+        }
 
-    if(range_query_ != NULL){
-        return range_query_->GetScore();
+        if (E_INDEX_READ_GEO_DISTANCE == ui_query_type || E_INDEX_READ_GEO_SHAPE == ui_query_type){
+            if (component_->SortField().empty() && !query_bitset_.test(E_INDEX_READ_RANGE)){
+                return query_process_map_[ui_query_type]->GetScore();
+            }
+        }
+        return query_process_map_[ui_query_type]->GetScore();
     }
 }
 
 void BoolQueryProcess::SortScore(int& i_sequence , int& i_rank){
-    if (range_query_pre_term_ != NULL){
-        return range_query_pre_term_->SortScore(i_sequence , i_rank);
+    if(query_bitset_.test(E_INDEX_READ_PRE_TERM)){
+        range_query_pre_term_->SortScore();
+        return;
     }
+    for (uint32_t ui_query_type = E_INDEX_READ_GEO_DISTANCE
+        ; ui_query_type < E_INDEX_READ_TOTAL_NUM
+        ; ++ui_query_type){
+        if (!query_bitset_.test(ui_query_type)){
+            continue;
+        }
 
-    if (geo_distance_query_ != NULL){
-        geo_distance_query_->SortScore(i_sequence , i_rank);
-    }
-
-    if(range_query_ != NULL){
-        range_query_->SortScore(i_sequence , i_rank);
+        if (E_INDEX_READ_GEO_DISTANCE == ui_query_type || E_INDEX_READ_GEO_SHAPE == ui_query_type){
+            if (component_->SortField().empty() && !query_bitset_.test(E_INDEX_READ_RANGE)){
+                query_process_map_[ui_query_type]->SortScore();
+                return;
+            }
+        }
+        query_process_map_[ui_query_type]->SortScore();
+        return;
     }
 }
 
 void BoolQueryProcess::SetResponse(){
-    if (range_query_pre_term_ != NULL){
-        range_query_pre_term_->SetResponse();
-        response_ = range_query_pre_term_->response_;
+    if(query_bitset_.test(E_INDEX_READ_PRE_TERM)){
+        response_ = range_query_pre_term_->SetResponse();
+        return;
     }
+    for (uint32_t ui_query_type = E_INDEX_READ_GEO_DISTANCE
+        ; ui_query_type < E_INDEX_READ_TOTAL_NUM
+        ; ++ui_query_type){
+        if (!query_bitset_.test(ui_query_type)){
+            continue;
+        }
 
-    if (geo_distance_query_ != NULL){
-        geo_distance_query_->SetResponse();
-        response_ = geo_distance_query_->response_;
-    }
-
-    if(range_query_ != NULL){
-        range_query_->SetResponse();
-        response_ = range_query_->response_;
+        response_ = query_process_map_[ui_query_type]->SetResponse();
+        return;
     }
 }
 
@@ -224,37 +221,65 @@ int BoolQueryProcess::InitQueryProcess(uint32_t type , const Json::Value& value)
     if(value.isMember(TERM)){
         query_type = E_INDEX_READ_TERM;
         parse_value = parse_value_[TERM];
+        if (query_process_map_.find(query_type) == query_process_map_.end()){
+            query_process_map_.insert(std::make_pair(query_type 
+                    , new TermQueryProcess(parse_value)));
+        }
     } else if(value.isMember(MATCH)){
         query_type = E_INDEX_READ_MATCH;
         parse_value = parse_value_[MATCH];
+        if (query_process_map_.find(query_type) == query_process_map_.end()){
+            query_process_map_.insert(std::make_pair(query_type 
+                    , new MatchQueryProcess(parse_value)));
+        }
     } else if(value.isMember(RANGE)){
         parse_value = parse_value_[RANGE];
         if (component_->TerminalTag()){
             query_type = E_INDEX_READ_PRE_TERM;
-            
         }else{
             query_type = E_INDEX_READ_RANGE;
+        }
+        if (query_process_map_.find(query_type) == query_process_map_.end()){
+            query_process_map_.insert(std::make_pair(query_type 
+                    , RangeQueryGenerator::Instance->GetRangeQueryProcess(query_type , parse_value)));
         }
     } else if(value.isMember(GEODISTANCE)){
         query_type = E_INDEX_READ_GEO_DISTANCE;
         parse_value = parse_value_[GEODISTANCE];
+        if (query_process_map_.find(query_type) == query_process_map_.end()){
+            query_process_map_.insert(std::make_pair(query_type 
+                    , new GeoDistanceQueryProcess(parse_value)));
+        }
     } else if(value.isMember(POINTS)){
         query_type = E_INDEX_READ_GEO_SHAPE;
         parse_value = parse_value_[POINTS];
+        if (query_process_map_.find(query_type) == query_process_map_.end()){
+            query_process_map_.insert(std::make_pair(query_type 
+                    , new GeoShapeQueryProcess(parse_value)));
+        }
     } else {
         log_error("BoolQueryParser only support term/match/range/geo_distance!");
         return -RT_PARSE_CONTENT_ERROR;
     }
 
+    if (!query_bitset_.test(query_type)){
+        query_bitset_.set(query_type);
+    }
     query_process_map_[query_type]->SetParseJsonValue(parse_value);
     query_process_map_[query_type]->ParseContent(type);
     return 0;
 }
 
-void BoolQueryProcess::GetKeyFromFieldInfo(const std::vector<FieldInfo>& field_info_vec, std::vector<MemCompUnionNode>& key_vec){
+void BoolQueryProcess::GetKeyFromFieldInfo(const std::vector<FieldInfo>& field_info_vec, std::vector<MemCompUnionNode>& key_vec, bool& b_has_range){
     std::vector<FieldInfo>::const_iterator iter = field_info_vec.cbegin();
     for(; iter != field_info_vec.end(); iter++){
-        key_vec.push_back(MemCompUnionNode(iter->field_type , iter->word));
+        if (SEGMENT_RANGE == iter->segment_tag ){
+            b_has_range = true;
+            key_vec.push_back(MemCompUnionNode(iter->field_type , iter->start));
+            key_vec.push_back(MemCompUnionNode(iter->field_type , iter->end));
+        }else{
+            key_vec.push_back(MemCompUnionNode(iter->field_type , iter->word));
+        }
     }
 }
 

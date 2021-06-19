@@ -7,13 +7,10 @@ QueryProcess::QueryProcess(const Json::Value& value)
     : component_(NULL)
     , doc_manager_(NULL)
     , request_(NULL)
+    , p_valid_docs_set_(&ResultContext::Instance()->GetValidDocs())
     , parse_value_(value)
     , scoredocid_set_()
     , response_()
-    , valid_docs_()
-    , high_light_word_()
-    , docid_keyinfovet_map_()
-    , key_doccount_map_()
     , sort_field_type_()
 { }
 
@@ -42,7 +39,7 @@ int QueryProcess::StartQuery(){
     return iret;
 }
 
-void QueryProcess::SetResponse()
+const Json::Value& QueryProcess::SetResponse()
 {
     log_debug("search result begin.");
     response_["code"] = 0;
@@ -61,6 +58,7 @@ void QueryProcess::SetResponse()
     }
     response_["count"] = rank;
     log_debug("search result end: %lld.", (long long int)GetSysTimeMicros());
+    return response_;
 }
 
 int QueryProcess::GetScore()
@@ -70,20 +68,21 @@ int QueryProcess::GetScore()
     case SORT_RELEVANCE: // 按照相关度得分，并以此排序
         {
             // 范围查的时候如果不指定排序类型，需要在这里对skipList进行赋值
-            if (docid_keyinfovet_map_.empty() && scoredocid_set_.empty()) {
-                std::set<std::string>::iterator iter = valid_docs_.begin();
-                for(; iter != valid_docs_.end(); iter++){
+            DocKeyinfosMap docid_keyinfovet_map = ResultContext::Instance()->GetDocKeyinfosMap();
+            if (docid_keyinfovet_map->empty() && scoredocid_set_.empty()) {
+                std::set<std::string>::iterator iter = p_valid_docs_set_->begin();
+                for(; iter != p_valid_docs_set_->end(); iter++){
                     scoredocid_set_.insert(ScoreDocIdNode(1,*iter));
                 }
                 break;
             }
 
-            std::map<std::string, KeyInfoVet>::iterator docid_keyinfovet_iter = docid_keyinfovet_map_.begin();
-            for (; docid_keyinfovet_iter != docid_keyinfovet_map_.end(); ++ docid_keyinfovet_iter){
+            std::map<std::string, KeyInfoVet>::iterator docid_keyinfovet_iter = docid_keyinfovet_map.begin();
+            for (; docid_keyinfovet_iter != docid_keyinfovet_map.end(); ++ docid_keyinfovet_iter){
                 std::string doc_id = docid_keyinfovet_iter->first;
                 KeyInfoVet& key_info = docid_keyinfovet_iter->second;
 
-                if(valid_docs_.find(doc_id) == valid_docs_.end()){
+                if(p_valid_docs_set_->find(doc_id) == p_valid_docs_set_->end()){
                     continue;
                 }
 
@@ -91,7 +90,7 @@ int QueryProcess::GetScore()
                 for (uint32_t i = 0; i < key_info.size(); i++) {
                     std::string keyword = key_info[i].word;
                     uint32_t ui_word_freq = key_info[i].word_freq;
-                    uint32_t ui_doc_count = key_doccount_map_[keyword];
+                    uint32_t ui_doc_count = ResultContext::Instance()->GetKeywordDoccountMap()[keyword];
                     score += log((DOC_CNT - ui_doc_count + 0.5) / (ui_doc_count + 0.5)) * ((D_BM25_K1 + 1)*ui_word_freq)  \
                             / (D_BM25_K + ui_word_freq) * (D_BM25_K2 + 1) * 1 / (D_BM25_K2 + 1);
                 }
@@ -101,12 +100,13 @@ int QueryProcess::GetScore()
         break;
     case SORT_TIMESTAMP: // 按照时间戳得分，并以此排序
         {
-            std::map<std::string, KeyInfoVet>::iterator docid_keyinfovet_iter = docid_keyinfovet_map_.begin();
-            for (; docid_keyinfovet_iter != docid_keyinfovet_map_.end(); ++ docid_keyinfovet_iter){
+            DocKeyinfosMap docid_keyinfovet_map = ResultContext::Instance()->GetDocKeyinfosMap();
+            std::map<std::string, KeyInfoVet>::iterator docid_keyinfovet_iter = docid_keyinfovet_map.begin();
+            for (; docid_keyinfovet_iter != docid_keyinfovet_map.end(); ++ docid_keyinfovet_iter){
                 std::string doc_id = docid_keyinfovet_iter->first;
                 KeyInfoVet& key_info = docid_keyinfovet_iter->second;
 
-                if(valid_docs_.find(doc_id) == valid_docs_.end()){
+                if(p_valid_docs_set_->find(doc_id) == p_valid_docs_set_->end()){
                     continue;
                 }
 
@@ -121,8 +121,8 @@ int QueryProcess::GetScore()
         break;
     case DONT_SORT: // 不排序，docid有序
         {
-            std::set<std::string>::iterator valid_docs_iter = valid_docs_.begin();
-            for(; valid_docs_iter != valid_docs_.end(); valid_docs_iter++){
+            std::set<std::string>::iterator valid_docs_iter = p_valid_docs_set_->begin();
+            for(; valid_docs_iter != p_valid_docs_set_->end(); valid_docs_iter++){
                 std::string doc_id = *valid_docs_iter;
                 scoredocid_set_.insert(ScoreDocIdNode(1 , doc_id));
             }
@@ -131,8 +131,8 @@ int QueryProcess::GetScore()
     case SORT_FIELD_ASC: // 按照指定字段进行升降排序
     case SORT_FIELD_DESC:
         {
-            std::set<std::string>::iterator valid_docs_iter = valid_docs_.begin();
-            for(; valid_docs_iter != valid_docs_.end(); valid_docs_iter++){
+            std::set<std::string>::iterator valid_docs_iter = p_valid_docs_set_->begin();
+            for(; valid_docs_iter != p_valid_docs_set_->end(); valid_docs_iter++){
                 std::string doc_id = *valid_docs_iter;
                 doc_manager_->GetScoreMap(doc_id, component_->SortType()
                         , component_->SortField(), sort_field_type_);
@@ -151,7 +151,9 @@ void QueryProcess::SortScore(int& i_sequence , int& i_rank)
     if ((SORT_FIELD_DESC == component_->SortType() || SORT_FIELD_ASC == component_->SortType())
         && scoredocid_set_.empty()){
         SortByCOrderOp(i_rank);
-    }else{ // 默认降序，分高的在前（地理位置查询除外）
+    }else if(SORT_FIELD_ASC == component_->SortType()){ 
+        AscSort(i_sequence, i_rank);
+    }else{ // 不指定情况下，默认降序，分高的在前,时间新的在前,docid大的在前（地理位置查询除外）
         DescSort(i_sequence, i_rank);
     }
 }

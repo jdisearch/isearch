@@ -27,6 +27,8 @@ int TermQueryProcess::ParseContent(int logic_type){
     }
     uint32_t segment_tag = 0;
     FieldInfo field_info;
+    field_info.query_type = E_INDEX_READ_TERM;
+
     uint32_t uiRet = DBManager::Instance()->GetWordField(segment_tag, component_->Appid()
                     , field_name, field_info);
     if(uiRet != 0 && field_info.index_tag == 0){
@@ -47,15 +49,29 @@ int TermQueryProcess::ParseContent(int logic_type){
 }
 
 int TermQueryProcess::GetValidDoc(){
+    if (component_->GetFieldList(ORKEY).empty()){
+        return -RT_GET_FIELD_ERROR;
+    }
+    
+    return GetValidDoc(ORKEY , component_->GetFieldList(ORKEY)[FIRST_TEST_INDEX]);
+}
+
+int TermQueryProcess::GetValidDoc(int logic_type, const std::vector<FieldInfo>& keys){
+    if (0 == keys[FIRST_SPLIT_WORD_INDEX].index_tag){
+        return -RT_GET_FIELD_ERROR;
+    }
+    
     std::vector<IndexInfo> index_info_vet;
-    int iret = ValidDocFilter::Instance()->TextInvertIndexSearch(component_->OrKeys()
-                , index_info_vet , high_light_word_, docid_keyinfovet_map_ , key_doccount_map_);
+    int iret = ValidDocFilter::Instance()->TextInvertIndexSearch(keys, index_info_vet);
     if (iret != 0) { return iret; }
 
-    bool bRet = doc_manager_->GetDocContent(index_info_vet , valid_docs_);
+    ValidDocSet valid_docs;
+    bool bRet = doc_manager_->GetDocContent(index_info_vet , valid_docs);
     if (false == bRet){
         log_error("GetDocContent error.");
         return -RT_DTC_ERR;
     }
+
+    ResultContext::Instance()->SetValidDocs(logic_type , valid_docs);
     return 0;
 }

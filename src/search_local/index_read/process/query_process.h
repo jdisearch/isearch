@@ -27,6 +27,7 @@
 #include "../db_manager.h"
 #include "../split_manager.h"
 #include "../comm.h"
+#include "../system_status.h"
 #include "skiplist.h"
 #include "task_request.h"
 
@@ -41,13 +42,17 @@ const char* const GEODISTANCE ="geo_distance";
 const char* const DISTANCE = "distance";
 const char* const GEOSHAPE ="geo_polygon";
 
+#define FIRST_TEST_INDEX 0
+#define FIRST_SPLIT_WORD_INDEX 0
+
 enum E_INDEX_READ_QUERY_PROCESS{
     E_INDEX_READ_GEO_DISTANCE,
     E_INDEX_READ_GEO_SHAPE,
     E_INDEX_READ_MATCH,
     E_INDEX_READ_TERM,
     E_INDEX_READ_RANGE,
-    E_INDEX_READ_PRE_TERM
+    E_INDEX_READ_PRE_TERM,
+    E_INDEX_READ_TOTAL_NUM
 };
 
 class QueryProcess{
@@ -59,25 +64,19 @@ public:
     int StartQuery();
     void SetRequest(CTaskRequest* const request) { request_ = request; };
     void SetParseJsonValue(const Json::Value& value) { parse_value_ = value; };
-    void SetComponent(Component* const component) { component_ = component;};
+    void SetComponent(RequestContext* const component) { component_ = component;};
     void SetDocManager(DocManager* const doc_manager) { doc_manager_ = doc_manager;};
-    void SetQueryContext(const ValidDocSet& valid_doc, const HighLightWordSet& high_light_word
-                , const DocKeyinfosMap& doc_keyinfos, const KeywordDoccountMap& keyword_doccount){
-                    valid_docs_ = valid_doc;
-                    high_light_word_ = high_light_word;
-                    docid_keyinfovet_map_ = doc_keyinfos;
-                    key_doccount_map_ = keyword_doccount;
-    };
 
 public:
     virtual int ParseContent(int logic_type) = 0;
+    virtual int GetValidDoc(int logic_type , const std::vector<FieldInfo>& keys) = 0;
 
 protected:
     virtual int ParseContent() = 0;
     virtual int GetValidDoc() = 0;
     virtual int GetScore();
     virtual void SortScore(int& i_sequence , int& i_rank);
-    virtual void SetResponse();
+    virtual const Json::Value& SetResponse();
 
 protected:
     void SortByCOrderOp(int& i_rank);
@@ -86,18 +85,14 @@ protected:
     void AppendHighLightWord();
 
 protected:
-    Component* component_;
+    RequestContext* component_;
     DocManager* doc_manager_;
     CTaskRequest* request_;
+    ValidDocSet* p_valid_docs_set_;
 
     Json::Value parse_value_;
     std::set<ScoreDocIdNode> scoredocid_set_;
     Json::Value response_;
-
-    ValidDocSet valid_docs_;
-    HighLightWordSet high_light_word_;
-    DocKeyinfosMap docid_keyinfovet_map_;
-    KeywordDoccountMap key_doccount_map_;
 
 private:
     FIELDTYPE sort_field_type_;
