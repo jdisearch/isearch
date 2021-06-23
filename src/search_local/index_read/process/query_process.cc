@@ -7,7 +7,7 @@ QueryProcess::QueryProcess(const Json::Value& value)
     : component_(NULL)
     , doc_manager_(NULL)
     , request_(NULL)
-    , p_valid_docs_set_(&ResultContext::Instance()->GetValidDocs())
+    , p_valid_docs_set_(ResultContext::Instance()->GetValidDocs())
     , parse_value_(value)
     , scoredocid_set_()
     , response_()
@@ -58,8 +58,8 @@ int QueryProcess::GetScore()
     case SORT_RELEVANCE: // 按照相关度得分，并以此排序
         {
             // 范围查的时候如果不指定排序类型，需要在这里对skipList进行赋值
-            DocKeyinfosMap docid_keyinfovet_map = ResultContext::Instance()->GetDocKeyinfosMap();
-            if (docid_keyinfovet_map->empty() && scoredocid_set_.empty()) {
+            const DocKeyinfosMap& docid_keyinfovet_map = ResultContext::Instance()->GetDocKeyinfosMap();
+            if (docid_keyinfovet_map.empty() && scoredocid_set_.empty()) {
                 std::set<std::string>::iterator iter = p_valid_docs_set_->begin();
                 for(; iter != p_valid_docs_set_->end(); iter++){
                     scoredocid_set_.insert(ScoreDocIdNode(1,*iter));
@@ -67,10 +67,10 @@ int QueryProcess::GetScore()
                 break;
             }
 
-            std::map<std::string, KeyInfoVet>::iterator docid_keyinfovet_iter = docid_keyinfovet_map.begin();
-            for (; docid_keyinfovet_iter != docid_keyinfovet_map.end(); ++ docid_keyinfovet_iter){
+            std::map<std::string, KeyInfoVet>::const_iterator docid_keyinfovet_iter = docid_keyinfovet_map.cbegin();
+            for (; docid_keyinfovet_iter != docid_keyinfovet_map.cend(); ++ docid_keyinfovet_iter){
                 std::string doc_id = docid_keyinfovet_iter->first;
-                KeyInfoVet& key_info = docid_keyinfovet_iter->second;
+                const KeyInfoVet& key_info = docid_keyinfovet_iter->second;
 
                 if(p_valid_docs_set_->find(doc_id) == p_valid_docs_set_->end()){
                     continue;
@@ -80,7 +80,7 @@ int QueryProcess::GetScore()
                 for (uint32_t i = 0; i < key_info.size(); i++) {
                     std::string keyword = key_info[i].word;
                     uint32_t ui_word_freq = key_info[i].word_freq;
-                    uint32_t ui_doc_count = ResultContext::Instance()->GetKeywordDoccountMap()[keyword];
+                    uint32_t ui_doc_count = ResultContext::Instance()->GetKeywordDoccountMap(keyword);
                     score += log((DOC_CNT - ui_doc_count + 0.5) / (ui_doc_count + 0.5)) * ((D_BM25_K1 + 1)*ui_word_freq)  \
                             / (D_BM25_K + ui_word_freq) * (D_BM25_K2 + 1) * 1 / (D_BM25_K2 + 1);
                 }
@@ -198,7 +198,7 @@ void QueryProcess::SortByCOrderOp(int& i_rank)
 
 void QueryProcess::AscSort(int& i_sequence , int& i_rank)
 {
-    log_debug("m_has_gis, size:%d ", scoredocid_set_.size());
+    log_debug("m_has_gis, size:%d ", (uint32_t)scoredocid_set_.size());
     int i_limit_start = component_->PageSize() * (component_->PageIndex() - 1);
     int i_limit_end = component_->PageSize() * component_->PageIndex() - 1;
 
@@ -206,7 +206,7 @@ void QueryProcess::AscSort(int& i_sequence , int& i_rank)
     for( ;iter != scoredocid_set_.end(); ++iter){
         // 通过extra_filter_keys进行额外过滤（针对区分度不高的字段）
         if(doc_manager_->CheckDocByExtraFilterKey(iter->s_docid) == false){
-            log_debug("CheckDocByExtraFilterKey failed, %s", iter->s_docid);
+            log_debug("CheckDocByExtraFilterKey failed, %s", iter->s_docid.c_str());
             continue;
         }
         i_sequence ++;
@@ -228,7 +228,7 @@ void QueryProcess::DescSort(int& i_sequence , int& i_rank)
     int i_limit_start = component_->PageSize() * (component_->PageIndex() - 1);
     int i_limit_end = component_->PageSize() * component_->PageIndex() - 1;
 
-    std::set<ScoreDocIdNode>::iterator riter = scoredocid_set_.rbegin();
+    std::set<ScoreDocIdNode>::reverse_iterator riter = scoredocid_set_.rbegin();
     for( ;riter != scoredocid_set_.rend(); ++riter){
         if(doc_manager_->CheckDocByExtraFilterKey(riter->s_docid) == false){
             continue;
@@ -250,8 +250,9 @@ void QueryProcess::DescSort(int& i_sequence , int& i_rank)
 void QueryProcess::AppendHighLightWord()
 {
     int count = 0;
-    set<string>::iterator iter = high_light_word_.begin();
-    for (; iter != high_light_word_.end(); iter++) {
+    const HighLightWordSet& highlight_word_set = ResultContext::Instance()->GetHighLightWordSet();
+    std::set<std::string>::const_iterator iter = highlight_word_set.cbegin();
+    for (; iter != highlight_word_set.cend(); iter++) {
         if (count >= 10)
             break;
         ++count;

@@ -188,6 +188,9 @@ const std::vector<std::vector<FieldInfo> >& RequestContext::GetFieldList(int log
     }else if (INVERTKEY == logic_type){
         return invert_keys_;
     }
+    log_error("get field list with error type, please check");
+    static std::vector<std::vector<FieldInfo> > empty_fieldinfos;
+    return empty_fieldinfos;
 }
 
 void RequestContext::AddToExtraFieldList(int type , const ExtraFilterKey& extra_field){

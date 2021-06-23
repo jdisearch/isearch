@@ -21,13 +21,13 @@
 
 #include <iostream>
 #include <sstream>
-#include "../component.h"
+#include "../request_context.h"
+#include "../result_context.h"
 #include "../valid_doc_filter.h"
 #include "../doc_manager.h"
 #include "../db_manager.h"
 #include "../split_manager.h"
 #include "../comm.h"
-#include "../system_status.h"
 #include "skiplist.h"
 #include "task_request.h"
 

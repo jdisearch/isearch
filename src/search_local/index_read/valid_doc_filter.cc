@@ -51,7 +51,7 @@ int ValidDocFilter::HanPinTextInvertIndexSearch(const std::vector<FieldInfo>& ke
         for (; iter != keys.cend(); ++iter){
             std::vector<IndexInfo> doc_info;
             if ((iter->segment_tag) == SEGMENT_CHINESE) {
-                int ret = GetDocByShiftWord(*iter, doc_info, p_data_base_->Appid(), highlightWord);
+                int ret = GetDocByShiftWord(*iter, doc_info, p_data_base_->Appid());
                 if (ret != 0) {
                     index_info_vet.clear();
                     return -RT_GET_DOC_ERR;
@@ -62,10 +62,10 @@ int ValidDocFilter::HanPinTextInvertIndexSearch(const std::vector<FieldInfo>& ke
                     info.word_freq = 1;
                     info.field = (iter->field);
                     info.word = (iter->word);
-                    docid_keyinfo_map[doc_info[doc_info_idx].doc_id].push_back(info);
+                    ResultContext::Instance()->SetDocKeyinfoMap(doc_info[doc_info_idx].doc_id , info);
                 }
             } else if ((iter->segment_tag) == SEGMENT_ENGLISH) {
-                int ret = GetDocByShiftEnWord(*iter, doc_info, p_data_base_->Appid(), highlightWord);
+                int ret = GetDocByShiftEnWord(*iter, doc_info, p_data_base_->Appid());
                 if (ret != 0) {
                     index_info_vet.clear();
                     return -RT_GET_DOC_ERR;
@@ -76,7 +76,7 @@ int ValidDocFilter::HanPinTextInvertIndexSearch(const std::vector<FieldInfo>& ke
                     info.word_freq = 1;
                     info.field = (iter->field);
                     info.word = (iter->word);
-                    docid_keyinfo_map[doc_info[doc_info_idx].doc_id].push_back(info);
+                    ResultContext::Instance()->SetDocKeyinfoMap(doc_info[doc_info_idx].doc_id , info);
                 }
             }
             index_info_vet = Union(index_info_vet, doc_info);
@@ -168,8 +168,8 @@ int ValidDocFilter::ProcessTerminal(const std::vector<std::vector<FieldInfo> >& 
 }
 
 void ValidDocFilter::CalculateByWord(FieldInfo fieldInfo, const std::vector<IndexInfo>& doc_info) {
-    std::vector<IndexInfo>::iterator iter = doc_info.begin();
-    for ( ; iter != doc_info.end(); ++iter) {
+    std::vector<IndexInfo>::const_iterator iter = doc_info.cbegin();
+    for ( ; iter != doc_info.cend(); ++iter) {
         std::string pos_str = iter->pos;
         std::vector<int> pos_vec;
         if (pos_str != "" && pos_str.size() > 2) {
@@ -250,8 +250,8 @@ bool ValidDocFilter::GetDocIndexCache(std::string word, uint32_t field, std::vec
 
 void ValidDocFilter::SetDocIndexCache(const std::vector<IndexInfo>& doc_info, std::string& indexJsonStr) {
     Json::Value indexJson;
-    std::vector<IndexInfo>::iterator iter = doc_info.begin();
-    for ( ; iter != doc_info.end(); ++iter) {
+    std::vector<IndexInfo>::const_iterator iter = doc_info.cbegin();
+    for ( ; iter != doc_info.cend(); ++iter) {
         Json::Value json_tmp;
         json_tmp["appid"] = iter->appid;
         json_tmp["id"] = iter->doc_id;

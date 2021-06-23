@@ -28,8 +28,13 @@
 extern CIndexTableManager g_IndexInstance;
 
 DocManager::DocManager(RequestContext *c)
-    : component(c)
+    : score_str_map()
+    , score_int_map()
+    , score_double_map()
+    , valid_version_()
+    , doc_content_map_()
     , doc_distance_map_()
+    , component(c)
 { }
 
 DocManager::~DocManager(){

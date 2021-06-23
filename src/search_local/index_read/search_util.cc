@@ -35,6 +35,7 @@
 #include <math.h>
 #include <string.h>
 #include "utils/get_aois_action.h"
+#include "process/geo_distance_query_process.h"
 using namespace std;
 
 string initial_table[] = { "b","p","m","f","d","t","n","l","g","k","h","j","q","x","zh","ch","sh","r","z","c","s","y","w" };
@@ -1287,11 +1288,11 @@ double distanceSimplify(double lat1, double lng1, double lat2, double lng2) {
 
 bool GetGisDistance(uint32_t appid, const GeoPointContext& geo_point, const hash_string_map& doc_content, hash_double_map& distances)
 {
-    double d_query_lat = strToDouble(geo_point.Latitude);
-    double d_query_lng = strToDouble(geo_point.Longtitude);
+    double d_query_lat = strToDouble(geo_point.sLatitude);
+    double d_query_lng = strToDouble(geo_point.sLongtitude);
 
-    hash_string_map::iterator doc_it = doc_content.begin();
-    for ( ; doc_it != doc_content.end(); doc_it++) {
+    hash_string_map::const_iterator doc_it;
+    for (doc_it = doc_content.cbegin() ; doc_it != doc_content.cend(); doc_it++) {
         if (doc_it->second == "") {
             log_error("content is invalid, appid:%d, doc_id:%s, content:%s.",appid, (doc_it->first).c_str(), (doc_it->second).c_str());
             continue;
@@ -1311,7 +1312,7 @@ bool GetGisDistance(uint32_t appid, const GeoPointContext& geo_point, const hash
             uint32_t segment_tag = 0;
             FieldInfo field_info;
             uint32_t uiret = DBManager::Instance()->GetWordField(segment_tag, appid, *iter, field_info);
-            if (FIELD_GEO_POINT == field_info.field_type){
+            if (uiret != 0 && FIELD_GEO_POINT == field_info.field_type){
                 GeoPointContext target_geo_point(snap_json[*iter]);
                 double d_target_lat = strToDouble(target_geo_point.sLatitude);
                 double d_target_lng = strToDouble(target_geo_point.sLongtitude);
@@ -1321,7 +1322,7 @@ bool GetGisDistance(uint32_t appid, const GeoPointContext& geo_point, const hash
                     ResultContext::Instance()->SetValidDocs(doc_it->first);
                     distances[doc_it->first] = dis;
                 }
-            }else if (FIELD_GEO_SHAPE == field_info.field_type){
+            }else if (uiret != 0 && FIELD_GEO_SHAPE == field_info.field_type){
                 // temp no handle ,latter add
                 ResultContext::Instance()->SetValidDocs(doc_it->first);
                 distances[doc_it->first] = 1;
@@ -1372,13 +1373,13 @@ int ShiftIntelligentInfo(IntelligentInfo &info, int len)
     return 0;
 }
 
-bool GetSuggestDoc(FieldInfo& fieldInfo, uint32_t len, const IntelligentInfo &info, vector<IndexInfo> &doc_id_set, uint32_t appid, set<string>& highlightWord)
+bool GetSuggestDoc(FieldInfo& fieldInfo, uint32_t len, const IntelligentInfo &info, vector<IndexInfo> &doc_id_set, uint32_t appid)
 {
     bool bRet;
     int index = 0;
     uint32_t field = fieldInfo.field;
     uint32_t segment_feature = fieldInfo.segment_feature;
-    bRet = g_hanpinIndexInstance.GetSuggestDoc(appid, index, len, field, info, doc_id_set, highlightWord);
+    bRet = g_hanpinIndexInstance.GetSuggestDoc(appid, index, len, field, info, doc_id_set);
     if (bRet == false)
         goto resError;
 
@@ -1392,7 +1393,7 @@ bool GetSuggestDoc(FieldInfo& fieldInfo, uint32_t len, const IntelligentInfo &in
         if (ShiftIntelligentInfo(t2, i) < 0) {
             continue;
         }
-        bRet = g_hanpinIndexInstance.GetSuggestDoc(appid, index, len, field, t2, doc_id_set, highlightWord);
+        bRet = g_hanpinIndexInstance.GetSuggestDoc(appid, index, len, field, t2, doc_id_set);
         if (bRet == false)
             goto resError;
     }
@@ -1403,13 +1404,13 @@ resError:
     return false;
 }
 
-bool GetSuggestDocWithoutCharacter(FieldInfo& fieldInfo, uint32_t len, const IntelligentInfo &info, vector<IndexInfo> &doc_id_set, uint32_t appid, set<string>& highlightWord)
+bool GetSuggestDocWithoutCharacter(FieldInfo& fieldInfo, uint32_t len, const IntelligentInfo &info, vector<IndexInfo> &doc_id_set, uint32_t appid)
 {
     bool bRet;
     int index = 0;
     uint32_t field = fieldInfo.field;
     uint32_t segment_feature = fieldInfo.segment_feature;
-    bRet = g_hanpinIndexInstance.GetSuggestDocWithoutCharacter(appid, index, len, field, info, doc_id_set, highlightWord);
+    bRet = g_hanpinIndexInstance.GetSuggestDocWithoutCharacter(appid, index, len, field, info, doc_id_set);
     if (bRet == false)
         goto resError;
 
@@ -1423,7 +1424,7 @@ bool GetSuggestDocWithoutCharacter(FieldInfo& fieldInfo, uint32_t len, const Int
         if (ShiftIntelligentInfoWithoutCharacter(t2, i) < 0) {
             continue;
         }
-        bRet = g_hanpinIndexInstance.GetSuggestDocWithoutCharacter(appid, index, len, field, t2, doc_id_set, highlightWord);
+        bRet = g_hanpinIndexInstance.GetSuggestDocWithoutCharacter(appid, index, len, field, t2, doc_id_set);
         if (bRet == false)
             goto resError;
     }
@@ -1434,7 +1435,7 @@ resError:
     return false;
 }
 
-int GetDocByShiftWord(FieldInfo fieldInfo, vector<IndexInfo> &doc_id_set, uint32_t appid, set<string>& highlightWord)
+int GetDocByShiftWord(FieldInfo fieldInfo, vector<IndexInfo> &doc_id_set, uint32_t appid)
 {
     log_debug("GetDocByShiftWord start");
     bool bRet = true;
@@ -1455,7 +1456,7 @@ int GetDocByShiftWord(FieldInfo fieldInfo, vector<IndexInfo> &doc_id_set, uint32
         ConvertIntelligent(tmp, info, bRet);
         int length = tmp.size();
         if (bRet) {
-            bRet = GetSuggestDoc(fieldInfo, length, info, doc_id_set, appid, highlightWord);
+            bRet = GetSuggestDoc(fieldInfo, length, info, doc_id_set, appid);
             if (!bRet) {
                 log_error("GetSuggestDocInfo error.");
                 return -RT_DTC_ERR;
@@ -1466,7 +1467,7 @@ int GetDocByShiftWord(FieldInfo fieldInfo, vector<IndexInfo> &doc_id_set, uint32
     return 0;
 }
 
-int GetDocByShiftEnWord(FieldInfo fieldInfo, vector<IndexInfo> &doc_id_set, uint32_t appid, set<string>& highlightWord)
+int GetDocByShiftEnWord(FieldInfo fieldInfo, vector<IndexInfo> &doc_id_set, uint32_t appid)
 {
     log_debug("GetDocByShiftEnWord start");
     bool bRet = true;
@@ -1474,7 +1475,7 @@ int GetDocByShiftEnWord(FieldInfo fieldInfo, vector<IndexInfo> &doc_id_set, uint
     int length = 0;
     IntelligentInfo enInfo;
     ConvertCharIntelligent(fieldInfo.word, enInfo, length);
-    bRet = GetSuggestDocWithoutCharacter(fieldInfo, length, enInfo, doc_id_set, appid, highlightWord);
+    bRet = GetSuggestDocWithoutCharacter(fieldInfo, length, enInfo, doc_id_set, appid);
     if (!bRet) {
         log_error("GetEnSuggestDocInfo error.");
         return -RT_DTC_ERR;

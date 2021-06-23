@@ -212,7 +212,7 @@ bool CIndexTableManager::DocValid(uint32_t appid, string doc_id, bool &is_valid)
 bool CIndexTableManager::get_snapshot_execute(int left, 
                                               int right, 
                                               uint32_t appid, 
-                                              vector<IndexInfo>& no_filter_docs, 
+                                              const vector<IndexInfo>& no_filter_docs, 
                                               vector<DocVersionInfo>& docVersionInfo) 
 {
     int ret = 0;
@@ -279,7 +279,7 @@ bool CIndexTableManager::get_snapshot_execute(int left,
     return true;
 }
 
-bool CIndexTableManager::DocValid(uint32_t appid, vector<IndexInfo>& vecs, bool need_version, map<string, uint32_t>& valid_version, hash_string_map& doc_content_map){
+bool CIndexTableManager::DocValid(uint32_t appid, const vector<IndexInfo>& vecs, bool need_version, map<string, uint32_t>& valid_version, hash_string_map& doc_content_map){
     int numbers = 32;
     int docSize = vecs.size();
     int count = docSize / numbers;
@@ -595,7 +595,7 @@ int CIndexTableManager::GetDocCnt(uint32_t appid) {
     return doc_cnt;
 }
 
-bool CIndexTableManager::GetSuggestDoc(uint32_t appid, int index, uint32_t len,  uint32_t field, const IntelligentInfo &info, vector<IndexInfo> &doc_id_set, set<string>& hlWord)
+bool CIndexTableManager::GetSuggestDoc(uint32_t appid, int index, uint32_t len,  uint32_t field, const IntelligentInfo &info, vector<IndexInfo> &doc_id_set)
 {
     int ret;
     DTC::Server* dtcServer = &server;
@@ -755,9 +755,9 @@ bool CIndexTableManager::GetSuggestDoc(uint32_t appid, int index, uint32_t len, 
             doc_id_set.push_back(info);
             string word = rst.StringValue("word");
             if (isAllChinese(word)) {
-                hlWord.insert(word.substr(index*3, len*3));
+                ResultContext::Instance()->SetHighLightWordSet(word.substr(index*3, len*3));
             } else {
-                hlWord.insert(word.substr(index, len));
+                ResultContext::Instance()->SetHighLightWordSet(word.substr(index, len));
             }
         }
 
@@ -766,7 +766,7 @@ bool CIndexTableManager::GetSuggestDoc(uint32_t appid, int index, uint32_t len, 
     return true;
 }
 
-bool CIndexTableManager::GetSuggestDocWithoutCharacter(uint32_t appid, int index, uint32_t len,  uint32_t field, const IntelligentInfo &info, vector<IndexInfo> &doc_id_set, set<string>& hlWord)
+bool CIndexTableManager::GetSuggestDocWithoutCharacter(uint32_t appid, int index, uint32_t len,  uint32_t field, const IntelligentInfo &info, vector<IndexInfo> &doc_id_set)
 {
     int ret;
     DTC::Server* dtcServer = &server;
@@ -900,9 +900,9 @@ bool CIndexTableManager::GetSuggestDocWithoutCharacter(uint32_t appid, int index
             doc_id_set.push_back(info);
             string word = rst.StringValue("word");
             if (isAllChinese(word)) {
-                hlWord.insert(word.substr(index*3, len*3));
+                ResultContext::Instance()->SetHighLightWordSet(word.substr(index*3, len*3));
             } else {
-                hlWord.insert(word.substr(index, len));
+                ResultContext::Instance()->SetHighLightWordSet(word.substr(index, len));
             }
         }
 

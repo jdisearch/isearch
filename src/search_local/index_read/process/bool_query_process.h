@@ -13,6 +13,11 @@ struct MemCompUnionNode{
     uint32_t ui_field_type;
     std::string s_key;
 
+    MemCompUnionNode()
+        : ui_field_type(-1)
+        , s_key("")
+    {}
+
     MemCompUnionNode(uint32_t field_type , std::string key)
         : ui_field_type(field_type)
         , s_key(key)
@@ -25,13 +30,15 @@ public:
     virtual ~BoolQueryProcess();
 
 private:
-    virtual int ParseContent();
     virtual int ParseContent(int logic_type);
+    virtual int GetValidDoc(int logic_type , const std::vector<FieldInfo>& keys);
+
+    virtual int ParseContent();
     virtual int GetValidDoc();
     virtual int CheckValidDoc();
     virtual int GetScore();
     virtual void SortScore(int& i_sequence , int& i_rank);
-    virtual void SetResponse();
+    virtual const Json::Value& SetResponse();
 
 private:
     int ParseRequest(const Json::Value& request, int logic_type);

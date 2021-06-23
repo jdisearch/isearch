@@ -44,7 +44,7 @@ int GeoDistanceQueryProcess::ParseContent(int logic_type){
     if(!gisCode.empty()){
         uint32_t segment_tag = SEGMENT_NONE;
         FieldInfo fieldInfo;
-        field_info.query_type = E_INDEX_READ_GEO_DISTANCE;
+        fieldInfo.query_type = E_INDEX_READ_GEO_DISTANCE;
         
         uint32_t uiRet = DBManager::Instance()->GetWordField(segment_tag, component_->Appid()
             , s_geo_distance_fieldname , fieldInfo);
@@ -98,8 +98,8 @@ int GeoDistanceQueryProcess::GetScore(){
     case SORT_FIELD_ASC:
     case SORT_FIELD_DESC:
         {
-            hash_double_map::iterator dis_iter = doc_manager_->GetDocDistance().begin();
-            for(; dis_iter != doc_manager_->GetDocDistance().end(); ++dis_iter){
+            hash_double_map::const_iterator dis_iter = doc_manager_->GetDocDistance().cbegin();
+            for(; dis_iter != doc_manager_->GetDocDistance().cend(); ++dis_iter){
                 scoredocid_set_.insert(ScoreDocIdNode(dis_iter->second , dis_iter->first));
             }
         }

@@ -30,6 +30,7 @@
 #include "index_tbl_op.h"
 #include "result_context.h"
 using namespace std;
+struct GeoPointContext;
 
 vector<int> splitInt(const string& src, string separate_character);
 set<string> splitStr(const string& src, string separate_character);
@@ -65,10 +66,10 @@ bool GetGisCode(string lng, string lat, string ip, double distance, vector<strin
 bool GetGisCode(const vector<string>& lng_arr, const vector<string>& lat_arr, vector<string>& gisCode);
 uint32_t GetIpNum(string ip);
 int ShiftIntelligentInfo(IntelligentInfo &info, int len);
-bool GetSuggestDoc(FieldInfo& fieldInfo, uint32_t len, const IntelligentInfo &info, vector<IndexInfo> &doc_id_set);
+bool GetSuggestDoc(FieldInfo& fieldInfo, uint32_t len, const IntelligentInfo &info, vector<IndexInfo> &doc_id_set, uint32_t appid);
 bool GetSuggestDocWithoutCharacter(FieldInfo& fieldInfo, uint32_t len, const IntelligentInfo &info, vector<IndexInfo> &doc_id_set);
-int GetDocByShiftWord(FieldInfo fieldInfo, vector<IndexInfo> &doc_id_set, uint32_t appid, set<string>& highlightWord);
-int GetDocByShiftEnWord(FieldInfo fieldInfo, vector<IndexInfo> &doc_id_set, uint32_t appid, set<string>& highlightWord);
+int GetDocByShiftWord(FieldInfo fieldInfo, vector<IndexInfo> &doc_id_set, uint32_t appid);
+int GetDocByShiftEnWord(FieldInfo fieldInfo, vector<IndexInfo> &doc_id_set, uint32_t appid);
 uint64_t GetSysTimeMicros();
 string trim(string& str);
 string delPrefix(string& str);

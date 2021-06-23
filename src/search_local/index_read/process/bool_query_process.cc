@@ -4,6 +4,7 @@
 #include "match_query_process.h"
 #include "term_query_process.h"
 #include "range_query_process.h"
+#include "../key_format.h"
 
 BoolQueryProcess::BoolQueryProcess(const Json::Value& value)
     : QueryProcess(value)
@@ -109,16 +110,20 @@ int BoolQueryProcess::ParseContent(int logic_type){
     return 0;
 }
 
+int BoolQueryProcess::GetValidDoc(int logic_type , const std::vector<FieldInfo>& keys){
+    log_info("BoolQueryProcess no need get valid doc by logictype");
+    return 0;
+}
+
 int BoolQueryProcess::GetValidDoc(){
-    bool bRet = false;
     if (query_bitset_.test(E_INDEX_READ_PRE_TERM) && query_bitset_.test(E_INDEX_READ_TERM)){
             return query_process_map_[E_INDEX_READ_PRE_TERM]->GetValidDoc();
     }   
 
     for (uint32_t ui_key_type = ORKEY; ui_key_type < KEYTOTALNUM; ++ui_key_type){
-        std::vector<std::vector<FieldInfo> >::iterator iter = component_->GetFieldList(ui_key_type).cbegin();
+        std::vector<std::vector<FieldInfo> >::const_iterator iter = component_->GetFieldList(ui_key_type).cbegin();
         for (; iter != component_->GetFieldList(ui_key_type).cend(); ++iter){
-            std::vector<FieldInfo>::iterator field_info_iter = iter->cbegin();
+            std::vector<FieldInfo>::const_iterator field_info_iter = iter->cbegin();
             for (; field_info_iter != iter->cend(); ++field_info_iter){
                 query_process_map_[field_info_iter->query_type]->GetValidDoc(ui_key_type , *iter);
             }
@@ -143,6 +148,7 @@ int BoolQueryProcess::CheckValidDoc(){
         }
         return query_process_map_[ui_query_type]->CheckValidDoc();
     }
+    return -1;
 }
 
 int BoolQueryProcess::GetScore(){
@@ -161,6 +167,7 @@ int BoolQueryProcess::GetScore(){
         }
         return query_process_map_[ui_query_type]->GetScore();
     }
+    return -1;
 }
 
 void BoolQueryProcess::SortScore(int& i_sequence , int& i_rank){
@@ -173,17 +180,17 @@ void BoolQueryProcess::SortScore(int& i_sequence , int& i_rank){
 
         if (E_INDEX_READ_GEO_DISTANCE == ui_query_type || E_INDEX_READ_GEO_SHAPE == ui_query_type){
             if (component_->SortField().empty() && !query_bitset_.test(E_INDEX_READ_RANGE)){
-                query_process_map_[ui_query_type]->SortScore();
+                query_process_map_[ui_query_type]->SortScore(i_sequence , i_rank);
                 return;
             }
             continue;
         }
-        query_process_map_[ui_query_type]->SortScore();
+        query_process_map_[ui_query_type]->SortScore(i_sequence , i_rank);
         return;
     }
 }
 
-void BoolQueryProcess::SetResponse(){
+const Json::Value& BoolQueryProcess::SetResponse(){
     for (uint32_t ui_query_type = E_INDEX_READ_PRE_TERM
         ; ui_query_type < E_INDEX_READ_TOTAL_NUM
         ; ++ui_query_type){
@@ -192,8 +199,9 @@ void BoolQueryProcess::SetResponse(){
         }
 
         response_ = query_process_map_[ui_query_type]->SetResponse();
-        return;
+        return response_;
     }
+    return response_;
 }
 
 int BoolQueryProcess::ParseRequest(const Json::Value& request, int logic_type){
@@ -243,7 +251,7 @@ int BoolQueryProcess::InitQueryProcess(uint32_t type , const Json::Value& value)
         }
         if (query_process_map_.find(query_type) == query_process_map_.end()){
             query_process_map_.insert(std::make_pair(query_type 
-                    , RangeQueryGenerator::Instance->GetRangeQueryProcess(query_type , parse_value)));
+                    , RangeQueryGenerator::Instance()->GetRangeQueryProcess(query_type , parse_value)));
         }
     } else if(value.isMember(GEODISTANCE)){
         query_type = E_INDEX_READ_GEO_DISTANCE;
@@ -277,8 +285,8 @@ void BoolQueryProcess::GetKeyFromFieldInfo(const std::vector<FieldInfo>& field_i
     for(; iter != field_info_vec.end(); iter++){
         if (SEGMENT_RANGE == iter->segment_tag ){
             b_has_range = true;
-            key_vec.push_back(MemCompUnionNode(iter->field_type , iter->start));
-            key_vec.push_back(MemCompUnionNode(iter->field_type , iter->end));
+            key_vec.push_back(MemCompUnionNode(iter->field_type , std::to_string(iter->start)));
+            key_vec.push_back(MemCompUnionNode(iter->field_type , std::to_string(iter->end)));
         }else{
             key_vec.push_back(MemCompUnionNode(iter->field_type , iter->word));
         }

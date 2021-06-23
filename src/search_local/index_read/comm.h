@@ -22,7 +22,7 @@
 #include <stdint.h>
 #include <vector>
 #include <set>
-#include <tr1/unordered_map>
+#include <unordered_map>
 #include <limits.h>
 #include <map>
 #include <cmath>
@@ -38,10 +38,10 @@ const uint32_t MAX_SEARCH_LEN = 60;
 const uint32_t SINGLE_WORD_LEN = 18;
 const uint32_t MAX_VALUE_LEN = 51200;
 
-const double DOUBLE_EPS = 1e-3;
+const double DOUBLE_EPS_3 = 1e-3;
 
-typedef std::tr1::unordered_map<std::string, double> hash_double_map;
-typedef std::tr1::unordered_map<std::string, std::string> hash_string_map;
+typedef std::unordered_map<std::string, double> hash_double_map;
+typedef std::unordered_map<std::string, std::string> hash_string_map;
 
 enum RetCode{
 	RT_PARSE_JSON_ERR = 10001,
@@ -267,10 +267,10 @@ struct ScoreDocIdNode{
 	{ }
 	
 	bool operator<(const ScoreDocIdNode& score_docid_node) const {
-		if (fabs(d_score - score_docid_node.d_score) < DOUBLE_EPS){
+		if (fabs(d_score - score_docid_node.d_score) < DOUBLE_EPS_3){
 			return s_docid.compare(score_docid_node.s_docid) < 0;
 		}
-		return (d_score + DOUBLE_EPS) < score_docid_node.d_score;
+		return (d_score + DOUBLE_EPS_3) < score_docid_node.d_score;
 	}
 };
 

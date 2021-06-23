@@ -76,7 +76,7 @@ int SearchTask::Process(CTaskRequest *request)
         }else if (query.isMember(GEOSHAPE)){
             query_process_ = new GeoShapeQueryProcess(query[GEOSHAPE]);
         }else if (query.isMember(RANGE)){
-            query_process_ = RangeQueryGenerator::Instance->GetRangeQueryProcess(E_INDEX_READ_RANGE , query[RANGE]);
+            query_process_ = RangeQueryGenerator::Instance()->GetRangeQueryProcess(E_INDEX_READ_RANGE , query[RANGE]);
         }else if (query.isMember(BOOL)){
             query_process_ = new BoolQueryProcess(query[BOOL]);
         }else{

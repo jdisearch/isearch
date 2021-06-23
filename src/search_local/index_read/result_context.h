@@ -29,13 +29,13 @@ public:
     const DocKeyinfosMap& GetDocKeyinfosMap() const { return docid_keyinfovet_map_;};
 
     void SetWordDoccountMap(const std::string& s_word, uint32_t ui_doc_count);
-    const KeywordDoccountMap& GetKeywordDoccountMap() const { return key_doccount_map_;};
+    uint32_t GetKeywordDoccountMap(const std::string& s_word) { return key_doccount_map_[s_word];};
 
     void SetIndexInfos(int logic_type , std::vector<IndexInfo>& index_info_vet);
     const std::vector<IndexInfo>& GetIndexInfos() const { return index_info_vet_;};
 
     void SetValidDocs(const std::string& valid_docid);
-    const ValidDocSet& GetValidDocs() const { return valid_docs_set_;};
+    ValidDocSet* GetValidDocs() { return &valid_docs_set_;};
 
 private:
     void SetOrIndexInfos(std::vector<IndexInfo>& or_index_info_vet);
