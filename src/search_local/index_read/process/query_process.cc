@@ -26,39 +26,29 @@ int QueryProcess::StartQuery(){
     if (0 == iret){
         iret = GetValidDoc();
         if (0 == iret){
-            iret = GetScore();
+            iret = CheckValidDoc();
             if (0 == iret){
-                SetResponse();
+                iret = GetScore();
+                if (0 == iret){
+                    SetResponse();
 
-                Json::FastWriter writer;
-                std::string outputConfig = writer.write(response_);
-                request_->setResult(outputConfig);
+                    Json::FastWriter writer;
+                    std::string outputConfig = writer.write(response_);
+                    request_->setResult(outputConfig);
+                }
             }
         }
     }
     return iret;
 }
 
-const Json::Value& QueryProcess::SetResponse()
-{
-    log_debug("search result begin.");
-    response_["code"] = 0;
-
-    int sequence = -1;
-    int rank = 0;
-    response_["type"] = 0;
-    SortScore(sequence , rank);
-
-    if(!component_->RequiredFields().empty()){
-        doc_manager_->AppendFieldsToRes(response_, component_->RequiredFields());
+int QueryProcess::CheckValidDoc(){
+    bool bRet = doc_manager_->GetDocContent();
+    if (false == bRet){
+        log_error("GetDocContent error.");
+        return -RT_DTC_ERR;
     }
-
-    if (rank > 0){
-        AppendHighLightWord();
-    }
-    response_["count"] = rank;
-    log_debug("search result end: %lld.", (long long int)GetSysTimeMicros());
-    return response_;
+    return 0;
 }
 
 int QueryProcess::GetScore()
@@ -156,6 +146,28 @@ void QueryProcess::SortScore(int& i_sequence , int& i_rank)
     }else{ // 不指定情况下，默认降序，分高的在前,时间新的在前,docid大的在前（地理位置查询除外）
         DescSort(i_sequence, i_rank);
     }
+}
+
+const Json::Value& QueryProcess::SetResponse()
+{
+    log_debug("search result begin.");
+    response_["code"] = 0;
+
+    int sequence = -1;
+    int rank = 0;
+    response_["type"] = 0;
+    SortScore(sequence , rank);
+
+    if(!component_->RequiredFields().empty()){
+        doc_manager_->AppendFieldsToRes(response_, component_->RequiredFields());
+    }
+
+    if (rank > 0){
+        AppendHighLightWord();
+    }
+    response_["count"] = rank;
+    log_debug("search result end: %lld.", (long long int)GetSysTimeMicros());
+    return response_;
 }
 
 void QueryProcess::SortByCOrderOp(int& i_rank)

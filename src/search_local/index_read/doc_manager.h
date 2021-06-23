@@ -32,8 +32,8 @@ public:
     ~DocManager();
 
     bool CheckDocByExtraFilterKey(std::string doc_id);
-    bool GetDocContent(std::vector<IndexInfo>& doc_id_ver_vec, std::set<std::string>& valid_docs);
-    bool GetDocContent(const std::vector<IndexInfo>& doc_id_ver_vec, const GeoPointContext& geo_point , std::set<std::string>& valid_docs);
+    bool GetDocContent();
+    bool GetDocContent(const GeoPointContext& geo_point);
 
     bool AppendFieldsToRes(Json::Value &response, std::vector<std::string> &m_fields);
     bool GetScoreMap(std::string doc_id, uint32_t m_sort_type, std::string m_sort_field, FIELDTYPE &m_sort_field_type);

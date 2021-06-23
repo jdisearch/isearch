@@ -98,14 +98,7 @@ int RangeQueryProcess::GetValidDoc(int logic_type, const std::vector<FieldInfo>&
     std::vector<IndexInfo> index_info_vet;
     int iret = ValidDocFilter::Instance()->RangeQueryInvertIndexSearch(keys, index_info_vet);
     if (iret != 0) { return iret;}
-
-    ValidDocSet valid_docs;
-    bool bRet = doc_manager_->GetDocContent(index_info_vet , valid_docs);
-    if (false == bRet){
-        log_error("GetDocContent error.");
-        return -RT_DTC_ERR;
-    }
-    ResultContext::Instance()->SetValidDocs(logic_type , valid_docs);
+    ResultContext::Instance()->SetIndexInfos(logic_type , index_info_vet);
     return iret;
 }
 
@@ -171,6 +164,11 @@ int PreTerminal::GetValidDoc(){
         limit_start += component_->PageSize() * N;
         N *= 2;
     }
+    return 0;
+}
+
+int PreTerminal::CheckValidDoc(){
+    log_info("RangeQueryPreTerminal do not need check valid doc");
     return 0;
 }
 

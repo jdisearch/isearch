@@ -77,14 +77,16 @@ int GeoDistanceQueryProcess::GetValidDoc(int logic_type, const std::vector<Field
     std::vector<IndexInfo> index_info_vet;
     int iret = ValidDocFilter::Instance()->TextInvertIndexSearch(keys, index_info_vet);
     if (iret != 0) { return iret; }
+    ResultContext::Instance()->SetIndexInfos(logic_type , index_info_vet);
+    return 0;
+}
 
-    ValidDocSet valid_docs;
-    bool bRet = doc_manager_->GetDocContent(index_info_vet , o_geo_point_ , valid_docs);
+int GeoDistanceQueryProcess::CheckValidDoc(){
+    bool bRet = doc_manager_->GetDocContent(o_geo_point_);
     if (false == bRet){
         log_error("GetDocContent error.");
         return -RT_DTC_ERR;
     }
-    ResultContext::Instance()->SetValidDocs(logic_type , valid_docs);
     return 0;
 }
 

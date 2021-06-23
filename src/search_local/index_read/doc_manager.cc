@@ -16,7 +16,7 @@
  * =====================================================================================
  */
 
-#include "component.h"
+#include "request_context.h"
 #include "doc_manager.h"
 #include "log.h"
 #include "search_util.h"
@@ -136,44 +136,44 @@ void DocManager::CheckIfKeyValid(const std::vector<ExtraFilterKey>& extra_filter
     }
 }
 
-bool DocManager::GetDocContent(std::vector<IndexInfo> &doc_id_ver_vec, std::set<std::string> &valid_docs){
-    if (component->SnapshotSwitch() == 1 && doc_id_ver_vec.size() <= 1000) {
+bool DocManager::GetDocContent(){
+    const std::vector<IndexInfo>& o_index_info_vet = ResultContext::Instance()->GetIndexInfos();
+    if (component->SnapshotSwitch() == 1 && o_index_info_vet.size() <= 1000) {
         bool need_version = false;
         if(component->RequiredFields().size() > 0){
             need_version = true;
         }
-        bool bRet = g_IndexInstance.DocValid(component->Appid(), doc_id_ver_vec, valid_docs, need_version, valid_version_, doc_content_map_);
+        bool bRet = g_IndexInstance.DocValid(component->Appid(), o_index_info_vet, need_version, valid_version_, doc_content_map_);
         if (false == bRet) {
             log_error("GetDocInfo by snapshot error.");
             return false;
         }
     } else {
-        for(size_t i = 0 ; i < doc_id_ver_vec.size(); i++){
-            valid_docs.insert(doc_id_ver_vec[i].doc_id);
-            if(doc_id_ver_vec[i].extend != ""){
-                doc_content_map_.insert(std::make_pair(doc_id_ver_vec[i].doc_id, doc_id_ver_vec[i].extend));
+        for(size_t i = 0 ; i < o_index_info_vet.size(); i++){
+            ResultContext::Instance()->SetValidDocs(o_index_info_vet[i].doc_id);
+            if(o_index_info_vet[i].extend != ""){
+                doc_content_map_.insert(std::make_pair(o_index_info_vet[i].doc_id, o_index_info_vet[i].extend));
             }
         }
     }
 
-    log_debug("doc_id_ver_vec size: %d", (int)doc_id_ver_vec.size());
+    log_debug("doc_id_ver_vec size: %d", (int)o_index_info_vet.size());
     return true;
 }
 
-bool DocManager::GetDocContent(const std::vector<IndexInfo>& doc_id_ver_vec, const GeoPointContext& geo_point , std::set<std::string>& valid_docs)
+bool DocManager::GetDocContent(const GeoPointContext& geo_point)
 {
-    if (component->SnapshotSwitch() != 1 || doc_id_ver_vec.size() > 1000){
-        for(size_t i = 0 ; i < doc_id_ver_vec.size(); i++){
-            if(doc_id_ver_vec[i].extend != ""){
-                doc_content_map_.insert(make_pair(doc_id_ver_vec[i].doc_id, doc_id_ver_vec[i].extend));
-            }
+    const std::vector<IndexInfo>& o_index_info_vet = ResultContext::Instance()->GetIndexInfos();
+    for(size_t i = 0 ; i < o_index_info_vet.size(); i++){
+        if(o_index_info_vet[i].extend != ""){
+            doc_content_map_.insert(make_pair(o_index_info_vet[i].doc_id, o_index_info_vet[i].extend));
         }
     }
 
     if(doc_content_map_.empty()){
-        g_IndexInstance.GetDocContent(component->Appid(), doc_id_ver_vec, doc_content_map_);
+        g_IndexInstance.GetDocContent(component->Appid(), doc_content_map_);
     }
-    GetGisDistance(component->Appid(), geo_point, doc_content_map_, doc_distance_map_ , valid_docs);
+    GetGisDistance(component->Appid(), geo_point, doc_content_map_, doc_distance_map_ );
 
     return true;
 }

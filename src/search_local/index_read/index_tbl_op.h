@@ -26,6 +26,7 @@
 #include "search_conf.h"
 #include "search_util.h"
 #include "json/value.h"
+#include "result_context.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <vector>
@@ -53,16 +54,16 @@ class CIndexTableManager
 public:
 	int InitServer(const SDTCHost &dtchost, string bindAddr);
 	int InitServer2(const SDTCHost &dtchost);
-	bool GetDocInfo(uint32_t appid, string word, uint32_t key_locate, vector<IndexInfo> &doc_info);
+	bool GetDocInfo(uint32_t appid, string word, uint32_t field_id, vector<IndexInfo> &doc_info);
 	int GetDocCnt(uint32_t appid);
 
 	bool get_snapshot_execute(int left, int right,uint32_t appid, vector<IndexInfo>& no_filter_docs, vector<DocVersionInfo>& docVersionInfo);
 	bool get_top_snapshot_execute(int left, int right, uint32_t appid, vector<TopDocInfo>& no_filter_docs, vector<DocVersionInfo>& docVersionInfo);
 	bool TopDocValid(uint32_t appid, vector<TopDocInfo>& no_filter_docs, vector<TopDocInfo>& doc_info);
-	bool DocValid(uint32_t appid, vector<IndexInfo>& vecs, set<string>& valid_set, bool need_version, map<string, uint32_t>& valid_version, hash_string_map& doc_content_map);
+	bool DocValid(uint32_t appid, vector<IndexInfo>& vecs, bool need_version, map<string, uint32_t>& valid_version, hash_string_map& doc_content_map);
 	bool GetTopDocInfo(uint32_t appid, string word, vector<TopDocInfo>& doc_info);
-	bool GetDocContent(uint32_t appid, const vector<IndexInfo> &doc_id_set, hash_string_map& doc_content);
-	bool GetSnapshotContent(int left, int right, uint32_t appid, const vector<IndexInfo>& docs, hash_string_map& doc_content);
+	bool GetDocContent(uint32_t appid, hash_string_map& doc_content);
+	bool GetSnapshotContent(int left, int right, uint32_t appid, hash_string_map& doc_content);
 	bool GetSuggestDoc(uint32_t appid, int index, uint32_t len, uint32_t field, const IntelligentInfo &info, vector<IndexInfo> &doc_id_set, set<string>& hlWord);
 	bool GetSuggestDocWithoutCharacter(uint32_t appid, int index, uint32_t len,  uint32_t field, const IntelligentInfo &info, vector<IndexInfo> &doc_id_set, set<string>& hlWord);
 	bool GetScoreByField(uint32_t appid, string doc_id, string sort_field, uint32_t sort_type, ScoreInfo &score_info);

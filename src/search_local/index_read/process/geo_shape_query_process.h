@@ -70,7 +70,7 @@ public:
     GeoShapeQueryProcess(const Json::Value& value);
     virtual~ GeoShapeQueryProcess();
 
-private:
+public:
     virtual int ParseContent(int logic_type);
 };
 

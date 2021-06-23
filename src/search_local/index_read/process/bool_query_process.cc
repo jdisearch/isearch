@@ -9,9 +9,6 @@ BoolQueryProcess::BoolQueryProcess(const Json::Value& value)
     : QueryProcess(value)
     , query_process_map_()
     , query_bitset_()
-    , query_process_base_(NULL)
-    , range_query_pre_term_(NULL)
-    , geo_distance_query_(NULL)
 { }
 
 BoolQueryProcess::~BoolQueryProcess()
@@ -115,11 +112,8 @@ int BoolQueryProcess::ParseContent(int logic_type){
 int BoolQueryProcess::GetValidDoc(){
     bool bRet = false;
     if (query_bitset_.test(E_INDEX_READ_PRE_TERM) && query_bitset_.test(E_INDEX_READ_TERM)){
-        range_query_pre_term_ = dynamic_cast<PreTerminal*>(query_process_map_[E_INDEX_READ_PRE_TERM]);
-        if (range_query_pre_term_ != NULL){
-            return range_query_pre_term_->GetValidDoc();
-        }
-    }
+            return query_process_map_[E_INDEX_READ_PRE_TERM]->GetValidDoc();
+    }   
 
     for (uint32_t ui_key_type = ORKEY; ui_key_type < KEYTOTALNUM; ++ui_key_type){
         std::vector<std::vector<FieldInfo> >::iterator iter = component_->GetFieldList(ui_key_type).cbegin();
@@ -133,12 +127,26 @@ int BoolQueryProcess::GetValidDoc(){
     return 0;
 }
 
-int BoolQueryProcess::GetScore(){
-    if(query_bitset_.test(E_INDEX_READ_PRE_TERM)){
-        return range_query_pre_term_->GetScore();
-    }
+int BoolQueryProcess::CheckValidDoc(){
+    for (uint32_t ui_query_type = E_INDEX_READ_PRE_TERM
+        ; ui_query_type < E_INDEX_READ_TOTAL_NUM
+        ; ++ui_query_type){
+        if (!query_bitset_.test(ui_query_type)){
+            continue;
+        }
 
-    for (uint32_t ui_query_type = E_INDEX_READ_GEO_DISTANCE
+        if (E_INDEX_READ_GEO_DISTANCE == ui_query_type || E_INDEX_READ_GEO_SHAPE == ui_query_type){
+            if (component_->SortField().empty() && !query_bitset_.test(E_INDEX_READ_RANGE)){
+                return query_process_map_[ui_query_type]->CheckValidDoc();
+            }
+            continue;
+        }
+        return query_process_map_[ui_query_type]->CheckValidDoc();
+    }
+}
+
+int BoolQueryProcess::GetScore(){
+    for (uint32_t ui_query_type = E_INDEX_READ_PRE_TERM
         ; ui_query_type < E_INDEX_READ_TOTAL_NUM
         ; ++ui_query_type){
         if (!query_bitset_.test(ui_query_type)){
@@ -149,17 +157,14 @@ int BoolQueryProcess::GetScore(){
             if (component_->SortField().empty() && !query_bitset_.test(E_INDEX_READ_RANGE)){
                 return query_process_map_[ui_query_type]->GetScore();
             }
+            continue;
         }
         return query_process_map_[ui_query_type]->GetScore();
     }
 }
 
 void BoolQueryProcess::SortScore(int& i_sequence , int& i_rank){
-    if(query_bitset_.test(E_INDEX_READ_PRE_TERM)){
-        range_query_pre_term_->SortScore();
-        return;
-    }
-    for (uint32_t ui_query_type = E_INDEX_READ_GEO_DISTANCE
+    for (uint32_t ui_query_type = E_INDEX_READ_PRE_TERM
         ; ui_query_type < E_INDEX_READ_TOTAL_NUM
         ; ++ui_query_type){
         if (!query_bitset_.test(ui_query_type)){
@@ -171,6 +176,7 @@ void BoolQueryProcess::SortScore(int& i_sequence , int& i_rank){
                 query_process_map_[ui_query_type]->SortScore();
                 return;
             }
+            continue;
         }
         query_process_map_[ui_query_type]->SortScore();
         return;
@@ -178,11 +184,7 @@ void BoolQueryProcess::SortScore(int& i_sequence , int& i_rank){
 }
 
 void BoolQueryProcess::SetResponse(){
-    if(query_bitset_.test(E_INDEX_READ_PRE_TERM)){
-        response_ = range_query_pre_term_->SetResponse();
-        return;
-    }
-    for (uint32_t ui_query_type = E_INDEX_READ_GEO_DISTANCE
+    for (uint32_t ui_query_type = E_INDEX_READ_PRE_TERM
         ; ui_query_type < E_INDEX_READ_TOTAL_NUM
         ; ++ui_query_type){
         if (!query_bitset_.test(ui_query_type)){

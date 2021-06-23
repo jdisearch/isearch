@@ -45,13 +45,14 @@ const char* const GEOSHAPE ="geo_polygon";
 #define FIRST_TEST_INDEX 0
 #define FIRST_SPLIT_WORD_INDEX 0
 
+// query process definition has priorities ,beacause of BOOL query
 enum E_INDEX_READ_QUERY_PROCESS{
+    E_INDEX_READ_PRE_TERM,
+    E_INDEX_READ_RANGE,
     E_INDEX_READ_GEO_DISTANCE,
     E_INDEX_READ_GEO_SHAPE,
     E_INDEX_READ_MATCH,
     E_INDEX_READ_TERM,
-    E_INDEX_READ_RANGE,
-    E_INDEX_READ_PRE_TERM,
     E_INDEX_READ_TOTAL_NUM
 };
 
@@ -70,10 +71,10 @@ public:
 public:
     virtual int ParseContent(int logic_type) = 0;
     virtual int GetValidDoc(int logic_type , const std::vector<FieldInfo>& keys) = 0;
-
-protected:
+    
     virtual int ParseContent() = 0;
     virtual int GetValidDoc() = 0;
+    virtual int CheckValidDoc();
     virtual int GetScore();
     virtual void SortScore(int& i_sequence , int& i_rank);
     virtual const Json::Value& SetResponse();

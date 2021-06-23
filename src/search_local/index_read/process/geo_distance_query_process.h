@@ -103,18 +103,15 @@ public:
     virtual int ParseContent(int logic_type);
     virtual int GetValidDoc(int logic_type, const std::vector<FieldInfo>& keys);
 
-private:
     virtual int ParseContent();
     virtual int GetValidDoc();
+    virtual int CheckValidDoc();
     virtual int GetScore();
     virtual void SortScore(int& i_sequence , int& i_rank);
 
 private:
     GeoPointContext o_geo_point_;
     hash_double_map o_distance_;
-
-private:
-    friend class BoolQueryProcess;
 };
 
 #endif

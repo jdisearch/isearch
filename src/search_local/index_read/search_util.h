@@ -28,6 +28,7 @@
 #include "comm.h"
 #include "search_conf.h"
 #include "index_tbl_op.h"
+#include "result_context.h"
 using namespace std;
 
 vector<int> splitInt(const string& src, string separate_character);
@@ -57,7 +58,7 @@ set<string> sets_intersection(set<string> v1, set<string> v2); // 集合求交�
 set<string> sets_union(set<string> v1, set<string> v2); // 集合求并集
 set<string> sets_difference(set<string> v1, set<string> v2); // 集合求差集
 double strToDouble(const string& str);
-bool GetGisDistance(uint32_t appid, const GeoPointContext& geo_point, const hash_string_map& doc_content , hash_double_map& distances ,std::set<std::string>& valid_docs);
+bool GetGisDistance(uint32_t appid, const GeoPointContext& geo_point, const hash_string_map& doc_content , hash_double_map& distances);
 void ConvertCharIntelligent(const string word, IntelligentInfo &info, int &len);
 void ConvertIntelligent(const vector<Content> &result, IntelligentInfo &info, bool &flag);
 bool GetGisCode(string lng, string lat, string ip, double distance, vector<string>& gisCode);

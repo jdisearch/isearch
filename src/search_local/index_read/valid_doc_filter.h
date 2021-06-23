@@ -26,8 +26,8 @@
 #include "comm.h"
 #include "singleton.h"
 #include "noncopyable.h"
-#include "component.h"
-#include "system_status.h"
+#include "request_context.h"
+#include "result_context.h"
 
 class ValidDocFilter : private noncopyable{
 public:
@@ -47,10 +47,6 @@ public:
     void BindDataBasePointer(RequestContext* const p_data_base) { p_data_base_ = p_data_base; };
 
 public:
-    int OrAndInvertKeyFilter(std::vector<IndexInfo>& index_info_vet
-            , std::set<std::string>& highlightWord, std::map<std::string, KeyInfoVet>& docid_keyinfo_map
-            , std::map<std::string, uint32_t>& key_doccount_map);
-
     int HanPinTextInvertIndexSearch(const std::vector<FieldInfo>& keys
                     , std::vector<IndexInfo>& index_info_vet );
 
@@ -62,33 +58,15 @@ public:
 
     int ProcessTerminal(const std::vector<std::vector<FieldInfo> >& and_keys, const TerminalQryCond& query_cond, std::vector<TerminalRes>& vecs);
 
+private:
     void CalculateByWord(FieldInfo fieldInfo, const std::vector<IndexInfo> &doc_info);
     void SetDocIndexCache(const std::vector<IndexInfo> &doc_info, std::string& indexJsonStr);
     bool GetDocIndexCache(std::string word, uint32_t field, std::vector<IndexInfo> &doc_info);
     int GetDocIdSetByWord(FieldInfo fieldInfo, std::vector<IndexInfo> &doc_info);
-
-private:
-    // int GetTopDocIdSetByWord(FieldInfo fieldInfo, std::vector<TopDocInfo>& doc_info);
-
-    int OrKeyFilter(std::vector<IndexInfo>& index_info_vet
-            , std::set<std::string>& highlightWord, std::map<std::string, KeyInfoVet>& docid_keyinfo_map
-            , std::map<std::string, uint32_t>& key_doccount_map);
-
-    int AndKeyFilter(std::vector<IndexInfo>& index_info_vet
-            , std::set<std::string>& highlightWord, std::map<std::string, KeyInfoVet>& docid_keyinfo_map
-            , std::map<std::string, uint32_t>& key_doccount_map);
-
-    int InvertKeyFilter(std::vector<IndexInfo>& index_info_vet
-            , std::set<std::string>& highlightWord, std::map<std::string, KeyInfoVet>& docid_keyinfo_map
-            , std::map<std::string, uint32_t>& key_doccount_map);
-
-    int Process(const std::vector<std::vector<FieldInfo> >& keys, std::vector<IndexInfo>& index_info_vet
-            , std::set<std::string>& highlightWord, std::map<std::string, KeyInfoVet>& docid_keyinfo_map
-            , std::map<std::string, uint32_t>& key_doccount_map);
+    std::vector<IndexInfo> Union(std::vector<IndexInfo>& first_indexinfo_vet, std::vector<IndexInfo>& second_indexinfo_vet);
 
 private:
     RequestContext* p_data_base_;
-    std::function<std::vector<IndexInfo>(std::vector<IndexInfo>&,std::vector<IndexInfo>&)> o_or_and_not_functor_;
 };
 
 #endif

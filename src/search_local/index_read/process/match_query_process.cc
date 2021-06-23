@@ -74,13 +74,6 @@ int MatchQueryProcess::GetValidDoc(int logic_type, const std::vector<FieldInfo>&
         iret = ValidDocFilter::Instance()->HanPinTextInvertIndexSearch(keys , index_info_vet);
     }
     if (iret != 0) { return iret; }
-
-    ValidDocSet valid_docs;
-    bool bRet = doc_manager_->GetDocContent(index_info_vet , valid_docs);
-    if (false == bRet){
-        log_error("GetDocContent error.");
-        return -RT_DTC_ERR;
-    }
-    ResultContext::Instance()->SetValidDocs(logic_type , valid_docs);
+    ResultContext::Instance()->SetIndexInfos(logic_type , index_info_vet);
     return 0;
 }

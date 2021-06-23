@@ -15,8 +15,5 @@ public:
 private:
     virtual int ParseContent();
     virtual int GetValidDoc();
-
-private:
-    friend class BoolQueryProcess;
 };
 #endif

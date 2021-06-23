@@ -26,7 +26,7 @@
 #include "index_tbl_op.h"
 #include "task_request.h"
 #include "skiplist.h"
-#include "component.h"
+#include "request_context.h"
 #include "valid_doc_filter.h"
 #include "doc_manager.h"
 #include <string>

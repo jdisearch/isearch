@@ -18,16 +18,13 @@ public:
 public:
     virtual int ParseContent(int logic_type);
     virtual int GetValidDoc(int logic_type, const std::vector<FieldInfo>& keys);
-
-private:
-    virtual int ParseContent();
     virtual int GetValidDoc();
+
+protected:
+    virtual int ParseContent();
 
 private:
     uint32_t ui_query_type_;
-
-private:
-    friend class BoolQueryProcess;
 };
 
 class PreTerminal : public RangeQueryProcess{
@@ -38,16 +35,13 @@ public:
 public:
     virtual int GetValidDoc(int logic_type, const std::vector<FieldInfo>& keys);
 
-private:
     virtual int GetValidDoc();
+    virtual int CheckValidDoc();
     virtual int GetScore();
     virtual const Json::Value& SetResponse();
 
 private:
     std::vector<TerminalRes> candidate_doc_;
-
-private:
-    friend class BoolQueryProcess;
 };
 
 class RangeQueryGenerator : private noncopyable{

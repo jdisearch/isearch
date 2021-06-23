@@ -16,7 +16,7 @@
  * =====================================================================================
  */
 
-#include "component.h"
+#include "request_context.h"
 #include "split_manager.h"
 #include "db_manager.h"
 #include "utf8_str.h"

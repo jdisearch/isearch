@@ -28,6 +28,7 @@ private:
     virtual int ParseContent();
     virtual int ParseContent(int logic_type);
     virtual int GetValidDoc();
+    virtual int CheckValidDoc();
     virtual int GetScore();
     virtual void SortScore(int& i_sequence , int& i_rank);
     virtual void SetResponse();
@@ -43,7 +44,6 @@ private:
 private:
     std::map<int , QueryProcess*> query_process_map_;
     std::bitset<E_INDEX_READ_TOTAL_NUM> query_bitset_;
-    PreTerminal* range_query_pre_term_;
 };
 
 #endif

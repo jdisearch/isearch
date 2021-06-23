@@ -31,15 +31,19 @@ public:
     void SetWordDoccountMap(const std::string& s_word, uint32_t ui_doc_count);
     const KeywordDoccountMap& GetKeywordDoccountMap() const { return key_doccount_map_;};
 
-    void SetValidDocs(int logic_type , const ValidDocSet& valid_docs_set);
+    void SetIndexInfos(int logic_type , std::vector<IndexInfo>& index_info_vet);
+    const std::vector<IndexInfo>& GetIndexInfos() const { return index_info_vet_;};
+
+    void SetValidDocs(const std::string& valid_docid);
     const ValidDocSet& GetValidDocs() const { return valid_docs_set_;};
 
 private:
-    void SetOrValidDocs(const ValidDocSet& or_valid_docs_set);
-    void SetAndValidDocs(const ValidDocSet& and_valid_docs_set);
-    void SetInvertValidDocs(const ValidDocSet& invert_valid_docs_set);
+    void SetOrIndexInfos(std::vector<IndexInfo>& or_index_info_vet);
+    void SetAndIndexInfos(std::vector<IndexInfo>& and_index_info_vet);
+    void SetInvertIndexInfos(std::vector<IndexInfo>& invert_index_info_vet);
 
 private:
+    std::vector<IndexInfo> index_info_vet_;
     ValidDocSet valid_docs_set_;
     HighLightWordSet highlight_word_set_;
     DocKeyinfosMap docid_keyinfovet_map_;

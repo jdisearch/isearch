@@ -64,14 +64,6 @@ int TermQueryProcess::GetValidDoc(int logic_type, const std::vector<FieldInfo>& 
     std::vector<IndexInfo> index_info_vet;
     int iret = ValidDocFilter::Instance()->TextInvertIndexSearch(keys, index_info_vet);
     if (iret != 0) { return iret; }
-
-    ValidDocSet valid_docs;
-    bool bRet = doc_manager_->GetDocContent(index_info_vet , valid_docs);
-    if (false == bRet){
-        log_error("GetDocContent error.");
-        return -RT_DTC_ERR;
-    }
-
-    ResultContext::Instance()->SetValidDocs(logic_type , valid_docs);
+    ResultContext::Instance()->SetIndexInfos(logic_type , index_info_vet);
     return 0;
 }
