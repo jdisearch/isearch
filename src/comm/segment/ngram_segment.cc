@@ -187,16 +187,13 @@ double NgramSegment::calSegProbability(const vector<string>& vec) {
             }
         }
         // 乘以第一个词的概率
-        if ((pos == 0 && vec[pos] != "<BEG>") || (pos == 1 && vec[0] == "<BEG>")) {
+        if ((pos == 0 && vec[0] != "<BEG>") || (pos == 1 && vec[0] == "<BEG>")) {
             uint32_t word_freq = 0;
             WordInfo word_info;
             if (getWordInfo(vec[pos], 0, word_info)) {
                 word_freq = word_info.word_freq;
-                p += log(word_freq + 1.0 / hmm_manager_->NextDict().size() + hmm_manager_->TrainCnt());
             }
-            else {
-                p += log(1.0 / hmm_manager_->NextDict().size() + hmm_manager_->TrainCnt());
-            }
+            p += log(word_freq + 1.0 / hmm_manager_->NextDict().size() + hmm_manager_->TrainCnt());
         }
     }
 

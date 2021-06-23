@@ -176,9 +176,6 @@ void Segment::dealByHmmMgr(uint32_t appid, const vector<string>& res_all, vector
                     hmm_manager_->HmmSplit(buf, vec);
                     new_res_all.insert(new_res_all.end(), vec.begin(), vec.end());
                 }
-                else { // 是否有这种情况
-                    new_res_all.push_back(buf);
-                }
             }
             buf = "";
             new_res_all.push_back(res_all[i]);
@@ -194,9 +191,6 @@ void Segment::dealByHmmMgr(uint32_t appid, const vector<string>& res_all, vector
             vector<string> vec;
             hmm_manager_->HmmSplit(buf, vec);
             new_res_all.insert(new_res_all.end(), vec.begin(), vec.end());
-        }
-        else { // 是否有这种情况
-            new_res_all.push_back(buf);
         }
         buf = "";
     }

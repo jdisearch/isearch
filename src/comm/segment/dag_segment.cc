@@ -15,29 +15,13 @@ void DagSegment::ConcreteSplit(iutf8string& sentence, uint32_t appid, vector<str
     getDag(sentence, appid, dag_map);
     map<uint32_t, RouteValue> route;
     calc(sentence, dag_map, route, appid);
-    iutf8string utf8_str(sentence.stlstring());
-    uint32_t N = utf8_str.length();
+    uint32_t N = sentence.length();
     uint32_t i = 0;
-    string buf = "";
     while (i < N) {
         uint32_t j = route[i].idx + 1;
-        string l_word = utf8_str.substr(i, j - i);
-        if (isAllAlphaOrDigit(l_word)) {
-            buf += l_word;
-            i = j;
-        }
-        else {
-            if (!buf.empty()) {
-                vec.push_back(buf);
-                buf = "";
-            }
-            vec.push_back(l_word);
-            i = j;
-        }
-    }
-    if (!buf.empty()) {
-        vec.push_back(buf);
-        buf = "";
+        string l_word = sentence.substr(i, j - i);
+        vec.push_back(l_word);
+        i = j;
     }
 
     return;
@@ -81,12 +65,11 @@ void DagSegment::calc(iutf8string& utf8_str, const map<uint32_t, vector<uint32_t
                 map<uint32_t, WordInfo> wordInfo = word_dict_[word];
                 if (wordInfo.find(0) != wordInfo.end()) {
                     word_info = wordInfo[0];
-                    word_freq = word_info.word_freq;
                 }
                 if (wordInfo.find(appid) != wordInfo.end()) {
                     word_info = wordInfo[appid];
-                    word_freq = word_info.word_freq;
                 }
+                word_freq = word_info.word_freq;
             }
             double route_value = log(word_freq) - logtotal + route[vec[t] + 1].max_route;
             if (route_value > max_route) {

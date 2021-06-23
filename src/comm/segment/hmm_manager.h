@@ -23,7 +23,7 @@
 #include <set>
 #include <vector>
 #include <map>
-#include "../trainCorpus.h"
+#include <stdint.h>
 using namespace std;
 
 class HmmManager{
@@ -35,11 +35,18 @@ public:
     map<string, map<string, int> >& NextDict();
     uint32_t TrainCnt();
 private:
-    vector<char> viterbi(string sentence);
+    void viterbi(string sentence, vector<char>& output);
+    void getList(uint32_t str_len, vector<char>& output);
 private:
     uint32_t train_cnt_;
-    TrainCorpus* train_corpus_;
     map<string, map<string, int> > next_dict_;
+
+    map<char, map<char, double> > trans_dict_;
+    map<char, map<string, double> > emit_dict_;
+    map<char, double> start_dict_;
+    map<char, uint32_t> count_dict_;
+    uint32_t line_num_;
+    double min_emit_;
 };
 
 

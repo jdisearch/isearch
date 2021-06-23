@@ -23,15 +23,13 @@ void BmmSegment::ConcreteSplit(iutf8string& phrase, uint32_t appid, vector<strin
                 break;
             iutf8string key = phrase_sub.utf8substr(j, phrase_sub.length()-j);
             if (wordValid(key.stlstring(), appid) == true) {
-                vector<string>::iterator iter = bmm_list.begin();
-                bmm_list.insert(iter, key.stlstring());
+                bmm_list.insert(bmm_list.begin(), key.stlstring());
                 i -= key.length();
                 break;
             }
         }
         if (j == phrase_sub.length() - 1) {
-            vector<string>::iterator iter = bmm_list.begin();
-            bmm_list.insert(iter, "" + phrase_sub[j]);
+            bmm_list.insert(bmm_list.begin(), "" + phrase_sub[j]);
             i--;
         }
     }
