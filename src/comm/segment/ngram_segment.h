@@ -25,10 +25,10 @@ class NgramSegment: public Segment
 public:
     NgramSegment();
     ~NgramSegment();
-    virtual void ConcreteSplit(iutf8string& phrase, uint32_t appid, vector<string>& vec);
+    virtual void ConcreteSplit(const string& str, uint32_t appid, vector<string>& vec);
 private:
-    void fmm(iutf8string& phrase, uint32_t appid, vector<string>& vec);
-    void bmm(iutf8string& phrase, uint32_t appid, vector<string>& vec);
+    void fmm(const string& str, uint32_t appid, vector<string>& vec);
+    void bmm(const string& str, uint32_t appid, vector<string>& vec);
     double calSegProbability(const vector<string>& vec);
     bool getWordInfo(string word, uint32_t appid, WordInfo& word_info);
 };

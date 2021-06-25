@@ -9,11 +9,11 @@ NgramSegment::~NgramSegment()
 {
 }
 
-void NgramSegment::ConcreteSplit(iutf8string& utf8_str, uint32_t appid, vector<string>& parse_list){
+void NgramSegment::ConcreteSplit(const string& str, uint32_t appid, vector<string>& parse_list){
     vector<string> parse_list1;
     vector<string> parse_list2;
-    fmm(utf8_str, appid, parse_list1);
-    bmm(utf8_str, appid, parse_list2);
+    fmm(str, appid, parse_list1);
+    bmm(str, appid, parse_list2);
     parse_list1.insert(parse_list1.begin(), "<BEG>");
     parse_list1.push_back("<END>");
     parse_list2.insert(parse_list2.begin(), "<BEG>");
@@ -101,7 +101,8 @@ void NgramSegment::ConcreteSplit(iutf8string& utf8_str, uint32_t appid, vector<s
     return;
 }
 
-void NgramSegment::fmm(iutf8string& phrase, uint32_t appid, vector<string>& fmm_list) {
+void NgramSegment::fmm(const string& str, uint32_t appid, vector<string>& fmm_list) {
+	iutf8string phrase(str);
     int maxlen = MAX_WORD_LEN;
     int len_phrase = phrase.length();
     int i = 0, j = 0;
@@ -129,7 +130,8 @@ void NgramSegment::fmm(iutf8string& phrase, uint32_t appid, vector<string>& fmm_
     return;
 }
 
-void NgramSegment::bmm(iutf8string& phrase, uint32_t appid, vector<string>& bmm_list) {
+void NgramSegment::bmm(const string& str, uint32_t appid, vector<string>& bmm_list) {
+	iutf8string phrase(str);
     int maxlen = MAX_WORD_LEN;
     int len_phrase = phrase.length();
     int i = len_phrase, j = 0;

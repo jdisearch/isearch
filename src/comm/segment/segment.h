@@ -40,10 +40,10 @@ public:
     Segment();
     virtual ~Segment();
     virtual bool Init(string word_path, string train_path);
-    void CutForSearch(iutf8string& phrase, uint32_t appid, vector<vector<string> >& search_res_all);
-    void CutNgram(iutf8string& phrase, vector<string>& search_res, uint32_t n);
-    void Split(iutf8string& phrase, uint32_t appid, vector<string>& vec, bool hmm_flag = false);
-    virtual void ConcreteSplit(iutf8string& phrase, uint32_t appid, vector<string>& vec) = 0;
+    void CutForSearch(const string& str, uint32_t appid, vector<vector<string> >& search_res_all);
+    void CutNgram(const string& str, vector<string>& search_res, uint32_t n);
+    void Split(const string& str, uint32_t appid, vector<string>& vec, bool hmm_flag = false);
+    virtual void ConcreteSplit(const string& str, uint32_t appid, vector<string>& vec) = 0;
 
 protected:
     bool isAllAlphaOrDigit(string str);

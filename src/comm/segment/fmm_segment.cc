@@ -8,7 +8,8 @@ FmmSegment::~FmmSegment()
 {
 }
 
-void FmmSegment::ConcreteSplit(iutf8string& phrase, uint32_t appid, vector<string>& fmm_list){
+void FmmSegment::ConcreteSplit(const string& str, uint32_t appid, vector<string>& fmm_list){
+	iutf8string phrase(str);
     int maxlen = MAX_WORD_LEN;
     int len_phrase = phrase.length();
     int i = 0, j = 0;

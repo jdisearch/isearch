@@ -27,7 +27,7 @@ private:
 public:
     FmmSegment();
     ~FmmSegment();
-    virtual void ConcreteSplit(iutf8string& phrase, uint32_t appid, vector<string>& vec);
+    virtual void ConcreteSplit(const string& str, uint32_t appid, vector<string>& vec);
 };
 
 

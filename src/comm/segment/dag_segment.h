@@ -34,7 +34,7 @@ class DagSegment: public Segment
 public:
     DagSegment();
     ~DagSegment();
-    virtual void ConcreteSplit(iutf8string& phrase, uint32_t appid, vector<string>& vec);
+    virtual void ConcreteSplit(const string& str, uint32_t appid, vector<string>& vec);
 private:
     void getDag(iutf8string& sentence, uint32_t appid, map<uint32_t, vector<uint32_t> >& dag_map);
     void calc(iutf8string& sentence, const map<uint32_t, vector<uint32_t> >& dag_map, map<uint32_t, RouteValue>& route, uint32_t appid);

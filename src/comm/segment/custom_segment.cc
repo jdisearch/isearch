@@ -44,9 +44,9 @@ bool CustomSegment::Init(string word_path, string train_path){
     return true;
 }
 
-void CustomSegment::ConcreteSplit(iutf8string& phrase, uint32_t appid, vector<string>& vec){
+void CustomSegment::ConcreteSplit(const string& str, uint32_t appid, vector<string>& vec){
     char res[100] = {'\0'};
-    word_split_func_(phrase.stlstring().c_str(), res, 100);
+    word_split_func_(str.c_str(), res, 100);
     string tmp = "";
     for(int i = 0; i < strlen(res); i++){
         if(res[i] != ' '){

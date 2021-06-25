@@ -10,7 +10,8 @@ DagSegment::~DagSegment()
 {
 }
 
-void DagSegment::ConcreteSplit(iutf8string& sentence, uint32_t appid, vector<string>& vec){
+void DagSegment::ConcreteSplit(const string& str, uint32_t appid, vector<string>& vec){
+	iutf8string sentence(str);
     map<uint32_t, vector<uint32_t> > dag_map;
     getDag(sentence, appid, dag_map);
     map<uint32_t, RouteValue> route;

@@ -89,7 +89,8 @@ bool Segment::Init(string word_path, string train_path){
     return true;
 }
 
-void Segment::Split(iutf8string& phrase, uint32_t appid, vector<string>& new_res_all, bool hmm_flag){
+void Segment::Split(const string& str, uint32_t appid, vector<string>& new_res_all, bool hmm_flag){
+	iutf8string phrase(str);
     vector<string> sen_list;
     set<string> special_set;  // 记录英文和数字字符串
     string tmp_words = "";
@@ -137,9 +138,8 @@ void Segment::Split(iutf8string& phrase, uint32_t appid, vector<string>& new_res
     for (int i = 0; i < (int)sen_list.size(); i++) {
         // special_set中保存了连续的字母数字串，不需要进行分词
         if (special_set.find(sen_list[i]) == special_set.end() && punct_set_.find(sen_list[i]) == punct_set_.end()) {
-            iutf8string utf8_str(sen_list[i]);
             vector<string> parse_list;
-            ConcreteSplit(utf8_str, appid, parse_list);
+            ConcreteSplit(sen_list[i], appid, parse_list);
             res_all.insert(res_all.end(), parse_list.begin(), parse_list.end());
         }else { // 英文或数字需要放入到res_all，标点符号不需要
             if(punct_set_.find(sen_list[i]) == punct_set_.end()){
@@ -196,10 +196,10 @@ void Segment::dealByHmmMgr(uint32_t appid, const vector<string>& res_all, vector
     }
 }
 
-void Segment::CutForSearch(iutf8string& phrase, uint32_t appid, vector<vector<string> >& search_res_all) {
+void Segment::CutForSearch(const string& str, uint32_t appid, vector<vector<string> >& search_res_all) {
     // 搜索引擎模式
     vector<string> new_res_all;
-    Split(phrase, appid, new_res_all);
+    Split(str, appid, new_res_all);
     for (size_t i = 0; i < new_res_all.size(); i++) {
         vector<string> vec;
         iutf8string utf8_str(new_res_all[i]);
@@ -238,7 +238,8 @@ bool Segment::isAllAlphaOrDigit(string str) {
     return flag;
 }
 
-void Segment::CutNgram(iutf8string& phrase, vector<string>& search_res, uint32_t n) {
+void Segment::CutNgram(const string& str, vector<string>& search_res, uint32_t n) {
+	iutf8string phrase(str);
     uint32_t N = (n > (uint32_t)phrase.length()) ? (uint32_t)phrase.length() : n;
     for (size_t i = 1; i <= N; i++) {
         for (size_t j = 0; j < (size_t)phrase.length() - i + 1; j++) {

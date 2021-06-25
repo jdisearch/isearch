@@ -8,7 +8,8 @@ BmmSegment::~BmmSegment()
 {
 }
 
-void BmmSegment::ConcreteSplit(iutf8string& phrase, uint32_t appid, vector<string>& bmm_list){
+void BmmSegment::ConcreteSplit(const string& str, uint32_t appid, vector<string>& bmm_list){
+	iutf8string phrase(str);
     int maxlen = MAX_WORD_LEN;
     int len_phrase = phrase.length();
     int i = len_phrase, j = 0;

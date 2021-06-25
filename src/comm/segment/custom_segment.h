@@ -29,7 +29,7 @@ public:
     CustomSegment();
     ~CustomSegment();
     virtual bool Init(string word_path, string train_path);
-    virtual void ConcreteSplit(iutf8string& phrase, uint32_t appid, vector<string>& vec);
+    virtual void ConcreteSplit(const string& str, uint32_t appid, vector<string>& vec);
 private:
     CConfig* cache_config_;
     split_interface word_split_func_;
