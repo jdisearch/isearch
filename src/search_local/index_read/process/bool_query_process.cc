@@ -87,7 +87,6 @@ void BoolQueryProcess::HandleUnifiedIndex(){
 }
 
 int BoolQueryProcess::ParseContent(){
-    InitQueryMember();
     int ret = 0;
     if(parse_value_.isMember(MUST)){
         ret = ParseRequest(parse_value_[MUST] , ANDKEY);
@@ -102,6 +101,7 @@ int BoolQueryProcess::ParseContent(){
         ret = ParseRequest(parse_value_[MUST_NOT] , INVERTKEY);
         if (ret != 0) { return ret; }
     }
+    InitQueryMember();
     return ret;
 }
 
@@ -204,7 +204,10 @@ const Json::Value& BoolQueryProcess::SetResponse(){
     return response_;
 }
 
-int BoolQueryProcess::ParseRequest(const Json::Value& request, int logic_type){
+int BoolQueryProcess::ParseRequest(
+    const Json::Value& request,
+    int logic_type)
+{
     int iret = 0;
     if(request.isArray()){
         for(int i = 0; i < (int)request.size(); i++){
@@ -215,10 +218,14 @@ int BoolQueryProcess::ParseRequest(const Json::Value& request, int logic_type){
             }
         }
     } else if (request.isObject()) {
-        iret = InitQueryProcess(logic_type, request);
-        if(iret != 0){
-            log_error("InitQueryProcess error!");
-            return -RT_PARSE_CONTENT_ERROR;
+        Json::Value::Members search_member = request.getMemberNames();
+        Json::Value::Members::iterator iter = search_member.begin();
+        for (; iter != search_member.end(); ++iter){
+            iret = InitQueryProcess(logic_type, *iter);
+            if(iret != 0){
+                log_error("InitQueryProcess error!");
+                return -RT_PARSE_CONTENT_ERROR;
+            }
         }
     }
     return 0;

@@ -17,7 +17,7 @@ int GeoShapeQueryProcess::ParseContent(int logic_type){
     Json::Value field_value = parse_value_[fieldname];
     GeoShapeContext o_geo_shape;
     if(field_value.isMember(POINTS)){
-        o_geo_shape(field_value);
+        o_geo_shape(field_value[POINTS]);
     } else {
         return -RT_PARSE_CONTENT_ERROR;
     }

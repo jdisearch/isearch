@@ -35,8 +35,7 @@ int MatchQueryProcess::ParseContent(int logic_type){
     uint32_t segment_tag = SEGMENT_NONE;
     uint32_t uiRet = DBManager::Instance()->GetWordField(segment_tag, component_->Appid()
             , fieldname, fieldInfo);
-    if (uiRet != 0 && SEGMENT_DEFAULT == segment_tag)
-    {
+    if (uiRet != 0 && SEGMENT_DEFAULT == segment_tag){
         std::string split_data = SplitManager::Instance()->split(field_value.asString(), component_->Appid());
         log_debug("split_data: %s", split_data.c_str());
         std::vector<std::string> split_datas = splitEx(split_data, "|");
@@ -45,12 +44,11 @@ int MatchQueryProcess::ParseContent(int logic_type){
             fieldInfos.push_back(fieldInfo);
         }
     }
-    else if (uiRet != 0)
-    {
+    else if (uiRet != 0 && segment_tag != SEGMENT_RANGE){
         fieldInfo.word = field_value.asString();
         fieldInfos.push_back(fieldInfo);
     }else{
-        log_error("field_name:%s error, not in the app_field_define", fieldname.c_str());
+        log_error("field_name:[%s] error ,not in the app_field_define or segmentTag error", fieldname.c_str());
         return -RT_PARSE_CONTENT_ERROR;
     }
 
@@ -64,7 +62,7 @@ int MatchQueryProcess::GetValidDoc(){
 
 int MatchQueryProcess::GetValidDoc(int logic_type, const std::vector<FieldInfo>& keys){
     std::vector<IndexInfo> index_info_vet;
-    int iret = 0;
+    int iret = -1;
     uint32_t segment_tag = keys[FIRST_SPLIT_WORD_INDEX].segment_tag;
     if (SEGMENT_DEFAULT == segment_tag 
         || SEGMENT_NONE == segment_tag){
@@ -73,6 +71,7 @@ int MatchQueryProcess::GetValidDoc(int logic_type, const std::vector<FieldInfo>&
         || SEGMENT_ENGLISH == segment_tag){
         iret = ValidDocFilter::Instance()->HanPinTextInvertIndexSearch(keys , index_info_vet);
     }
+
     if (iret != 0) { return iret; }
     ResultContext::Instance()->SetIndexInfos(logic_type , index_info_vet);
     return 0;
