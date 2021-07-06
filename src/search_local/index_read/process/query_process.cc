@@ -83,6 +83,7 @@ int QueryProcess::GetScore()
                     uint32_t ui_doc_count = ResultContext::Instance()->GetKeywordDoccountMap(keyword);
                     score += log((DOC_CNT - ui_doc_count + 0.5) / (ui_doc_count + 0.5)) * ((D_BM25_K1 + 1)*ui_word_freq)  \
                             / (D_BM25_K + ui_word_freq) * (D_BM25_K2 + 1) * 1 / (D_BM25_K2 + 1);
+                    log_debug("loop score[%d]:%f", i , score);
                 }
                 scoredocid_set_.insert(ScoreDocIdNode(score , doc_id));
             }

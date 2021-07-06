@@ -40,7 +40,7 @@ bool CIndexTableManager::GetDocInfo(uint32_t appid, string word, uint32_t field_
     
     DTC::GetRequest getReq(dtcServer);
 
-    ret = getReq.SetKey(word.c_str());
+    ret = getReq.SetKey(word.c_str() , word.length());
     if (field_id != 0 && field_id != INT_MAX)
         ret = getReq.EQ("field", field_id);
     ret = getReq.EQ("start_time", 0);
