@@ -92,6 +92,7 @@ int ValidDocFilter::RangeQueryInvertIndexSearch(const std::vector<FieldInfo>& ke
         std::vector<FieldInfo>::const_iterator iter = keys.cbegin();
         for (; iter != keys.cend(); ++iter){
             std::vector<IndexInfo> doc_info;
+            log_debug("segment:%d , word:%s" , iter->segment_tag ,iter->word.c_str());
             if (SEGMENT_RANGE == (iter->segment_tag) && (iter->word).empty()){
                 std::stringstream ss;
                 ss << p_data_base_->Appid();

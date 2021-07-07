@@ -1288,9 +1288,6 @@ double distanceSimplify(double lat1, double lng1, double lat2, double lng2) {
 
 bool GetGisDistance(uint32_t appid, const GeoPointContext& geo_point, const hash_string_map& doc_content, hash_double_map& distances)
 {
-    double d_query_lat = strToDouble(geo_point.sLatitude);
-    double d_query_lng = strToDouble(geo_point.sLongtitude);
-
     hash_string_map::const_iterator doc_it;
     for (doc_it = doc_content.cbegin() ; doc_it != doc_content.cend(); doc_it++) {
         if (doc_it->second == "") {
@@ -1312,20 +1309,29 @@ bool GetGisDistance(uint32_t appid, const GeoPointContext& geo_point, const hash
             uint32_t segment_tag = 0;
             FieldInfo field_info;
             uint32_t uiret = DBManager::Instance()->GetWordField(segment_tag, appid, *iter, field_info);
-            if (uiret != 0 && FIELD_GEO_POINT == field_info.field_type){
+            if (geo_point.IsGeoPointFormat()){
+                if (uiret != 0 && FIELD_GEO_POINT == field_info.field_type){
                 GeoPointContext target_geo_point(snap_json[*iter]);
+                double d_query_lat = strToDouble(geo_point.sLatitude);
+                double d_query_lng = strToDouble(geo_point.sLongtitude);
                 double d_target_lat = strToDouble(target_geo_point.sLatitude);
                 double d_target_lng = strToDouble(target_geo_point.sLongtitude);
-                double dis = round(distanceSimplify(d_query_lat, d_query_lng, d_target_lat, d_target_lng)* 1000) / 1000;
-                if ((geo_point.d_distance > -0.0001 && geo_point.d_distance < 0.0001) 
-                    || (dis + 1e-6 <= geo_point.d_distance)){
-                    ResultContext::Instance()->SetValidDocs(doc_it->first);
-                    distances[doc_it->first] = dis;
+                double dis = round(distanceSimplify(d_query_lat, d_query_lng,
+                                                    d_target_lat, d_target_lng)* 1000) / 1000;
+
+                    if ((geo_point.d_distance > -0.0001 && geo_point.d_distance < 0.0001) 
+                            || (dis + 1e-6 <= geo_point.d_distance)){
+                        ResultContext::Instance()->SetValidDocs(doc_it->first);
+                        distances[doc_it->first] = dis;
+                        log_debug("query geopoint lat:%f , lng:%f , query target geopoint lat:%f , lng:%f , dis:%f"  \
+                            , d_query_lat , d_query_lng , d_target_lat , d_target_lng , dis);
+                    }
                 }
             }else if (uiret != 0 && FIELD_GEO_SHAPE == field_info.field_type){
                 // temp no handle ,latter add
                 ResultContext::Instance()->SetValidDocs(doc_it->first);
                 distances[doc_it->first] = 1;
+                log_debug("query target geoshape handle here");
             }
         }
     }

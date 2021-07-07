@@ -56,7 +56,7 @@ struct GeoPointContext
         d_distance = dDis;
     }
 
-    bool IsGeoPointFormat(){
+    bool IsGeoPointFormat() const{
         return ((!sLatitude.empty()) && (!sLongtitude.empty()));
     }
 

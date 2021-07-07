@@ -76,6 +76,7 @@ int RangeQueryProcess::ParseContent(int logic_type)
                 fieldInfo.start = start.isInt() ? start.asInt() : 0;
                 fieldInfo.end = end.isInt() ? end.asInt() : 0;
                 fieldInfo.range_type = info.range_type;
+                log_debug("start:%d , end:%d" , fieldInfo.start , fieldInfo.end);
                 fieldInfos.push_back(fieldInfo);
             }
         }

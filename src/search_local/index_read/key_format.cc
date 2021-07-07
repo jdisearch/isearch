@@ -43,6 +43,8 @@ std::string KeyFormat::Encode(const UnionKey& oUnionKey)
                 break;
             case FIELD_STRING:
             case FIELD_TEXT:
+            case FIELD_GEO_POINT:
+            case FIELD_GEO_SHAPE:
                 sUnionKey.append(EncodeBytes(oUnionKey[i].second));
                 break;
             default:

@@ -39,6 +39,7 @@ int GeoDistanceQueryProcess::ParseContent(int logic_type){
     geo.lon = atof(o_geo_point_.sLongtitude.c_str());
     geo.lat = atof(o_geo_point_.sLatitude.c_str());
     double d_distance = o_geo_point_.d_distance;
+    log_debug("geo lng:%f ,lat:%f , dis:%f" , geo.lon , geo.lat , d_distance);
 
     std::vector<std::string> gisCode = GetArroundGeoHash(geo, d_distance, GEO_PRECISION);
     if(!gisCode.empty()){
@@ -69,11 +70,15 @@ int GeoDistanceQueryProcess::ParseContent(int logic_type){
     return 0;
 }
 
-int GeoDistanceQueryProcess::GetValidDoc(){
+int GeoDistanceQueryProcess::GetValidDoc()
+{
     return GetValidDoc(ANDKEY , component_->GetFieldList(ANDKEY)[FIRST_TEST_INDEX]);
 }
 
-int GeoDistanceQueryProcess::GetValidDoc(int logic_type, const std::vector<FieldInfo>& keys){
+int GeoDistanceQueryProcess::GetValidDoc(
+    int logic_type,
+    const std::vector<FieldInfo>& keys)
+{
     std::vector<IndexInfo> index_info_vet;
     int iret = ValidDocFilter::Instance()->TextInvertIndexSearch(keys, index_info_vet);
     if (iret != 0) { return iret; }
@@ -81,7 +86,8 @@ int GeoDistanceQueryProcess::GetValidDoc(int logic_type, const std::vector<Field
     return 0;
 }
 
-int GeoDistanceQueryProcess::CheckValidDoc(){
+int GeoDistanceQueryProcess::CheckValidDoc()
+{
     bool bRet = doc_manager_->GetDocContent(o_geo_point_);
     if (false == bRet){
         log_error("GetDocContent error.");
@@ -90,7 +96,8 @@ int GeoDistanceQueryProcess::CheckValidDoc(){
     return 0;
 }
 
-int GeoDistanceQueryProcess::GetScore(){
+int GeoDistanceQueryProcess::GetScore()
+{
     switch (component_->SortType())
     {
     case SORT_RELEVANCE:
