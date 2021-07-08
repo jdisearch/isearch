@@ -23,15 +23,6 @@ BoolQueryProcess::~BoolQueryProcess()
     }
 }
 
-void BoolQueryProcess::InitQueryMember(){
-    std::map<int , QueryProcess*>::iterator iter = query_process_map_.begin();
-    for ( ; iter != query_process_map_.end(); ++iter){
-        iter->second->SetRequest(request_);
-        iter->second->SetComponent(component_);
-        iter->second->SetDocManager(doc_manager_);
-    }
-}
-
 void BoolQueryProcess::HandleUnifiedIndex(){
     std::vector<std::vector<FieldInfo> >& and_keys = component_->AndKeys();
 
@@ -89,19 +80,22 @@ void BoolQueryProcess::HandleUnifiedIndex(){
 int BoolQueryProcess::ParseContent(){
     int ret = 0;
     if(parse_value_.isMember(MUST)){
+        log_debug("must parse:%s" , parse_value_[MUST].toStyledString().c_str() );
         ret = ParseRequest(parse_value_[MUST] , ANDKEY);
         if (ret != 0) { return ret; }
     }
     HandleUnifiedIndex();
+
     if (parse_value_.isMember(SHOULD)){
+        log_debug("should parse:%s" , parse_value_[SHOULD].toStyledString().c_str() );
         ret = ParseRequest(parse_value_[SHOULD] , ORKEY);
         if (ret != 0) { return ret; }
     }
     if (parse_value_.isMember(MUST_NOT)){
+        log_debug("must not parse:%s" , parse_value_[MUST_NOT].toStyledString().c_str() );
         ret = ParseRequest(parse_value_[MUST_NOT] , INVERTKEY);
         if (ret != 0) { return ret; }
     }
-    InitQueryMember();
     return ret;
 }
 
@@ -121,12 +115,23 @@ int BoolQueryProcess::GetValidDoc(){
     }   
 
     for (uint32_t ui_key_type = ORKEY; ui_key_type < KEYTOTALNUM; ++ui_key_type){
-        std::vector<std::vector<FieldInfo> >::const_iterator iter = component_->GetFieldList(ui_key_type).cbegin();
-        for (; iter != component_->GetFieldList(ui_key_type).cend(); ++iter){
-            std::vector<FieldInfo>::const_iterator field_info_iter = iter->cbegin();
-            for (; field_info_iter != iter->cend(); ++field_info_iter){
-                query_process_map_[field_info_iter->query_type]->GetValidDoc(ui_key_type , *iter);
+        std::vector<std::vector<FieldInfo> >::const_iterator filedinfo_vet_iter =  \
+            component_->GetFieldList(ui_key_type).cbegin();
+
+        for (;filedinfo_vet_iter != component_->GetFieldList(ui_key_type).cend();
+            ++ filedinfo_vet_iter){
+            if (filedinfo_vet_iter->empty()){
+                continue;
             }
+            uint32_t query_type = (*filedinfo_vet_iter)[FIRST_TEST_INDEX].query_type;
+
+            if (!query_bitset_.test(query_type)){
+                log_error("get valid doc query type:%d , logic type:%d" , \
+                    query_type , ui_key_type);
+                return -1;
+            }
+
+            query_process_map_[query_type]->GetValidDoc(ui_key_type , *filedinfo_vet_iter);
         }
     }
     return 0;
@@ -210,18 +215,24 @@ int BoolQueryProcess::ParseRequest(
 {
     int iret = 0;
     if(request.isArray()){
+        log_debug("array parse");
         for(int i = 0; i < (int)request.size(); i++){
-            iret = InitQueryProcess(logic_type , request[i]);
-            if(iret != 0){
-                log_error("InitQueryProcess error!");
-                return -RT_PARSE_CONTENT_ERROR;
+            Json::Value::Members search_member = request[i].getMemberNames();
+            Json::Value::Members::iterator iter = search_member.begin();
+            for (; iter != search_member.end(); ++iter){
+                iret = InitQueryProcess(logic_type , *iter , request[i][*iter]);
+                if(iret != 0){
+                    log_error("InitQueryProcess error!");
+                    return -RT_PARSE_CONTENT_ERROR;
+                }
             }
         }
     } else if (request.isObject()) {
+        log_debug("object parse");
         Json::Value::Members search_member = request.getMemberNames();
         Json::Value::Members::iterator iter = search_member.begin();
         for (; iter != search_member.end(); ++iter){
-            iret = InitQueryProcess(logic_type, *iter);
+            iret = InitQueryProcess(logic_type, *iter , request[*iter]);
             if(iret != 0){
                 log_error("InitQueryProcess error!");
                 return -RT_PARSE_CONTENT_ERROR;
@@ -231,26 +242,29 @@ int BoolQueryProcess::ParseRequest(
     return 0;
 }
 
-int BoolQueryProcess::InitQueryProcess(uint32_t type , const Json::Value& value){
+int BoolQueryProcess::InitQueryProcess(
+    uint32_t type,
+    const std::string& query_key,
+    const Json::Value& parse_value)
+{
+    log_debug("InitQueryProcess start");
     int query_type = -1;
-    Json::Value parse_value;
 
-    if(value.isMember(TERM)){
+    if(0 == query_key.compare(TERM)){
         query_type = E_INDEX_READ_TERM;
-        parse_value = parse_value_[TERM];
         if (query_process_map_.find(query_type) == query_process_map_.end()){
             query_process_map_.insert(std::make_pair(query_type 
                     , new TermQueryProcess(parse_value)));
+            log_debug("bool query term process init");
         }
-    } else if(value.isMember(MATCH)){
+    } else if(0 == query_key.compare(MATCH)){
         query_type = E_INDEX_READ_MATCH;
-        parse_value = parse_value_[MATCH];
         if (query_process_map_.find(query_type) == query_process_map_.end()){
             query_process_map_.insert(std::make_pair(query_type 
                     , new MatchQueryProcess(parse_value)));
+            log_debug("bool query match process init");
         }
-    } else if(value.isMember(RANGE)){
-        parse_value = parse_value_[RANGE];
+    } else if(0 == query_key.compare(RANGE)){
         if (component_->TerminalTag()){
             query_type = E_INDEX_READ_PRE_TERM;
         }else{
@@ -259,29 +273,36 @@ int BoolQueryProcess::InitQueryProcess(uint32_t type , const Json::Value& value)
         if (query_process_map_.find(query_type) == query_process_map_.end()){
             query_process_map_.insert(std::make_pair(query_type 
                     , RangeQueryGenerator::Instance()->GetRangeQueryProcess(query_type , parse_value)));
+            log_debug("bool query range process init");
         }
-    } else if(value.isMember(GEODISTANCE)){
+    } else if(0 == query_key.compare(GEODISTANCE)){
         query_type = E_INDEX_READ_GEO_DISTANCE;
-        parse_value = parse_value_[GEODISTANCE];
         if (query_process_map_.find(query_type) == query_process_map_.end()){
             query_process_map_.insert(std::make_pair(query_type 
                     , new GeoDistanceQueryProcess(parse_value)));
+            log_debug("bool query geo distance process init");
         }
-    } else if(value.isMember(POINTS)){
+    } else if(0 == query_key.compare(GEOSHAPE)){
         query_type = E_INDEX_READ_GEO_SHAPE;
-        parse_value = parse_value_[POINTS];
         if (query_process_map_.find(query_type) == query_process_map_.end()){
             query_process_map_.insert(std::make_pair(query_type 
                     , new GeoShapeQueryProcess(parse_value)));
+            log_debug("bool query geo shape process init");
         }
     } else {
-        log_error("BoolQueryParser only support term/match/range/geo_distance!");
+        log_error("BoolQueryParser only support term/match/range/geo_distance/geoshape!");
         return -RT_PARSE_CONTENT_ERROR;
     }
 
     if (!query_bitset_.test(query_type)){
         query_bitset_.set(query_type);
+
+        query_process_map_[query_type]->SetRequest(request_);
+        query_process_map_[query_type]->SetComponent(component_);
+        query_process_map_[query_type]->SetDocManager(doc_manager_);
+        log_debug("query bitset has type:%d" , query_type);
     }
+    log_debug("current query type:%d , parse value:%s" , query_type , parse_value.toStyledString().c_str());
     query_process_map_[query_type]->SetParseJsonValue(parse_value);
     query_process_map_[query_type]->ParseContent(type);
     return 0;

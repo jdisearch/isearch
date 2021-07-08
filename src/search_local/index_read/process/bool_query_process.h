@@ -42,8 +42,7 @@ private:
 
 private:
     int ParseRequest(const Json::Value& request, int logic_type);
-    int InitQueryProcess(uint32_t type , const Json::Value& value);
-    void InitQueryMember();
+    int InitQueryProcess(uint32_t type , const std::string& query_key, const Json::Value& parse_value);
     void HandleUnifiedIndex();
     void GetKeyFromFieldInfo(const std::vector<FieldInfo>& field_info_vec, std::vector<MemCompUnionNode>& key_vec , bool& b_has_range);
     std::vector<MemCompUnionNode> Combination(std::vector<std::vector<MemCompUnionNode> >& dimensionalArr);

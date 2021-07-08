@@ -35,12 +35,9 @@ int GeoShapeQueryProcess::ParseContent(int logic_type){
             if (uiRet != 0 && SEGMENT_NONE == segment_tag) {
                 component_->SetHasGisFlag(true);
                 for (size_t index = 0; index < gisCode.size(); index++) {
-                    FieldInfo info;
-                    info.field = fieldInfo.field;
-                    info.field_type = fieldInfo.field_type;
-                    info.segment_tag = fieldInfo.segment_tag;
-                    info.word = gisCode[index];
-                    fieldInfos.push_back(info);
+                    fieldInfo.word = gisCode[index];
+                    log_debug("geo shape point:%s", fieldInfo.word.c_str());
+                    fieldInfos.push_back(fieldInfo);
                 }
             }
             if (!fieldInfos.empty()) {
