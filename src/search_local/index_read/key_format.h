@@ -14,16 +14,6 @@ class KeyFormat {
 public:
     typedef std::vector<std::pair<int,std::string> >  UnionKey;
 
-	struct MemCompUnionNode{
-    	uint32_t ui_field_type;
-    	std::string s_key;
-
-    	MemCompUnionNode(uint32_t field_type , std::string key)
-        	: ui_field_type(field_type)
-        	, s_key(key)
-    	{ }
-	};
-	
 public:
     static std::string Encode(const UnionKey& oUnionKey);
     static bool Decode(const std::string& sKey, UnionKey& oUnionKey);

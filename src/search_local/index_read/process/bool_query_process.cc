@@ -31,8 +31,8 @@ void BoolQueryProcess::HandleUnifiedIndex(){
     for (; iter != and_keys.end(); ++iter){
         fieldid_fieldinfos_map.insert(std::make_pair(((*iter)[0]).field , *iter));
     }
-    component_->AndKeys().clear();
 
+    std::vector<std::vector<FieldInfo> > union_field_infos;
     std::vector<std::string> union_key_vec;
     DBManager::Instance()->GetUnionKeyField(component_->Appid() , union_key_vec);
     std::vector<std::string>::iterator union_key_iter = union_key_vec.begin();
@@ -48,32 +48,52 @@ void BoolQueryProcess::HandleUnifiedIndex(){
             }
         }
         if(hit_union_key == true){
-            std::vector<std::vector<MemCompUnionNode> > keys_vvec;
+            log_debug("hit union key combination");
+            std::vector<std::vector<string> > keys_vvec;
             std::vector<FieldInfo> unionFieldInfos;
             bool b_has_range = false;
             for(union_field_iter = union_field_vec.begin(); union_field_iter != union_field_vec.end(); union_field_iter++){
                 std::vector<FieldInfo> field_info_vec = fieldid_fieldinfos_map.at(*union_field_iter);
-                std::vector<MemCompUnionNode> key_vec;
+                std::vector<std::string> key_vec;
                 GetKeyFromFieldInfo(field_info_vec, key_vec , b_has_range);
                 keys_vvec.push_back(key_vec);
                 fieldid_fieldinfos_map.erase(*union_field_iter);  // 命中union_key的需要从fieldid_fieldinfos_map中删除
             }
-            std::vector<MemCompUnionNode> union_keys = Combination(keys_vvec);
+            log_debug("has range query flag:%d" , (int)b_has_range);
+            std::vector<std::string> union_keys = Combination(keys_vvec);
             for(int m = 0 ; m < (int)union_keys.size(); m++){
                 FieldInfo info;
                 info.field = 0;
                 info.field_type = FIELD_INDEX;
-                info.query_type= (b_has_range ? E_INDEX_READ_RANGE : E_INDEX_READ_TERM);
+
+                for (uint32_t ui_query_type = E_INDEX_READ_PRE_TERM ;
+                    ui_query_type < E_INDEX_READ_TOTAL_NUM ;
+                    ++ui_query_type){
+                    if (query_bitset_.test(ui_query_type)){
+                        info.query_type = ui_query_type;
+                        break;
+                    }
+                }
                 info.segment_tag = (b_has_range ? SEGMENT_RANGE : SEGMENT_DEFAULT);
-                info.word = union_keys[m].s_key;
+                info.word = union_keys[m];
+                log_debug("union key[%d]:%s" , m, info.word.c_str());
                 unionFieldInfos.push_back(info);
             }
-            component_->AddToFieldList(ANDKEY, unionFieldInfos);
+            union_field_infos.push_back(unionFieldInfos);
         }
     }
-    std::map<uint32_t, std::vector<FieldInfo> >::iterator field_key_map_iter = fieldid_fieldinfos_map.begin();
-    for(; field_key_map_iter != fieldid_fieldinfos_map.end(); field_key_map_iter++){
-        component_->AddToFieldList(ANDKEY, field_key_map_iter->second);
+
+    if (!union_field_infos.empty()){
+        log_debug("replace andkey database");
+        component_->AndKeys().clear();
+        std::vector<std::vector<FieldInfo> >::iterator  field_info_vet_iter = union_field_infos.begin();
+        for (; field_info_vet_iter != union_field_infos.end();++field_info_vet_iter){
+            component_->AddToFieldList(ANDKEY, *field_info_vet_iter);
+        }
+        std::map<uint32_t, std::vector<FieldInfo> >::iterator field_key_map_iter = fieldid_fieldinfos_map.begin();
+        for(; field_key_map_iter != fieldid_fieldinfos_map.end(); field_key_map_iter++){
+            component_->AddToFieldList(ANDKEY, field_key_map_iter->second);
+        }
     }
 }
 
@@ -112,7 +132,7 @@ int BoolQueryProcess::GetValidDoc(int logic_type , const std::vector<FieldInfo>&
 int BoolQueryProcess::GetValidDoc(){
     if (query_bitset_.test(E_INDEX_READ_PRE_TERM) && query_bitset_.test(E_INDEX_READ_TERM)){
             return query_process_map_[E_INDEX_READ_PRE_TERM]->GetValidDoc();
-    }   
+    }
 
     for (uint32_t ui_key_type = ORKEY; ui_key_type < KEYTOTALNUM; ++ui_key_type){
         std::vector<std::vector<FieldInfo> >::const_iterator filedinfo_vet_iter =  \
@@ -308,15 +328,28 @@ int BoolQueryProcess::InitQueryProcess(
     return 0;
 }
 
-void BoolQueryProcess::GetKeyFromFieldInfo(const std::vector<FieldInfo>& field_info_vec, std::vector<MemCompUnionNode>& key_vec, bool& b_has_range){
+void BoolQueryProcess::GetKeyFromFieldInfo(const std::vector<FieldInfo>& field_info_vec, std::vector<std::string>& key_vec, bool& b_has_range){
     std::vector<FieldInfo>::const_iterator iter = field_info_vec.cbegin();
-    for(; iter != field_info_vec.end(); iter++){
-        if (SEGMENT_RANGE == iter->segment_tag ){
+    for(; iter != field_info_vec.cend(); iter++){
+        KeyFormat::UnionKey o_keyinfo_vet;
+        std::string s_format_key = "";
+        if (E_INDEX_READ_RANGE == iter->query_type || 
+            E_INDEX_READ_PRE_TERM == iter->query_type){
             b_has_range = true;
-            key_vec.push_back(MemCompUnionNode(iter->field_type , std::to_string(iter->start)));
-            key_vec.push_back(MemCompUnionNode(iter->field_type , std::to_string(iter->end)));
+
+            o_keyinfo_vet.push_back(std::make_pair(iter->field_type , std::to_string(iter->start)));
+            s_format_key = KeyFormat::Encode(o_keyinfo_vet);
+            key_vec.push_back(s_format_key);
+
+            o_keyinfo_vet.clear();
+            o_keyinfo_vet.push_back(std::make_pair(iter->field_type , std::to_string(iter->end)));
+            s_format_key = KeyFormat::Encode(o_keyinfo_vet);
+            key_vec.push_back(s_format_key);
         }else{
-            key_vec.push_back(MemCompUnionNode(iter->field_type , iter->word));
+            o_keyinfo_vet.push_back(std::make_pair(iter->field_type , iter->word));
+            s_format_key = KeyFormat::Encode(o_keyinfo_vet);
+            key_vec.push_back(s_format_key);
+            log_debug("field type:%d , word:%s" , iter->field_type , iter->word.c_str());
         }
     }
 }
@@ -326,27 +359,24 @@ void BoolQueryProcess::GetKeyFromFieldInfo(const std::vector<FieldInfo>& field_i
 ** 输入：[[a],[b1,b2],[c1,c2,c3]]
 ** 输出：[a_b1_c1,a_b1_c2,a_b1_c3,a_b2_c1,a_b2_c2,a_b2_c3]
 */
-std::vector<MemCompUnionNode> BoolQueryProcess::Combination(std::vector<std::vector<MemCompUnionNode> >& dimensionalArr){
+std::vector<std::string> BoolQueryProcess::Combination(
+    std::vector<std::vector<std::string> >& dimensionalArr)
+{
     int FLength = dimensionalArr.size();
     if(FLength >= 2){
         int SLength1 = dimensionalArr[0].size();
         int SLength2 = dimensionalArr[1].size();
         int DLength = SLength1 * SLength2;
-        std::vector<MemCompUnionNode> temporary(DLength);
+        std::vector<std::string> temporary(DLength);
         int index = 0;
         for(int i = 0; i < SLength1; i++){
             for (int j = 0; j < SLength2; j++) {
-                KeyFormat::UnionKey o_keyinfo_vet;
-                o_keyinfo_vet.push_back(std::make_pair(dimensionalArr[0][i].ui_field_type , dimensionalArr[0][i].s_key));
-                o_keyinfo_vet.push_back(std::make_pair(dimensionalArr[1][j].ui_field_type , dimensionalArr[1][j].s_key));
-                std::string s_format_key = KeyFormat::Encode(o_keyinfo_vet);
-
-                temporary[index].s_key = s_format_key;
-                temporary[index].ui_field_type = FIELD_STRING;
+                temporary[index].append(dimensionalArr[0][i]);
+                temporary[index].append(dimensionalArr[1][j]);
                 index++;
             }
         }
-        std::vector<std::vector<MemCompUnionNode> > new_arr;
+        std::vector<std::vector<std::string> > new_arr;
         new_arr.push_back(temporary);
         for(int i = 2; i < (int)dimensionalArr.size(); i++){
             new_arr.push_back(dimensionalArr[i]);

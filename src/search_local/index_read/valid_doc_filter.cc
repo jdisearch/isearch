@@ -129,7 +129,9 @@ int ValidDocFilter::TextInvertIndexSearch(const std::vector<FieldInfo>& keys, st
             if (doc_info.size() == 0)
                 continue;
             if (!p_data_base_->GetHasGisFlag() || !isAllNumber(iter->word)){
-                ResultContext::Instance()->SetHighLightWordSet(iter->word);
+                if (iter->field_type != FIELD_INDEX){
+                    ResultContext::Instance()->SetHighLightWordSet(iter->word);
+                }
             }
             if(!p_data_base_->GetHasGisFlag() && (SORT_RELEVANCE == p_data_base_->SortType() || SORT_TIMESTAMP == p_data_base_->SortType())){
                 CalculateByWord(*iter, doc_info);

@@ -44,7 +44,7 @@ int MatchQueryProcess::ParseContent(int logic_type){
             fieldInfos.push_back(fieldInfo);
         }
     }
-    else if (uiRet != 0 && segment_tag != SEGMENT_RANGE){
+    else if (uiRet != 0){
         fieldInfo.word = field_value.asString();
         fieldInfos.push_back(fieldInfo);
     }else{
@@ -64,12 +64,11 @@ int MatchQueryProcess::GetValidDoc(int logic_type, const std::vector<FieldInfo>&
     std::vector<IndexInfo> index_info_vet;
     int iret = -1;
     uint32_t segment_tag = keys[FIRST_SPLIT_WORD_INDEX].segment_tag;
-    if (SEGMENT_DEFAULT == segment_tag 
-        || SEGMENT_NONE == segment_tag){
-        iret = ValidDocFilter::Instance()->TextInvertIndexSearch(keys , index_info_vet);
-    }else if(SEGMENT_CHINESE == segment_tag 
+    if(SEGMENT_CHINESE == segment_tag 
         || SEGMENT_ENGLISH == segment_tag){
         iret = ValidDocFilter::Instance()->HanPinTextInvertIndexSearch(keys , index_info_vet);
+    }else{
+         iret = ValidDocFilter::Instance()->TextInvertIndexSearch(keys , index_info_vet);
     }
 
     if (iret != 0) { return iret; }
