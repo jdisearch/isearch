@@ -92,12 +92,14 @@ int ValidDocFilter::RangeQueryInvertIndexSearch(const std::vector<FieldInfo>& ke
         std::vector<FieldInfo>::const_iterator iter = keys.cbegin();
         for (; iter != keys.cend(); ++iter){
             std::vector<IndexInfo> doc_info;
-            log_debug("segment:%d , word:%s" , iter->segment_tag ,iter->word.c_str());
-            if (SEGMENT_RANGE == (iter->segment_tag) && (iter->word).empty()){
+            log_debug("segment:%d , word:%s , field:%d, fieldtype:%d" , 
+                iter->segment_tag ,iter->word.c_str() , 
+                iter->field , iter->field_type);
+            if (iter->word.empty()){
                 std::stringstream ss;
                 ss << p_data_base_->Appid();
-                InvertIndexEntry startEntry(ss.str(), iter->field, (double)(iter->start));
-                InvertIndexEntry endEntry(ss.str(), iter->field, (double)(iter->end));
+                InvertIndexEntry startEntry(ss.str(), iter->field, iter->field_type , iter->start);
+                InvertIndexEntry endEntry(ss.str(), iter->field, iter->field_type , iter->end);
                 std::vector<InvertIndexEntry> resultEntry;
                 globalSyncIndexTimer->GetSearchIndex()->GetRangeIndex(iter->range_type, startEntry, endEntry, resultEntry);
                 std::vector<InvertIndexEntry>::iterator res_iter = resultEntry.begin();
@@ -156,8 +158,8 @@ int ValidDocFilter::ProcessTerminal(const std::vector<std::vector<FieldInfo> >& 
 
     std::stringstream ss;
     ss << p_data_base_->Appid();
-    InvertIndexEntry beginEntry(ss.str(), field_info.field, (double)field_info.start);
-    InvertIndexEntry endEntry(ss.str(), field_info.field, (double)field_info.end);
+    InvertIndexEntry beginEntry(ss.str(), field_info.field, field_info.field_type , field_info.start);
+    InvertIndexEntry endEntry(ss.str(), field_info.field, field_info.field_type , field_info.end);
     std::vector<InvertIndexEntry> resultEntry;
     globalSyncIndexTimer->GetSearchIndex()->GetRangeIndexInTerminal(field_info.range_type, beginEntry, endEntry, query_cond, resultEntry);
     std::vector<InvertIndexEntry>::iterator iter = resultEntry.begin();

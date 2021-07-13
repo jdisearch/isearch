@@ -55,13 +55,15 @@ struct InvertIndexEntry {
 		_IsValid = true;
 	}
 	
-	InvertIndexEntry(std::string appid, int field, double key){
+	InvertIndexEntry(std::string appid, int field, uint32_t key_type, double key){
 		_InvertIndexAppid = appid;
 		_InvertIndexField = field;
+		_InvertIndex_key_type = key_type;
 		_InvertIndexKey = key;
 	}
 
 	InvertIndexEntry(const InvertIndexEntry& src) {
+		this->_InvertIndex_key_type = src._InvertIndex_key_type;
 		this->_InvertIndexKey = src._InvertIndexKey;
 		this->_InvertIndexDocId = src._InvertIndexDocId;
 		this->_InvertIndexAppid = src._InvertIndexAppid;
@@ -72,6 +74,7 @@ struct InvertIndexEntry {
 	}
 
 	InvertIndexEntry& operator=(const InvertIndexEntry& src) {
+		this->_InvertIndex_key_type = src._InvertIndex_key_type;
 		this->_InvertIndexKey = src._InvertIndexKey;
 		this->_InvertIndexDocId = src._InvertIndexDocId;
 		this->_InvertIndexAppid = src._InvertIndexAppid;
@@ -109,6 +112,7 @@ struct InvertIndexEntry {
 		return oss.str();
 	}
 
+	uint32_t _InvertIndex_key_type;
 	double _InvertIndexKey;
 	std::string _InvertIndexDocId;
 	std::string _InvertIndexAppid;

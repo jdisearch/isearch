@@ -32,53 +32,59 @@ int RangeQueryProcess::ParseContent(int logic_type)
         
         Json::Value field_value = parse_value_[fieldname];
         if(field_value.isObject()){
-            FieldInfo info;
             Json::Value start;
             Json::Value end;
+            RANGTYPE ui_range_type;
             if(field_value.isMember(GTE)){
                 start = field_value[GTE];
                 if(field_value.isMember(LTE)){
                     end = field_value[LTE];
-                    info.range_type = RANGE_GELE;
+                    ui_range_type = RANGE_GELE;
                 } else if(field_value.isMember(LT)){
                     end = field_value[LT];
-                    info.range_type = RANGE_GELT;
+                    ui_range_type = RANGE_GELT;
                 } else {
-                    info.range_type = RANGE_GE;
+                    ui_range_type = RANGE_GE;
                 }
             } else if(field_value.isMember(GT)){
                 start = field_value[GT];
                 if(field_value.isMember(LTE)){
                     end = field_value[LTE];
-                    info.range_type = RANGE_GTLE;
+                    ui_range_type = RANGE_GTLE;
                 } else if(field_value.isMember(LT)){
                     end = field_value[LT];
-                    info.range_type = RANGE_GTLT;
+                    ui_range_type = RANGE_GTLT;
                 } else {
-                    info.range_type = RANGE_GT;
+                    ui_range_type = RANGE_GT;
                 }
             } else if(field_value.isMember(LTE)){
                 end = field_value[LTE];
-                info.range_type = RANGE_LE;
+                ui_range_type = RANGE_LE;
             } else if(field_value.isMember(LT)){
                 end = field_value[LT];
-                info.range_type = RANGE_LT;
+                ui_range_type = RANGE_LT;
             }
-            if(!start.isInt() && !start.isNull()){
-                log_error("range query only support integer");
-                return -RT_PARSE_CONTENT_ERROR;
+            fieldInfo.range_type = ui_range_type;
+
+            log_debug("range_type:%d", ui_range_type);
+            if(start.isInt()){
+                fieldInfo.start = start.asInt();
+            } else if (start.isDouble()){
+                fieldInfo.start = start.asDouble();
+            } else {
+                log_error("range query lower value only support int/double");
             }
-            if(!end.isInt() && !end.isNull()){
-                log_error("range query only support integer");
-                return -RT_PARSE_CONTENT_ERROR;
+            
+            if (end.isInt()){
+                fieldInfo.end = end.asInt();
+            }else if (end.isDouble()){
+                fieldInfo.end = end.asDouble();
+            } else {
+                log_error("range query upper limit value only support int/double");
             }
-            if(start.isInt() || end.isInt()){
-                fieldInfo.start = start.isInt() ? start.asInt() : 0;
-                fieldInfo.end = end.isInt() ? end.asInt() : 0;
-                fieldInfo.range_type = info.range_type;
-                log_debug("start:%d , end:%d" , fieldInfo.start , fieldInfo.end);
-                fieldInfos.push_back(fieldInfo);
-            }
+            
+            log_debug("start:%f , end:%f" , fieldInfo.start , fieldInfo.end);
+            fieldInfos.push_back(fieldInfo);
         }
         if (!fieldInfos.empty()) {
             component_->AddToFieldList(logic_type, fieldInfos);

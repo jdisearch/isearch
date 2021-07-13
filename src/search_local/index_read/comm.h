@@ -188,8 +188,8 @@ struct FieldInfo
 	uint32_t field_type;
 	uint32_t segment_tag;
 	uint32_t segment_feature;
-	uint32_t start;
-	uint32_t end;
+	double start;
+	double end;
 	uint32_t index_tag;
 	RANGTYPE range_type;
 	uint32_t query_type;
