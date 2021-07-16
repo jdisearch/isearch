@@ -25,10 +25,12 @@
 #include <unistd.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <ctype.h>
 
 #include <bitset>
 #include <map>
 #include <string>
+#include <vector>
 #include <algorithm>
 
 #include "db_process_rocks.h"
@@ -600,6 +602,7 @@ int RocksdbProcess::condition_filter(
 
   case DField::String:
   case DField::Binary:
+  {
     matched = is_matched(rocksValue.c_str(), comparator, condValue.c_str(), (int)rocksValue.length(), (int)condValue.length(), false);
     if (!matched)
     {
@@ -607,6 +610,7 @@ int RocksdbProcess::condition_filter(
                condValue.c_str(), comparator);
       return 1;
     }
+  }
     break;
 
   default:
@@ -662,6 +666,23 @@ template bool RocksdbProcess::is_matched<int64_t>(const int64_t lv, int comp, co
 template bool RocksdbProcess::is_matched<uint64_t>(const uint64_t lv, int comp, const uint64_t rv);
 template bool RocksdbProcess::is_matched<double>(const double lv, int comp, const double rv);
 
+int RocksdbProcess::memcmp_ignore_case(
+    const void* lv, 
+    const void* rv, 
+    int count)
+{
+  int iret = 0;
+  for (int i = 0; i < count; i++){
+    char lv_buffer = tolower(((char*)lv)[i]);
+    char rv_buffer = tolower(((char*)rv)[i]);
+    iret = memcmp(&lv_buffer , &rv_buffer , sizeof(char));
+    if (iret != 0){
+      return iret;
+    }
+  }
+  return iret;
+}
+
 //template<>
 bool RocksdbProcess::is_matched(
     const char *lv,
@@ -686,37 +707,38 @@ bool RocksdbProcess::is_matched(
   {
   case 0:
     if (caseSensitive)
-      return lLen == rLen && !strncmp(lv, rv, minLen);
-    return lLen == rLen && !strncasecmp(lv, rv, minLen);
+      return lLen == rLen && !memcmp(lv, rv, minLen);
+    return lLen == rLen && !memcmp_ignore_case(lv, rv, minLen);
   case 1:
     if (lLen != rLen)
       return true;
     if (caseSensitive)
-      return strncmp(lv, rv, minLen);
-    return strncasecmp(lv, rv, minLen);
+      return memcmp(lv, rv, minLen);
+    return memcmp_ignore_case(lv, rv, minLen);
   case 2:
     if (caseSensitive)
-      ret = strncmp(lv, rv, minLen);
+      ret = memcmp(lv, rv, minLen);
     else
-      ret = strncasecmp(lv, rv, minLen);
+      ret = memcmp_ignore_case(lv, rv, minLen);
     return ret < 0 || (ret == 0 && lLen < rLen);
   case 3:
     if (caseSensitive)
-      ret = strncmp(lv, rv, minLen);
+      ret = memcmp(lv, rv, minLen);
     else
-      ret = strncasecmp(lv, rv, minLen);
+      ret = memcmp_ignore_case(lv, rv, minLen);
+    log_error("iret:%d , len:%d ,rLen:%d", ret , lLen , rLen);
     return ret < 0 || (ret == 0 && lLen <= rLen);
   case 4:
     if (caseSensitive)
-      ret = strncmp(lv, rv, minLen);
+      ret = memcmp(lv, rv, minLen);
     else
-      ret = strncasecmp(lv, rv, minLen);
+      ret = memcmp_ignore_case(lv, rv, minLen);
     return ret > 0 || (ret == 0 && lLen > rLen);
   case 5:
     if (caseSensitive)
-      ret = strncmp(lv, rv, minLen);
+      ret = memcmp(lv, rv, minLen);
     else
-      ret = strncasecmp(lv, rv, minLen);
+      ret = memcmp_ignore_case(lv, rv, minLen);
     return ret > 0 || (ret == 0 && lLen >= rLen);
   default:
     log_error("unsupport comparator:%d", comparator);
@@ -2204,6 +2226,24 @@ int RocksdbProcess::process_direct_query(
 
   std::vector<QueryCond> primaryKeyConds;
   ret = analyse_primary_key_conds(reqCxt, primaryKeyConds);
+
+#if 0
+  std::vector<QueryCond>::iterator iter = primaryKeyConds.begin();
+  for (; iter != primaryKeyConds.end(); ++iter){
+    std::vector<int> fieldTypes;
+    fieldTypes.push_back(DField::Signed);
+    std::vector<std::string> fieldValues;
+
+    int ipos = iter->sCondValue.find_last_of("#");
+    std::string stemp = iter->sCondValue.substr(ipos + 1);
+    key_format::Decode(stemp , fieldTypes , fieldValues);
+    log_error("field index:%d , condopr:%d , condvalue:%s" ,
+        iter->sFieldIndex , 
+        iter->sCondOpr , 
+        fieldValues[0].c_str());
+  }
+#endif
+
   if (ret != 0)
   {
     log_error("query condition incorrect in query context!");
@@ -2231,8 +2271,11 @@ int RocksdbProcess::process_direct_query(
   std::string value;
   RocksDBConn::RocksItr_t rocksItr;
 
-  bool forwardDirection = (primaryKeyConds[0].sCondOpr == (uint8_t)CondOpr::eEQ || primaryKeyConds[0].sCondOpr == (uint8_t)CondOpr::eGT || primaryKeyConds[0].sCondOpr == (uint8_t)CondOpr::eGE);
+  bool forwardDirection = (primaryKeyConds[0].sCondOpr == (uint8_t)CondOpr::eEQ || 
+      primaryKeyConds[0].sCondOpr == (uint8_t)CondOpr::eGT || 
+      primaryKeyConds[0].sCondOpr == (uint8_t)CondOpr::eGE);
   bool backwardEqual = primaryKeyConds[0].sCondOpr == (uint8_t)CondOpr::eLE;
+  log_debug("forwardDirection:%d , backwardEqual:%d", (int)forwardDirection , (int)backwardEqual);
   if (backwardEqual)
   {
     // if the query condtion is < || <=, use seek_for_prev to seek in the total_order_seek mode
@@ -2316,6 +2359,39 @@ int RocksdbProcess::process_direct_query(
   while (true)
   {
     ret = range_key_matched(fullKey, primaryKeyConds);
+
+#if 0
+    std::vector<std::string> rocksValues;
+    std::vector<int> fieldTypes;
+    fieldTypes.push_back(DField::String);
+    fieldTypes.push_back(DField::String);
+    fieldTypes.push_back(DField::Signed);
+    fieldTypes.push_back(DField::Signed);
+    fieldTypes.push_back(DField::Signed);
+
+    key_format::Decode(fullKey, fieldTypes, rocksValues);
+
+    for (int i = 0; i < rocksValues[0].length(); i++){
+      log_error("No:%d， is %d \n" , i , (int)rocksValues[0][i]);
+    }
+    
+    int ipos = rocksValues[0].find_last_of("#");
+    std::string stemp = rocksValues[0].substr(ipos + 1);
+    std::vector<std::string> rocksValues001;
+
+    std::vector<int> fieldTypes001;
+    fieldTypes001.push_back(DField::Signed);
+
+    key_format::Decode(stemp , fieldTypes001 , rocksValues001);
+    log_error("primary value:%s",  rocksValues001[0].c_str());
+
+    for (size_t i = 0; i < rocksValues.size(); i++)
+    {
+      
+      log_error("value:%s", rocksValues[i].c_str() );
+    }
+#endif
+
     if (ret == -1)
     {
       // prefix key not matched, reach to the end

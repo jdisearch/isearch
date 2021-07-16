@@ -269,6 +269,8 @@ class RocksdbProcess : public HelperProcessBase
           int64_t timeElapse);
 
       void print_stat_info();
+
+      int memcmp_ignore_case(const void* lv, const void* rv, int count);
 };
 
 #endif // __DB_PROCESS_ROCKS_H__
