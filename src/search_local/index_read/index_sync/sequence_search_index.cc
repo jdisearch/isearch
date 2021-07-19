@@ -35,14 +35,20 @@ const char *MAX_BORDER_SYMBOL = "10";
 const char *MIN_BORDER_SYMBOL = "00";
 
 static string gen_dtc_key_string(string appid, string type, uint32_t key_type, double key) {
-	std::stringstream stream_key;
-	stream_key << key;
 	log_debug("fieldtype:%d , key:%f " , key_type , key);
 	KeyFormat::UnionKey o_keyinfo_vet;
-    o_keyinfo_vet.push_back(std::make_pair(key_type , stream_key.str()));
+    o_keyinfo_vet.push_back(std::make_pair(key_type , std::to_string(key)));
 	std::string s_format_key = KeyFormat::Encode(o_keyinfo_vet);
-	
-	stream_key.str("");
+
+#if 0
+	KeyFormat::UnionKey o_output_vet;
+	o_output_vet.push_back(std::make_pair(key_type , ""));
+	KeyFormat::Decode(s_format_key , o_output_vet);
+	for (int i = 0; i < o_output_vet.size(); i++){
+		log_error("decode string:%s", o_output_vet[i].second.c_str());
+	}
+#endif
+	std::stringstream stream_key;
 	stream_key << appid << "#" << type << "#" << s_format_key;
 	return stream_key.str();
 }
