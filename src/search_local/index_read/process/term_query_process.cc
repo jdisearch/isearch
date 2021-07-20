@@ -57,6 +57,7 @@ int TermQueryProcess::GetValidDoc(){
 }
 
 int TermQueryProcess::GetValidDoc(int logic_type, const std::vector<FieldInfo>& keys){
+    log_debug("term query GetValidDoc beginning...");
     if (0 == keys[FIRST_SPLIT_WORD_INDEX].index_tag){
         return -RT_GET_FIELD_ERROR;
     }

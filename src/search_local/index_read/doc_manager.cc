@@ -208,7 +208,10 @@ bool DocManager::AppendFieldsToRes(Json::Value &response, std::vector<std::strin
                         value[m_fields[i].c_str()] = recv_packet[m_fields[i].c_str()].asString();
                     } else if(recv_packet[m_fields[i].c_str()].isDouble()){
                         value[m_fields[i].c_str()] = recv_packet[m_fields[i].c_str()].asDouble();
-                    } else {
+                    } else if(recv_packet[m_fields[i].c_str()].isObject()
+                        || recv_packet[m_fields[i].c_str()].isArray()){
+                        value[m_fields[i].c_str()] = recv_packet[m_fields[i].c_str()];
+                    }else{
                         log_error("field[%s] data type error.", m_fields[i].c_str());
                     }
                 } else {

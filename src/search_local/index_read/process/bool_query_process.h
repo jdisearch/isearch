@@ -22,7 +22,6 @@ private:
     virtual int GetValidDoc();
     virtual int CheckValidDoc();
     virtual int GetScore();
-    virtual void SortScore(int& i_sequence , int& i_rank);
     virtual const Json::Value& SetResponse();
 
 private:

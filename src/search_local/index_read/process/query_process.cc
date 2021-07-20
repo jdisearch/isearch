@@ -43,6 +43,7 @@ int QueryProcess::StartQuery(){
 }
 
 int QueryProcess::CheckValidDoc(){
+    log_debug("query base CheckValidDoc beginning...");
     bool bRet = doc_manager_->GetDocContent();
     if (false == bRet){
         log_error("GetDocContent error.");
@@ -53,10 +54,12 @@ int QueryProcess::CheckValidDoc(){
 
 int QueryProcess::GetScore()
 {
+    log_debug("query base GetScore beginning...");
     switch (component_->SortType())
     {
     case SORT_RELEVANCE: // 按照相关度得分，并以此排序
         {
+            log_debug("relevance score sort type");
             // 范围查的时候如果不指定排序类型，需要在这里对skipList进行赋值
             const DocKeyinfosMap& docid_keyinfovet_map = ResultContext::Instance()->GetDocKeyinfosMap();
             if (docid_keyinfovet_map.empty() && scoredocid_set_.empty()) {
@@ -91,6 +94,7 @@ int QueryProcess::GetScore()
         break;
     case SORT_TIMESTAMP: // 按照时间戳得分，并以此排序
         {
+            log_debug("time sort type");
             DocKeyinfosMap docid_keyinfovet_map = ResultContext::Instance()->GetDocKeyinfosMap();
             std::map<std::string, KeyInfoVet>::iterator docid_keyinfovet_iter = docid_keyinfovet_map.begin();
             for (; docid_keyinfovet_iter != docid_keyinfovet_map.end(); ++ docid_keyinfovet_iter){
@@ -112,6 +116,7 @@ int QueryProcess::GetScore()
         break;
     case DONT_SORT: // 不排序，docid有序
         {
+            log_debug("no sort type");
             std::set<std::string>::iterator valid_docs_iter = p_valid_docs_set_->begin();
             for(; valid_docs_iter != p_valid_docs_set_->end(); valid_docs_iter++){
                 std::string doc_id = *valid_docs_iter;
@@ -122,6 +127,7 @@ int QueryProcess::GetScore()
     case SORT_FIELD_ASC: // 按照指定字段进行升降排序
     case SORT_FIELD_DESC:
         {
+            log_debug("assign field sort type , order option:%d" , (int)sort_field_type_);
             std::set<std::string>::iterator valid_docs_iter = p_valid_docs_set_->begin();
             for(; valid_docs_iter != p_valid_docs_set_->end(); valid_docs_iter++){
                 std::string doc_id = *valid_docs_iter;
@@ -139,6 +145,7 @@ int QueryProcess::GetScore()
 
 void QueryProcess::SortScore(int& i_sequence , int& i_rank)
 {
+    log_debug("query base sortscore beginning...");
     if ((SORT_FIELD_DESC == component_->SortType() || SORT_FIELD_ASC == component_->SortType())
         && scoredocid_set_.empty()){
         SortByCOrderOp(i_rank);
@@ -173,6 +180,7 @@ const Json::Value& QueryProcess::SetResponse()
 
 void QueryProcess::SortByCOrderOp(int& i_rank)
 {
+    log_debug("query base SortByCOrderOp beginning...");
     OrderOpCond order_op_cond;
     order_op_cond.last_id = component_->LastId();
     order_op_cond.limit_start = component_->PageSize() * (component_->PageIndex()-1);
@@ -199,7 +207,7 @@ void QueryProcess::SortByCOrderOp(int& i_rank)
 
 void QueryProcess::AscSort(int& i_sequence , int& i_rank)
 {
-    log_debug("m_has_gis, size:%d ", (uint32_t)scoredocid_set_.size());
+    log_debug("ascsort, result size:%d ", (uint32_t)scoredocid_set_.size());
     int i_limit_start = component_->PageSize() * (component_->PageIndex() - 1);
     int i_limit_end = component_->PageSize() * component_->PageIndex() - 1;
 
@@ -226,6 +234,7 @@ void QueryProcess::AscSort(int& i_sequence , int& i_rank)
 
 void QueryProcess::DescSort(int& i_sequence , int& i_rank)
 {
+    log_debug("descsort, result size:%d ", (uint32_t)scoredocid_set_.size());
     int i_limit_start = component_->PageSize() * (component_->PageIndex() - 1);
     int i_limit_end = component_->PageSize() * component_->PageIndex() - 1;
 

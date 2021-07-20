@@ -76,6 +76,7 @@ int GeoDistanceQueryProcess::GetValidDoc(
     int logic_type,
     const std::vector<FieldInfo>& keys)
 {
+    log_debug("geo related query GetValidDoc beginning...");
     std::vector<IndexInfo> index_info_vet;
     int iret = ValidDocFilter::Instance()->TextInvertIndexSearch(keys, index_info_vet);
     if (iret != 0) { return iret; }
@@ -85,6 +86,7 @@ int GeoDistanceQueryProcess::GetValidDoc(
 
 int GeoDistanceQueryProcess::CheckValidDoc()
 {
+    log_debug("geo related query CheckValidDoc beginning...");
     bool bRet = doc_manager_->GetDocContent(o_geo_point_);
     if (false == bRet){
         log_error("GetDocContent error.");
@@ -95,6 +97,7 @@ int GeoDistanceQueryProcess::CheckValidDoc()
 
 int GeoDistanceQueryProcess::GetScore()
 {
+    log_debug("geo related query GetScore beginning...");
     switch (component_->SortType())
     {
     case SORT_RELEVANCE:
@@ -125,6 +128,7 @@ int GeoDistanceQueryProcess::GetScore()
 
 void GeoDistanceQueryProcess::SortScore(int& i_sequence , int& i_rank)
 {
+    log_debug("geo related query SortScore beginning...");
     // 降序和不排序处理 
     if (SORT_FIELD_DESC == component_->SortType()
         || DONT_SORT == component_->SortType()){

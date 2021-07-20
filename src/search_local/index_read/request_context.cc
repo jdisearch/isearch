@@ -92,7 +92,11 @@ int RequestContext::ParseJson(const char *sz_json, int json_len, Json::Value &re
 
     if(recv_packet.isMember("sort_type") && recv_packet["sort_type"].isString())
     {
-        sort_type_ = atoi(recv_packet["sort_type"].asString().c_str());
+        if (recv_packet["sort_type"].isString()){
+            sort_type_ = atoi(recv_packet["sort_type"].asString().c_str());
+        }else if(recv_packet["sort_type"].isInt()){
+            sort_type_ = recv_packet["sort_type"].asInt();
+        }
     }
     else {
         sort_type_ = SORT_RELEVANCE;
@@ -153,6 +157,7 @@ int RequestContext::ParseJson(const char *sz_json, int json_len, Json::Value &re
         return -RT_PARSE_JSON_ERR;
     }
 
+    log_debug("sort_type:%d , sort_field:%s", sort_type_ , sort_field_.c_str());
     return 0;
 }
 
