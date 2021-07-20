@@ -127,13 +127,13 @@ int QueryProcess::GetScore()
     case SORT_FIELD_ASC: // 按照指定字段进行升降排序
     case SORT_FIELD_DESC:
         {
-            log_debug("assign field sort type , order option:%d" , (int)sort_field_type_);
             std::set<std::string>::iterator valid_docs_iter = p_valid_docs_set_->begin();
             for(; valid_docs_iter != p_valid_docs_set_->end(); valid_docs_iter++){
                 std::string doc_id = *valid_docs_iter;
                 doc_manager_->GetScoreMap(doc_id, component_->SortType()
                         , component_->SortField(), sort_field_type_);
             }
+            log_debug("assign field sort type , order option:%d" , (int)sort_field_type_);
         }
         break;
     default:
@@ -237,6 +237,7 @@ void QueryProcess::DescSort(int& i_sequence , int& i_rank)
     log_debug("descsort, result size:%d ", (uint32_t)scoredocid_set_.size());
     int i_limit_start = component_->PageSize() * (component_->PageIndex() - 1);
     int i_limit_end = component_->PageSize() * component_->PageIndex() - 1;
+    log_debug("limit_start:%d , limit_end:%d", i_limit_start, i_limit_end);
 
     std::set<ScoreDocIdNode>::reverse_iterator riter = scoredocid_set_.rbegin();
     for( ;riter != scoredocid_set_.rend(); ++riter){
