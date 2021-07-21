@@ -58,9 +58,12 @@ void ResultContext::SetOrIndexInfos(std::vector<IndexInfo>& or_index_info_vet){
         std::sort(index_info_vet_.begin() , index_info_vet_.end());
         std::sort(or_index_info_vet.begin() , or_index_info_vet.end());
 
-        std::set_union(index_info_vet_.begin(), index_info_vet_.end()
-                    ,or_index_info_vet.begin() , or_index_info_vet.end() , index_info_result.begin());
+        std::vector<IndexInfo>::iterator iter = std::set_union(
+            index_info_vet_.begin(),index_info_vet_.end(),
+            or_index_info_vet.begin() ,or_index_info_vet.end(),
+            index_info_result.begin());
 
+        index_info_result.resize(iter - index_info_result.begin());
         index_info_vet_.swap(index_info_result);
     }
 }
@@ -76,9 +79,12 @@ void ResultContext::SetAndIndexInfos(std::vector<IndexInfo>& and_index_info_vet)
         std::sort(index_info_vet_.begin() , index_info_vet_.end());
         std::sort(and_index_info_vet.begin() , and_index_info_vet.end());
 
-        std::set_intersection(index_info_vet_.begin(), index_info_vet_.end()
-                    ,and_index_info_vet.begin() , and_index_info_vet.end() , index_info_result.begin());
+        std::vector<IndexInfo>::iterator iter = std::set_intersection(
+            index_info_vet_.begin(), index_info_vet_.end(),
+            and_index_info_vet.begin() , and_index_info_vet.end(),
+            index_info_result.begin());
 
+        index_info_result.resize(iter - index_info_result.begin());
         index_info_vet_.swap(index_info_result);
     }
 }
@@ -94,9 +100,12 @@ void ResultContext::SetInvertIndexInfos(std::vector<IndexInfo>& invert_index_inf
         std::sort(index_info_vet_.begin() , index_info_vet_.end());
         std::sort(invert_index_info_vet.begin() , invert_index_info_vet.end());
 
-        std::set_difference(index_info_vet_.begin(), index_info_vet_.end()
-                    ,invert_index_info_vet.begin() , invert_index_info_vet.end() , index_info_result.begin());
-
+        std::vector<IndexInfo>::iterator iter = std::set_difference(
+            index_info_vet_.begin(), index_info_vet_.end(),
+            invert_index_info_vet.begin() , invert_index_info_vet.end() ,
+            index_info_result.begin());
+            
+        index_info_result.resize(iter - index_info_result.begin());
         index_info_vet_.swap(index_info_result);
     }
 }
