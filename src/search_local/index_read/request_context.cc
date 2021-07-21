@@ -62,9 +62,8 @@ int RequestContext::ParseJson(const char *sz_json, int json_len, Json::Value &re
         return -RT_PARSE_JSON_ERR;
     }
 
-    if (recv_packet.isMember("appid") && recv_packet["appid"].isUInt())
-    {
-        appid_ = recv_packet["appid"].asUInt();
+    if (recv_packet.isMember("appid")){
+        appid_ = ParseJsonReturnInt("appid" , recv_packet);
     }
     else {
         appid_ = 10001;
@@ -74,66 +73,54 @@ int RequestContext::ParseJson(const char *sz_json, int json_len, Json::Value &re
         query_value_ = recv_packet["query"];
     }
 
-    if (recv_packet.isMember("page_index") && recv_packet["page_index"].isString())
-    {
-        page_index_ = atoi(recv_packet["page_index"].asString().c_str());
+    if (recv_packet.isMember("page_index")){
+        page_index_ = ParseJsonReturnInt("page_index" , recv_packet);
     }
     else {
         page_index_ = 1 ;
     }
 
-    if (recv_packet.isMember("page_size") && recv_packet["page_size"].isString())
-    {
-        page_size_ = atoi(recv_packet["page_size"].asString().c_str());
+    if (recv_packet.isMember("page_size")){
+        page_size_ = ParseJsonReturnInt("page_size" , recv_packet);
     }
     else {
         page_size_ = 10;
     }
 
-    if(recv_packet.isMember("sort_type") && recv_packet["sort_type"].isString())
-    {
-        if (recv_packet["sort_type"].isString()){
-            sort_type_ = atoi(recv_packet["sort_type"].asString().c_str());
-        }else if(recv_packet["sort_type"].isInt()){
-            sort_type_ = recv_packet["sort_type"].asInt();
-        }
+    if(recv_packet.isMember("sort_type")){
+        sort_type_ = ParseJsonReturnInt("sort_type" , recv_packet);
     }
     else {
         sort_type_ = SORT_RELEVANCE;
     }
 
-    if(recv_packet.isMember("sort_field") && recv_packet["sort_field"].isString())
-    {
+    if(recv_packet.isMember("sort_field") && recv_packet["sort_field"].isString()){
         sort_field_ = recv_packet["sort_field"].asString();
     }
     else {
         sort_field_ = "";
     }
 
-    if (recv_packet.isMember("return_all") && recv_packet["return_all"].isString())
-    {
-        return_all_ = atoi(recv_packet["return_all"].asString().c_str());
+    if (recv_packet.isMember("return_all")){
+        return_all_ = ParseJsonReturnInt("return_all" , recv_packet);
     }
     else {
         return_all_ = 0;
     }
 
-    if(recv_packet.isMember("fields") && recv_packet["fields"].isString())
-    {
+    if(recv_packet.isMember("fields") && recv_packet["fields"].isString()){
         std::string fields = recv_packet["fields"].asString();
         required_fields_ = splitEx(fields, ",");
     }
 
-    if (recv_packet.isMember("terminal_tag") && recv_packet["terminal_tag"].isString())
-    {
-        preterminal_tag_ = atoi(recv_packet["terminal_tag"].asString().c_str());
+    if (recv_packet.isMember("terminal_tag")){
+        preterminal_tag_ = ParseJsonReturnInt("terminal_tag" , recv_packet);
     }
     else {
         preterminal_tag_ = 0;
     }
 
-    if(recv_packet.isMember("last_id") && recv_packet["last_id"].isString())
-    {
+    if(recv_packet.isMember("last_id") && recv_packet["last_id"].isString()){
         last_id_ = recv_packet["last_id"].asString();
     }
     else {
@@ -141,8 +128,7 @@ int RequestContext::ParseJson(const char *sz_json, int json_len, Json::Value &re
     }
 
     bool score_flag = true;
-    if (recv_packet.isMember("last_score") && recv_packet["last_score"].isString())
-    {
+    if (recv_packet.isMember("last_score") && recv_packet["last_score"].isString()){
         last_score_ = recv_packet["last_score"].asString();
     }
     else {
@@ -159,6 +145,19 @@ int RequestContext::ParseJson(const char *sz_json, int json_len, Json::Value &re
 
     log_debug("sort_type:%d , sort_field:%s", sort_type_ , sort_field_.c_str());
     return 0;
+}
+
+uint32_t RequestContext::ParseJsonReturnInt(
+    const std::string& field,
+    const Json::Value& json_value)
+{
+    uint32_t ui_value = 0;
+    if (json_value[field].isString()){
+        ui_value = atoi(json_value[field].asString().c_str());
+    }else if (json_value[field].isInt()){
+        ui_value = json_value[field].asInt();
+    }
+    return ui_value;
 }
 
 void RequestContext::InitSwitch()

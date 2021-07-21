@@ -67,6 +67,9 @@ public:
     bool GetHasGisFlag() { return has_gis_; };
 
 private:
+    uint32_t ParseJsonReturnInt(const std::string& field, const Json::Value& json_value);
+
+private:
     std::vector<std::vector<FieldInfo> > or_keys_;
     std::vector<std::vector<FieldInfo> > and_keys_;
     std::vector<std::vector<FieldInfo> > invert_keys_;
