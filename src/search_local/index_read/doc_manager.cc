@@ -185,10 +185,6 @@ bool DocManager::GetDocContent(
     if (!bret){
         return bret;
     }
-
-    if (index_infos.size() == docid_dis_map.size()){
-        return bret;
-    }
     
     std::vector<IndexInfo> o_valid_index_infos;
     hash_double_map::iterator docid_dis_iter = docid_dis_map.begin();
