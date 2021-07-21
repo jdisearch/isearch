@@ -10,6 +10,7 @@ BoolQueryProcess::BoolQueryProcess(const Json::Value& value)
     : QueryProcess(value)
     , query_process_map_()
     , query_bitset_()
+    , has_and_logic_(false)
 { }
 
 BoolQueryProcess::~BoolQueryProcess()
@@ -100,6 +101,7 @@ void BoolQueryProcess::HandleUnifiedIndex(){
 int BoolQueryProcess::ParseContent(){
     int ret = 0;
     if(parse_value_.isMember(MUST)){
+        has_and_logic_ = true;
         log_debug("must parse:%s" , parse_value_[MUST].toStyledString().c_str() );
         ret = ParseRequest(parse_value_[MUST] , ANDKEY);
         if (ret != 0) { return ret; }
@@ -157,25 +159,6 @@ int BoolQueryProcess::GetValidDoc(){
     return 0;
 }
 
-int BoolQueryProcess::CheckValidDoc(){
-    for (uint32_t ui_query_type = E_INDEX_READ_PRE_TERM
-        ; ui_query_type < E_INDEX_READ_TOTAL_NUM
-        ; ++ui_query_type){
-        if (!query_bitset_.test(ui_query_type)){
-            continue;
-        }
-
-        if (E_INDEX_READ_GEO_DISTANCE == ui_query_type || E_INDEX_READ_GEO_SHAPE == ui_query_type){
-            if (!query_bitset_.test(E_INDEX_READ_RANGE)){
-                return query_process_map_[ui_query_type]->CheckValidDoc();
-            }
-            continue;
-        }
-        return query_process_map_[ui_query_type]->CheckValidDoc();
-    }
-    return -1;
-}
-
 int BoolQueryProcess::GetScore(){
     for (uint32_t ui_query_type = E_INDEX_READ_PRE_TERM
         ; ui_query_type < E_INDEX_READ_TOTAL_NUM
@@ -185,7 +168,9 @@ int BoolQueryProcess::GetScore(){
         }
 
         if (E_INDEX_READ_GEO_DISTANCE == ui_query_type || E_INDEX_READ_GEO_SHAPE == ui_query_type){
-            if (component_->SortField().empty() && !query_bitset_.test(E_INDEX_READ_RANGE)){
+            if (has_and_logic_ && 
+                component_->SortField().empty() && 
+                !query_bitset_.test(E_INDEX_READ_RANGE)){
                 return query_process_map_[ui_query_type]->GetScore();
             }
             continue;
@@ -204,7 +189,9 @@ const Json::Value& BoolQueryProcess::SetResponse(){
         }
 
         if (E_INDEX_READ_GEO_DISTANCE == ui_query_type || E_INDEX_READ_GEO_SHAPE == ui_query_type){
-            if (component_->SortField().empty() && !query_bitset_.test(E_INDEX_READ_RANGE)){
+            if (has_and_logic_ && 
+                component_->SortField().empty() &&
+                !query_bitset_.test(E_INDEX_READ_RANGE)){
                 response_ = query_process_map_[ui_query_type]->SetResponse();
                 return response_;
             }

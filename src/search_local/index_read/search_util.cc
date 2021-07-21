@@ -1321,7 +1321,6 @@ bool GetGisDistance(uint32_t appid, const GeoPointContext& geo_point, const hash
 
                     if ((geo_point.d_distance > -0.0001 && geo_point.d_distance < 0.0001) 
                             || (dis + 1e-6 <= geo_point.d_distance)){
-                        ResultContext::Instance()->SetValidDocs(doc_it->first);
                         distances[doc_it->first] = dis;
                         log_debug("query geopoint lat:%f , lng:%f , query target geopoint lat:%f , lng:%f , dis:%f"  \
                             , d_query_lat , d_query_lng , d_target_lat , d_target_lng , dis);
@@ -1329,7 +1328,6 @@ bool GetGisDistance(uint32_t appid, const GeoPointContext& geo_point, const hash
                 }
             }else if (uiret != 0 && FIELD_GEO_SHAPE == field_info.field_type){
                 // temp no handle ,latter add
-                ResultContext::Instance()->SetValidDocs(doc_it->first);
                 distances[doc_it->first] = 1;
                 log_debug("query target geoshape handle here");
             }

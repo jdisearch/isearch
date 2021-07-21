@@ -33,7 +33,7 @@ public:
 
     bool CheckDocByExtraFilterKey(std::string doc_id);
     bool GetDocContent();
-    bool GetDocContent(const GeoPointContext& geo_point);
+    bool GetDocContent(const GeoPointContext& geo_point , std::vector<IndexInfo>& index_infos);
 
     bool AppendFieldsToRes(Json::Value &response, std::vector<std::string> &m_fields);
     bool GetScoreMap(std::string doc_id, uint32_t m_sort_type, std::string m_sort_field, FIELDTYPE &m_sort_field_type);
@@ -41,7 +41,6 @@ public:
     std::map<std::string, int>& ScoreIntMap();
     std::map<std::string, double>& ScoreDoubleMap();
     std::map<std::string, uint32_t>& ValidVersion();
-    const hash_double_map& GetDocDistance() const { return doc_distance_map_;};
 
 private:
     void CheckIfKeyValid(const std::vector<ExtraFilterKey>& extra_filter_vec, const Json::Value &value, bool flag, bool &key_valid);
@@ -52,7 +51,6 @@ private:
     std::map<std::string, double> score_double_map;
     std::map<std::string, uint32_t> valid_version_;
     hash_string_map doc_content_map_;
-    hash_double_map doc_distance_map_;
     RequestContext* component;
 };
 

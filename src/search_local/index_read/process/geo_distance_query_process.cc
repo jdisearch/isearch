@@ -3,8 +3,7 @@
 
 GeoDistanceQueryProcess::GeoDistanceQueryProcess(const Json::Value& value)
     : QueryProcess(value)
-    , o_geo_point_()
-    , o_distance_()
+    , logictype_geopoint_map_()
 {
     response_["type"] = 1;
 }
@@ -16,29 +15,33 @@ int GeoDistanceQueryProcess::ParseContent(){
     return ParseContent(ANDKEY);
 }
 
-int GeoDistanceQueryProcess::ParseContent(int logic_type){
+int GeoDistanceQueryProcess::ParseContent(int logic_type)
+{
     std::string s_geo_distance_fieldname("");
+    GeoPointContext o_geo_point;
     Json::Value::Members member = parse_value_.getMemberNames();
     Json::Value::Members::iterator iter = member.begin();
     for(; iter != member.end(); ++iter){
         Json::Value geo_value = parse_value_[*iter];
         if (DISTANCE == (*iter)){
             if (geo_value.isString()){
-                o_geo_point_.SetDistance(atof(geo_value.asString().c_str()));
+                o_geo_point.SetDistance(atof(geo_value.asString().c_str()));
             } else {
                 log_error("GeoDistanceParser distance should be string, the unit is km.");
                 return -RT_PARSE_CONTENT_ERROR;
             }
         } else {
             s_geo_distance_fieldname = (*iter);
-            o_geo_point_(geo_value);
+            o_geo_point(geo_value);
         }
     }
 
+    logictype_geopoint_map_.insert(std::make_pair(logic_type , o_geo_point));
+
     GeoPoint geo;
-    geo.lon = atof(o_geo_point_.sLongtitude.c_str());
-    geo.lat = atof(o_geo_point_.sLatitude.c_str());
-    double d_distance = o_geo_point_.d_distance;
+    geo.lon = atof(o_geo_point.sLongtitude.c_str());
+    geo.lat = atof(o_geo_point.sLatitude.c_str());
+    double d_distance = o_geo_point.d_distance;
     log_debug("geo lng:%f ,lat:%f , dis:%f" , geo.lon , geo.lat , d_distance);
 
     std::vector<std::string> gisCode = GetArroundGeoHash(geo, d_distance, GEO_PRECISION);
@@ -80,18 +83,13 @@ int GeoDistanceQueryProcess::GetValidDoc(
     std::vector<IndexInfo> index_info_vet;
     int iret = ValidDocFilter::Instance()->TextInvertIndexSearch(keys, index_info_vet);
     if (iret != 0) { return iret; }
-    ResultContext::Instance()->SetIndexInfos(logic_type , index_info_vet);
-    return 0;
-}
 
-int GeoDistanceQueryProcess::CheckValidDoc()
-{
-    log_debug("geo related query CheckValidDoc beginning...");
-    bool bRet = doc_manager_->GetDocContent(o_geo_point_);
+    bool bRet = doc_manager_->GetDocContent(logictype_geopoint_map_[logic_type] , index_info_vet);
     if (false == bRet){
         log_error("GetDocContent error.");
         return -RT_DTC_ERR;
     }
+    ResultContext::Instance()->SetIndexInfos(logic_type , index_info_vet);
     return 0;
 }
 
@@ -105,9 +103,15 @@ int GeoDistanceQueryProcess::GetScore()
     case SORT_FIELD_ASC:
     case SORT_FIELD_DESC:
         {
-            hash_double_map::const_iterator dis_iter = doc_manager_->GetDocDistance().cbegin();
-            for(; dis_iter != doc_manager_->GetDocDistance().cend(); ++dis_iter){
-                scoredocid_set_.insert(ScoreDocIdNode(dis_iter->second , dis_iter->first));
+            const std::vector<IndexInfo>& o_index_info_vet = ResultContext::Instance()->GetIndexInfos();
+            std::set<std::string>::iterator valid_docs_iter = p_valid_docs_set_->begin();
+            for(; valid_docs_iter != p_valid_docs_set_->end(); valid_docs_iter++){
+                std::vector<IndexInfo>::const_iterator index_info_iter = o_index_info_vet.cbegin();
+                for (; index_info_iter != o_index_info_vet.cend(); ++index_info_iter){
+                    if ((*valid_docs_iter) == (index_info_iter->doc_id)){
+                        scoredocid_set_.insert(ScoreDocIdNode(index_info_iter->distance , index_info_iter->doc_id));
+                    }
+                }
             }
         }
         break;

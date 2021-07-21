@@ -174,11 +174,6 @@ int PreTerminal::GetValidDoc(){
     return 0;
 }
 
-int PreTerminal::CheckValidDoc(){
-    log_info("RangeQueryPreTerminal do not need check valid doc");
-    return 0;
-}
-
 int PreTerminal::GetScore(){
     log_info("RangeQueryPreTerminal do not need get score");
     return 0;

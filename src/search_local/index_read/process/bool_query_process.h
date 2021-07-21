@@ -20,7 +20,6 @@ private:
 
     virtual int ParseContent();
     virtual int GetValidDoc();
-    virtual int CheckValidDoc();
     virtual int GetScore();
     virtual const Json::Value& SetResponse();
 
@@ -34,6 +33,7 @@ private:
 private:
     std::map<int , QueryProcess*> query_process_map_;
     std::bitset<E_INDEX_READ_TOTAL_NUM> query_bitset_;
+    bool has_and_logic_;
 };
 
 #endif

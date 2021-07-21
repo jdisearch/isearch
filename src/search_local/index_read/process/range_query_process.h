@@ -36,7 +36,6 @@ public:
     virtual int GetValidDoc(int logic_type, const std::vector<FieldInfo>& keys);
 
     virtual int GetValidDoc();
-    virtual int CheckValidDoc();
     virtual int GetScore();
     virtual const Json::Value& SetResponse();
 

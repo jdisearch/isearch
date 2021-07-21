@@ -105,13 +105,11 @@ public:
 
     virtual int ParseContent();
     virtual int GetValidDoc();
-    virtual int CheckValidDoc();
     virtual int GetScore();
     virtual void SortScore(int& i_sequence , int& i_rank);
 
 private:
-    GeoPointContext o_geo_point_;
-    hash_double_map o_distance_;
+    std::map<int , GeoPointContext> logictype_geopoint_map_;
 };
 
 #endif

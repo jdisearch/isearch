@@ -283,6 +283,7 @@ struct IndexInfo {
 	uint32_t created_time;
 	std::string pos;
 	std::string extend;
+	double distance;
 
 	IndexInfo(){
 		appid = 0;
@@ -290,6 +291,7 @@ struct IndexInfo {
 		field = 0;
 		word_freq = 0;
 		created_time = 0;
+		distance = 0.0;
 	}
 
 	bool operator<(const IndexInfo& src) const  {

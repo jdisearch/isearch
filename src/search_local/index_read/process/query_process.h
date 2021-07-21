@@ -74,7 +74,6 @@ public:
     
     virtual int ParseContent() = 0;
     virtual int GetValidDoc() = 0;
-    virtual int CheckValidDoc();
     virtual int GetScore();
     virtual void SortScore(int& i_sequence , int& i_rank);
     virtual const Json::Value& SetResponse();
@@ -84,6 +83,7 @@ protected:
     void AscSort(int& i_sequence , int& i_rank);
     void DescSort(int& i_sequence , int& i_rank);
     void AppendHighLightWord();
+    int CheckValidDoc();
 
 protected:
     RequestContext* component_;

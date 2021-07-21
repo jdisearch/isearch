@@ -33,7 +33,6 @@ DocManager::DocManager(RequestContext *c)
     , score_double_map()
     , valid_version_()
     , doc_content_map_()
-    , doc_distance_map_()
     , component(c)
 { }
 
@@ -166,21 +165,44 @@ bool DocManager::GetDocContent(){
     return true;
 }
 
-bool DocManager::GetDocContent(const GeoPointContext& geo_point)
+bool DocManager::GetDocContent(
+    const GeoPointContext& geo_point ,
+    std::vector<IndexInfo>& index_infos)
 {
-    const std::vector<IndexInfo>& o_index_info_vet = ResultContext::Instance()->GetIndexInfos();
-    for(size_t i = 0 ; i < o_index_info_vet.size(); i++){
-        if(o_index_info_vet[i].extend != ""){
-            doc_content_map_.insert(make_pair(o_index_info_vet[i].doc_id, o_index_info_vet[i].extend));
+    std::vector<IndexInfo>::iterator iter = index_infos.begin();
+    for( ;iter != index_infos.end(); ++iter){
+        if((iter->extend) != ""){
+            doc_content_map_.insert(make_pair(iter->doc_id, iter->extend));
         }
     }
 
     if(doc_content_map_.empty()){
         g_IndexInstance.GetDocContent(component->Appid(), doc_content_map_);
     }
-    GetGisDistance(component->Appid(), geo_point, doc_content_map_, doc_distance_map_ );
 
-    return true;
+    hash_double_map docid_dis_map;
+    bool bret = GetGisDistance(component->Appid(), geo_point, doc_content_map_, docid_dis_map);
+    if (!bret){
+        return bret;
+    }
+
+    if (index_infos.size() == docid_dis_map.size()){
+        return bret;
+    }
+    
+    std::vector<IndexInfo> o_valid_index_infos;
+    hash_double_map::iterator docid_dis_iter = docid_dis_map.begin();
+    for ( ; docid_dis_iter != docid_dis_map.end(); ++docid_dis_iter){
+        iter = index_infos.begin();
+        for( ;iter != index_infos.end(); ++iter){
+            if ((docid_dis_iter->first) == (iter->doc_id)){
+                iter->distance = docid_dis_iter->second;
+                o_valid_index_infos.push_back(*iter);
+            }
+        }
+    }
+    index_infos.swap(o_valid_index_infos);
+    return bret;
 }
 
 bool DocManager::AppendFieldsToRes(Json::Value &response, std::vector<std::string> &m_fields){
