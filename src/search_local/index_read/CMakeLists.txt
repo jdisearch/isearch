@@ -10,6 +10,7 @@ AUX_SOURCE_DIRECTORY(./index_sync index_sync)
 AUX_SOURCE_DIRECTORY(./utils utils)
 AUX_SOURCE_DIRECTORY(./query query)
 AUX_SOURCE_DIRECTORY(./process process)
+AUX_SOURCE_DIRECTORY(./sort_operator sort_operator)
 
 LINK_DIRECTORIES(   
 ${PROJECT_SOURCE_DIR}/../../comm
@@ -17,7 +18,7 @@ ${PROJECT_SOURCE_DIR}/../../3rdlib/jsoncpp/lib
 ${PROJECT_SOURCE_DIR}/../../comm/stat
 )
 
-ADD_EXECUTABLE(index_read ${main} ${index_sync} ${utils} ${query} ${process})
+ADD_EXECUTABLE(index_read ${main} ${index_sync} ${utils} ${query} ${process} ${sort_operator})
 
 target_include_directories(index_read  PUBLIC
 ../../3rdlib/jsoncpp/include

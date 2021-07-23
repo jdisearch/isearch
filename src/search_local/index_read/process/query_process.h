@@ -28,6 +28,7 @@
 #include "../db_manager.h"
 #include "../split_manager.h"
 #include "../comm.h"
+#include "../sort_operator/sort_operator_base.h"
 #include "skiplist.h"
 #include "task_request.h"
 
@@ -89,14 +90,11 @@ protected:
     RequestContext* component_;
     DocManager* doc_manager_;
     CTaskRequest* request_;
-    ValidDocSet* p_valid_docs_set_;
+    SortOperatorBase* sort_operator_base_;
+    std::set<ScoreDocIdNode>* p_scoredocid_set_;
 
     Json::Value parse_value_;
-    std::set<ScoreDocIdNode> scoredocid_set_;
     Json::Value response_;
-
-private:
-    FIELDTYPE sort_field_type_;
 };
 
 #endif

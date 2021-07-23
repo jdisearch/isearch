@@ -86,11 +86,10 @@ enum KEYLOCATE{
 };
 
 enum SORTTYPE {
-	SORT_RELEVANCE = 1, // 按相关性排序
-	SORT_TIMESTAMP = 2, // 按时间排序
+	SORT_RELEVANCE = 1, // 默认，按相关性排序
 	DONT_SORT = 3, //不排序
 	SORT_FIELD_ASC = 4, // 按字段升序
-	SORT_FIELD_DESC = 5, // 按字段降序
+	SORT_FIELD_DESC = 5 // 按字段降序
 };
 
 enum FieldType{

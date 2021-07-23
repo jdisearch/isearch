@@ -7,15 +7,17 @@ QueryProcess::QueryProcess(const Json::Value& value)
     : component_(NULL)
     , doc_manager_(NULL)
     , request_(NULL)
-    , p_valid_docs_set_(ResultContext::Instance()->GetValidDocs())
+    , sort_operator_base_(NULL)
+    , p_scoredocid_set_(NULL)
     , parse_value_(value)
-    , scoredocid_set_()
     , response_()
-    , sort_field_type_()
 { }
 
 QueryProcess::~QueryProcess()
-{ }
+{ 
+    DELETE(sort_operator_base_);
+    ResultContext::Instance()->Clear();
+}
 
 int QueryProcess::StartQuery(){
     assert(component_ != NULL);
@@ -55,91 +57,8 @@ int QueryProcess::CheckValidDoc(){
 int QueryProcess::GetScore()
 {
     log_debug("query base GetScore beginning...");
-    switch (component_->SortType())
-    {
-    case SORT_RELEVANCE: // 按照相关度得分，并以此排序
-        {
-            log_debug("relevance score sort type");
-            // 范围查的时候如果不指定排序类型，需要在这里对skipList进行赋值
-            const DocKeyinfosMap& docid_keyinfovet_map = ResultContext::Instance()->GetDocKeyinfosMap();
-            if (docid_keyinfovet_map.empty() && scoredocid_set_.empty()) {
-                std::set<std::string>::iterator iter = p_valid_docs_set_->begin();
-                for(; iter != p_valid_docs_set_->end(); iter++){
-                    scoredocid_set_.insert(ScoreDocIdNode(1,*iter));
-                }
-                break;
-            }
-
-            std::map<std::string, KeyInfoVet>::const_iterator docid_keyinfovet_iter = docid_keyinfovet_map.cbegin();
-            for (; docid_keyinfovet_iter != docid_keyinfovet_map.cend(); ++ docid_keyinfovet_iter){
-                std::string doc_id = docid_keyinfovet_iter->first;
-                const KeyInfoVet& key_info = docid_keyinfovet_iter->second;
-
-                if(p_valid_docs_set_->find(doc_id) == p_valid_docs_set_->end()){
-                    continue;
-                }
-
-                double score = 0.0;
-                for (uint32_t i = 0; i < key_info.size(); i++) {
-                    std::string keyword = key_info[i].word;
-                    uint32_t ui_word_freq = key_info[i].word_freq;
-                    uint32_t ui_doc_count = ResultContext::Instance()->GetKeywordDoccountMap(keyword);
-                    score += log((DOC_CNT - ui_doc_count + 0.5) / (ui_doc_count + 0.5)) * ((D_BM25_K1 + 1)*ui_word_freq)  \
-                            / (D_BM25_K + ui_word_freq) * (D_BM25_K2 + 1) * 1 / (D_BM25_K2 + 1);
-                    log_debug("loop score[%d]:%f", i , score);
-                }
-                scoredocid_set_.insert(ScoreDocIdNode(score , doc_id));
-            }
-        }
-        break;
-    case SORT_TIMESTAMP: // 按照时间戳得分，并以此排序
-        {
-            log_debug("time sort type");
-            DocKeyinfosMap docid_keyinfovet_map = ResultContext::Instance()->GetDocKeyinfosMap();
-            std::map<std::string, KeyInfoVet>::iterator docid_keyinfovet_iter = docid_keyinfovet_map.begin();
-            for (; docid_keyinfovet_iter != docid_keyinfovet_map.end(); ++ docid_keyinfovet_iter){
-                std::string doc_id = docid_keyinfovet_iter->first;
-                KeyInfoVet& key_info = docid_keyinfovet_iter->second;
-
-                if(p_valid_docs_set_->find(doc_id) == p_valid_docs_set_->end()){
-                    continue;
-                }
-
-                if (key_info.empty()){
-                    continue;
-                }
-
-                double score = (double)key_info[0].created_time;
-                scoredocid_set_.insert(ScoreDocIdNode(score , doc_id));
-            }
-        }
-        break;
-    case DONT_SORT: // 不排序，docid有序
-        {
-            log_debug("no sort type");
-            std::set<std::string>::iterator valid_docs_iter = p_valid_docs_set_->begin();
-            for(; valid_docs_iter != p_valid_docs_set_->end(); valid_docs_iter++){
-                std::string doc_id = *valid_docs_iter;
-                scoredocid_set_.insert(ScoreDocIdNode(1 , doc_id));
-            }
-        }
-        break;
-    case SORT_FIELD_ASC: // 按照指定字段进行升降排序
-    case SORT_FIELD_DESC:
-        {
-            std::set<std::string>::iterator valid_docs_iter = p_valid_docs_set_->begin();
-            for(; valid_docs_iter != p_valid_docs_set_->end(); valid_docs_iter++){
-                std::string doc_id = *valid_docs_iter;
-                doc_manager_->GetScoreMap(doc_id, component_->SortType()
-                        , component_->SortField(), sort_field_type_);
-            }
-            log_debug("assign field sort type , order option:%d" , (int)sort_field_type_);
-        }
-        break;
-    default:
-        break;
-    }
-
+    sort_operator_base_ = new SortOperatorBase(component_ , doc_manager_);
+    p_scoredocid_set_ = sort_operator_base_->GetSortOperator((uint32_t)component_->SortType());
     return 0;
 }
 
@@ -147,7 +66,7 @@ void QueryProcess::SortScore(int& i_sequence , int& i_rank)
 {
     log_debug("query base sortscore beginning...");
     if ((SORT_FIELD_DESC == component_->SortType() || SORT_FIELD_ASC == component_->SortType())
-        && scoredocid_set_.empty()){
+        && p_scoredocid_set_->empty()){
         SortByCOrderOp(i_rank);
     }else if(SORT_FIELD_ASC == component_->SortType()){ 
         AscSort(i_sequence, i_rank);
@@ -190,11 +109,11 @@ void QueryProcess::SortByCOrderOp(int& i_rank)
         || component_->ExtraFilterInvertKeys().size() != 0){
         order_op_cond.has_extra_filter = true;
     }
-    if(sort_field_type_ == FIELDTYPE_INT){
+    if(FIELDTYPE_INT == sort_operator_base_->GetSortFieldType()){
         i_rank += doc_manager_->ScoreIntMap().size();
         COrderOp<int> orderOp(FIELDTYPE_INT, component_->SearchAfter(), component_->SortType());
         orderOp.Process(doc_manager_->ScoreIntMap(), atoi(component_->LastScore().c_str()), order_op_cond, response_, doc_manager_);
-    } else if(sort_field_type_ == FIELDTYPE_DOUBLE) {
+    } else if(FIELDTYPE_DOUBLE == sort_operator_base_->GetSortFieldType()) {
         i_rank += doc_manager_->ScoreDoubleMap().size();
         COrderOp<double> orderOp(FIELDTYPE_DOUBLE, component_->SearchAfter(), component_->SortType());
         orderOp.Process(doc_manager_->ScoreDoubleMap(), atof(component_->LastScore().c_str()), order_op_cond, response_, doc_manager_);
@@ -207,12 +126,12 @@ void QueryProcess::SortByCOrderOp(int& i_rank)
 
 void QueryProcess::AscSort(int& i_sequence , int& i_rank)
 {
-    log_debug("ascsort, result size:%d ", (uint32_t)scoredocid_set_.size());
+    log_debug("ascsort, result size:%d ", (uint32_t)p_scoredocid_set_->size());
     int i_limit_start = component_->PageSize() * (component_->PageIndex() - 1);
     int i_limit_end = component_->PageSize() * component_->PageIndex() - 1;
 
-    std::set<ScoreDocIdNode>::iterator iter = scoredocid_set_.begin();
-    for( ;iter != scoredocid_set_.end(); ++iter){
+    std::set<ScoreDocIdNode>::iterator iter = p_scoredocid_set_->begin();
+    for( ;iter != p_scoredocid_set_->end(); ++iter){
         // 通过extra_filter_keys进行额外过滤（针对区分度不高的字段）
         if(doc_manager_->CheckDocByExtraFilterKey(iter->s_docid) == false){
             log_debug("CheckDocByExtraFilterKey failed, %s", iter->s_docid.c_str());
@@ -234,13 +153,13 @@ void QueryProcess::AscSort(int& i_sequence , int& i_rank)
 
 void QueryProcess::DescSort(int& i_sequence , int& i_rank)
 {
-    log_debug("descsort, result size:%d ", (uint32_t)scoredocid_set_.size());
+    log_debug("descsort, result size:%d ", (uint32_t)p_scoredocid_set_->size());
     int i_limit_start = component_->PageSize() * (component_->PageIndex() - 1);
     int i_limit_end = component_->PageSize() * component_->PageIndex() - 1;
     log_debug("limit_start:%d , limit_end:%d", i_limit_start, i_limit_end);
 
-    std::set<ScoreDocIdNode>::reverse_iterator riter = scoredocid_set_.rbegin();
-    for( ;riter != scoredocid_set_.rend(); ++riter){
+    std::set<ScoreDocIdNode>::reverse_iterator riter = p_scoredocid_set_->rbegin();
+    for( ;riter != p_scoredocid_set_->rend(); ++riter){
         if(doc_manager_->CheckDocByExtraFilterKey(riter->s_docid) == false){
             continue;
         }

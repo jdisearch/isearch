@@ -1,4 +1,5 @@
 #include "geo_distance_query_process.h"
+#include "../sort_operator/geo_query_sort_operator.h"
 #include "../valid_doc_filter.h"
 
 GeoDistanceQueryProcess::GeoDistanceQueryProcess(const Json::Value& value)
@@ -96,46 +97,20 @@ int GeoDistanceQueryProcess::GetValidDoc(
 int GeoDistanceQueryProcess::GetScore()
 {
     log_debug("geo related query GetScore beginning...");
-    switch (component_->SortType())
-    {
-    case SORT_RELEVANCE:
-    case SORT_TIMESTAMP:
-    case SORT_FIELD_ASC:
-    case SORT_FIELD_DESC:
-        {
-            const std::vector<IndexInfo>& o_index_info_vet = ResultContext::Instance()->GetIndexInfos();
-            std::set<std::string>::iterator valid_docs_iter = p_valid_docs_set_->begin();
-            for(; valid_docs_iter != p_valid_docs_set_->end(); valid_docs_iter++){
-                std::vector<IndexInfo>::const_iterator index_info_iter = o_index_info_vet.cbegin();
-                for (; index_info_iter != o_index_info_vet.cend(); ++index_info_iter){
-                    if ((*valid_docs_iter) == (index_info_iter->doc_id)){
-                        scoredocid_set_.insert(ScoreDocIdNode(index_info_iter->distance , index_info_iter->doc_id));
-                    }
-                }
-            }
-        }
-        break;
-    case DONT_SORT:
-        {
-            std::set<std::string>::iterator valid_docs_iter = p_valid_docs_set_->begin();
-            for(; valid_docs_iter != p_valid_docs_set_->end(); valid_docs_iter++){
-                scoredocid_set_.insert(ScoreDocIdNode(1 , *valid_docs_iter));
-            }
-        }
-        break;
-    default:
-        break;
-    }
-
+    sort_operator_base_ = new GeoQuerySortOperator(component_ , doc_manager_);
+    p_scoredocid_set_ = sort_operator_base_->GetSortOperator((uint32_t)component_->SortType());
     return 0;
 }
 
 void GeoDistanceQueryProcess::SortScore(int& i_sequence , int& i_rank)
 {
     log_debug("geo related query SortScore beginning...");
-    // 降序和不排序处理 
-    if (SORT_FIELD_DESC == component_->SortType()
-        || DONT_SORT == component_->SortType()){
+    
+    if ((SORT_FIELD_DESC == component_->SortType() || SORT_FIELD_ASC == component_->SortType())
+        && p_scoredocid_set_->empty()){
+        SortByCOrderOp(i_rank);
+    }else if (SORT_FIELD_DESC == component_->SortType()
+        || DONT_SORT == component_->SortType()){ // 降序和不排序处理
         DescSort(i_sequence , i_rank);
     }else { // 不指定情况下，默认升序，距离近在前
         AscSort(i_sequence , i_rank);

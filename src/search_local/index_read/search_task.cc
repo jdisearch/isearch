@@ -98,7 +98,6 @@ int SearchTask::Process(CTaskRequest *request)
             return ret;
         }
     }
-    ResultContext::Instance()->Clear();
     common::ProfilerMonitor::GetInstance().RegisterInfoEnd(caller_info);
     return 0;
 }
