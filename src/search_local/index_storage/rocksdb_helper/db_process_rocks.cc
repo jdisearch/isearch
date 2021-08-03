@@ -445,13 +445,21 @@ inline int RocksdbProcess::str2Value(
     break;
 
   case DField::String:
-    Value.str.len = Str.length();
-    Value.str.ptr = const_cast<char *>(Str.data()); // 不重新new，要等这个value使用完后释放内存(如果Str是动态分配的)
+    {
+      char* p = (char*)calloc(Str.length() , sizeof(char));
+      memcpy((void*)p , (void*)Str.data() , Str.length());
+      Value.str.ptr = p;
+      Value.str.len = Str.length();
+    }
     break;
 
   case DField::Binary:
-    Value.bin.len = Str.length();
-    Value.bin.ptr = const_cast<char *>(Str.data());
+    {
+      char* p = (char*)calloc(Str.length() , sizeof(char));
+      memcpy((void*)p , (void*)Str.data() , Str.length());
+      Value.bin.ptr = p;
+      Value.bin.len = Str.length();
+    }
     break;
 
   default:
