@@ -340,8 +340,11 @@ std::vector<IndexInfo> ValidDocFilter::Union(std::vector<IndexInfo>& first_index
     std::sort(first_indexinfo_vet.begin() , first_indexinfo_vet.end());
     std::sort(second_indexinfo_vet.begin() , second_indexinfo_vet.end());
 
-    std::set_union(first_indexinfo_vet.begin(), first_indexinfo_vet.end()
-                ,second_indexinfo_vet.begin() , second_indexinfo_vet.end() , index_info_result.begin());
+    std::vector<IndexInfo>::iterator iter = std::set_union(
+        first_indexinfo_vet.begin(), first_indexinfo_vet.end(),
+        second_indexinfo_vet.begin() , second_indexinfo_vet.end() ,
+        index_info_result.begin());
 
+    index_info_result.resize(iter - index_info_result.begin());
     return index_info_result;
 }
