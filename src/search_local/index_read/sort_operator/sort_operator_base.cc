@@ -20,7 +20,9 @@ std::set<ScoreDocIdNode>* SortOperatorBase::GetSortOperator(uint32_t ui_sort_typ
     log_debug("GetSortOperator beginning...");
     switch (ui_sort_type)
     {
-    case SORT_RELEVANCE:{
+    case SORT_RELEVANCE:
+    case SORT_GEO_DISTANCE:
+        {
             RelevanceSort();
         }
         break;

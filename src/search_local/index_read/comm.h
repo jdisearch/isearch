@@ -89,7 +89,8 @@ enum SORTTYPE {
 	SORT_RELEVANCE = 1, // 默认，按相关性排序
 	DONT_SORT = 3, //不排序
 	SORT_FIELD_ASC = 4, // 按字段升序
-	SORT_FIELD_DESC = 5 // 按字段降序
+	SORT_FIELD_DESC = 5, // 按字段降序
+	SORT_GEO_DISTANCE = 6 // 按距离升序
 };
 
 enum FieldType{
