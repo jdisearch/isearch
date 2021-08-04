@@ -32,6 +32,12 @@ int GeoShapeQueryProcess::ParseContent(int logic_type){
 
             uint32_t uiRet = DBManager::Instance()->GetWordField(segment_tag, component_->Appid()
                         , fieldname, fieldInfo);
+
+            if (0 == uiRet){
+                log_error("field_name:[%s] error ,not in the app_field_define", fieldname.c_str());
+                return -RT_PARSE_CONTENT_ERROR;
+            }
+
             if (uiRet != 0 && SEGMENT_NONE == segment_tag) {
                 component_->SetHasGisFlag(true);
                 for (size_t index = 0; index < gisCode.size(); index++) {

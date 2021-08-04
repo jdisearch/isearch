@@ -54,6 +54,11 @@ int GeoDistanceQueryProcess::ParseContent(int logic_type)
         uint32_t uiRet = DBManager::Instance()->GetWordField(segment_tag, component_->Appid()
             , s_geo_distance_fieldname , fieldInfo);
 
+        if (0 == uiRet){
+            log_error("field_name:[%s] error ,not in the app_field_define", s_geo_distance_fieldname.c_str());
+            return -RT_PARSE_CONTENT_ERROR;
+        }
+
         std::vector<FieldInfo> fieldInfos;
         if (uiRet != 0 && SEGMENT_NONE == segment_tag) {
             component_->SetHasGisFlag(true);
@@ -64,15 +69,16 @@ int GeoDistanceQueryProcess::ParseContent(int logic_type)
             }
         }
 
-        if (!fieldInfos.empty()) {
-            component_->AddToFieldList(logic_type, fieldInfos);
-        }
+        component_->AddToFieldList(logic_type, fieldInfos);
     }
     return 0;
 }
 
 int GeoDistanceQueryProcess::GetValidDoc()
 {
+    if (component_->GetFieldList(ANDKEY).empty()){
+        return -RT_GET_FIELD_ERROR;
+    }
     return GetValidDoc(ANDKEY , component_->GetFieldList(ANDKEY)[FIRST_TEST_INDEX]);
 }
 

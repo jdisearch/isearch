@@ -97,6 +97,10 @@ int RangeQueryProcess::ParseContent(int logic_type)
 }
 
 int RangeQueryProcess::GetValidDoc(){
+    if (component_->GetFieldList(ORKEY).empty()){
+        return -RT_GET_FIELD_ERROR;
+    }
+
     return GetValidDoc(ORKEY , component_->GetFieldList(ORKEY)[FIRST_TEST_INDEX]);
 }
 
