@@ -62,8 +62,8 @@ public:
 	bool TopDocValid(uint32_t appid, vector<TopDocInfo>& no_filter_docs, vector<TopDocInfo>& doc_info);
 	bool DocValid(uint32_t appid, const vector<IndexInfo>& vecs, bool need_version, map<string, uint32_t>& valid_version, hash_string_map& doc_content_map);
 	bool GetTopDocInfo(uint32_t appid, string word, vector<TopDocInfo>& doc_info);
-	bool GetDocContent(uint32_t appid, hash_string_map& doc_content);
-	bool GetSnapshotContent(int left, int right, uint32_t appid, hash_string_map& doc_content);
+	bool GetDocContent(uint32_t appid, const std::vector<IndexInfo>& index_infos, hash_string_map& doc_content);
+	bool GetSnapshotContent(int left, int right, uint32_t appid , const std::vector<IndexInfo>& index_infos, hash_string_map& doc_content);
 	bool GetSuggestDoc(uint32_t appid, int index, uint32_t len, uint32_t field, const IntelligentInfo &info, vector<IndexInfo> &doc_id_set);
 	bool GetSuggestDocWithoutCharacter(uint32_t appid, int index, uint32_t len,  uint32_t field, const IntelligentInfo &info, vector<IndexInfo> &doc_id_set);
 	bool GetScoreByField(uint32_t appid, string doc_id, string sort_field, uint32_t sort_type, ScoreInfo &score_info);

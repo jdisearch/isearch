@@ -177,7 +177,7 @@ bool DocManager::GetDocContent(
     }
 
     if(doc_content_map_.empty()){
-        g_IndexInstance.GetDocContent(component->Appid(), doc_content_map_);
+        g_IndexInstance.GetDocContent(component->Appid(),index_infos , doc_content_map_);
     }
 
     hash_double_map docid_dis_map;

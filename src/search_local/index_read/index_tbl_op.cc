@@ -420,29 +420,37 @@ bool CIndexTableManager::TopDocValid(uint32_t appid, vector<TopDocInfo>& no_filt
     return true;
 }
 
-bool CIndexTableManager::GetDocContent(uint32_t appid, hash_string_map& doc_content)
+bool CIndexTableManager::GetDocContent(
+    uint32_t appid, 
+    const std::vector<IndexInfo>& index_infos,
+    hash_string_map& doc_content)
 {
     int numbers = 32; //DTC批量查找的上限为32个
-    int docSize = ResultContext::Instance()->GetIndexInfos().size();
-    int count = docSize / numbers;
-    int remain = docSize % numbers;
+    int doc_size = index_infos.size();
+    int count = doc_size / numbers;
+    int remain = doc_size % numbers;
 
     for (int index = 0; index < count; index++) 
     {
         int left = index * numbers;
         int right = (index + 1) * numbers;
-        if (!GetSnapshotContent(left, right, appid, doc_content))
+        if (!GetSnapshotContent(left, right, appid, index_infos ,doc_content))
             return false;
     }
 
-    if (!GetSnapshotContent(docSize-remain, docSize, appid, doc_content)) {
+    if (!GetSnapshotContent(doc_size-remain, doc_size, appid, index_infos ,doc_content)) {
         return false;
     }
 
     return true;
 }
 
-bool CIndexTableManager::GetSnapshotContent(int left, int right, uint32_t appid, hash_string_map& doc_content)
+bool CIndexTableManager::GetSnapshotContent(
+    int left,
+    int right,
+    uint32_t appid,
+    const std::vector<IndexInfo>& index_infos,
+    hash_string_map& doc_content)
 {
     int ret = 0;
     if (left == right) {
@@ -462,7 +470,7 @@ bool CIndexTableManager::GetSnapshotContent(int left, int right, uint32_t appid,
         stringstream ss_key;
         ss_key << appid;
         ss_key << "#10#";
-        ss_key << ResultContext::Instance()->GetIndexInfos()[i].doc_id;
+        ss_key << index_infos[i].doc_id;
         docKeys += ss_key.str();
         ret = getReq.AddKeyValue("key", ss_key.str().c_str());
     }
