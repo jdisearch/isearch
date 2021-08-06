@@ -58,16 +58,13 @@ private:
 template<typename T>
 void COrderOp<T>::Process(const std::map<std::string, T>& score_map, T last_value, OrderOpCond order_op_cond, Json::Value& response, DocManager *doc_manager)
 {
-	DocIdEntry<T> last_entry;
+	DocIdEntry<T> last_entry(order_op_cond.last_id , last_value ,  _OrderFieldType, _SortType);
 	for (typename std::map<std::string, T>::const_iterator it = score_map.begin(); it != score_map.end(); it++) {
 		DocIdEntry<T> doc_entry(it->first, it->second, _OrderFieldType, _SortType);
 		if(order_op_cond.has_extra_filter){
 			_ScoreSet.insert(doc_entry);
 		} else {
 			_ScoreVec.push_back(doc_entry);
-		}
-		if(it->second == last_value && it->first == order_op_cond.last_id){
-			last_entry = doc_entry;
 		}
 	}
 	
