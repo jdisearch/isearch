@@ -177,6 +177,7 @@ int RocksDBConn::Open(const std::string &dbPath)
   }
 
   mHasConnected = true;
+  log_error("open rocksdb success! path:%s", mRocksDbPath.c_str()); 
   return 0;
 
 REPORT_ERROR:
@@ -404,10 +405,15 @@ int RocksDBConn::retrieve_start(
     bool forwardDirection,
     ColumnFamiliesIndex colIndex)
 {
-  if (startKey.empty())
+  if ( startKey.empty() )
   {
-    log_info("empty retrieve key!");
-    return -1;
+    if (!forwardDirection)
+    {
+    	log_info("empty retrieve key!");
+    	return -1;
+    }
+    // search from first
+    return get_first_entry(startKey, value, itr, colIndex);
   }
 
   ReadOptions options = ReadOptions();

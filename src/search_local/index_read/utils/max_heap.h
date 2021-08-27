@@ -147,6 +147,10 @@ std::vector<DocIdEntry<T> > CMaxHeap<T>::getNumbers(vector<DocIdEntry<T> >& arr,
 		}
 	}
 
+	if (max_heap_vec.empty()){
+		return max_heap_vec;
+	}
+	
 	buildMaxHeap(max_heap_vec);
 	for(int i = k; i < (int)arr.size(); ++i){
 		// 出现比堆顶元素小且大于last_value的值, 置换堆顶元素, 并调整堆
@@ -171,6 +175,11 @@ std::vector<DocIdEntry<T> > CMaxHeap<T>::getNumbers(vector<DocIdEntry<T> >& arr,
 			break;
 		}
 	}
+	
+	if (max_heap_vec.empty()){
+		return max_heap_vec;
+	}
+
 	buildMaxHeap(max_heap_vec);
 	for(int i = k; i < (int)arr.size(); ++i){
 		// 出现比堆顶元素小的值, 置换堆顶元素, 并调整堆

@@ -43,12 +43,13 @@ public:
     void CutForSearch(const string& str, uint32_t appid, vector<vector<string> >& search_res_all);
     void CutNgram(const string& str, vector<string>& search_res, uint32_t n);
     void Split(const string& str, uint32_t appid, vector<string>& vec, bool hmm_flag = false);
+    bool WordValid(string word, uint32_t appid);
+    bool GetWordInfo(string word, uint32_t appid, WordInfo &word_info);
     virtual void ConcreteSplit(const string& str, uint32_t appid, vector<string>& vec) = 0;
 
 protected:
     bool isAllAlphaOrDigit(string str);
     bool isAlphaOrDigit(string str);
-    bool wordValid(string word, uint32_t appid);
     void dealByHmmMgr(uint32_t appid, const vector<string>& old_vec, vector<string>& new_vec);
 
 protected:

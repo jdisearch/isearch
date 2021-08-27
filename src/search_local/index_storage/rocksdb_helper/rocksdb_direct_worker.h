@@ -31,6 +31,7 @@ class RocksdbDirectWorker : public PollerObject
 private:
   HelperProcessBase *mDBProcessRocks;
   DirectRequestContext mRequestContext;
+  RangeQueryRows_t range_query_row_;
   DirectResponseContext mResponseContext;
 
 public:
@@ -49,6 +50,9 @@ private:
   void proc_direct_request();
   void send_response();
   int remove_from_event_poll();
+  void procDirectRangeQuery();
+  void procReplicationRegistry();
+  void procReplicationStateQuery();
 
   int recieve_message(
       char *data,

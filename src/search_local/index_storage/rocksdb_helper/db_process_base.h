@@ -55,9 +55,15 @@ public:
 	virtual int process_direct_query(
 		DirectRequestContext *reqCxt,
 		DirectResponseContext *respCxt)
-	{
-		return -1;
-	}
+  { return -1; }
+    
+  virtual int startReplListener() { return -1; }
+  virtual int TriggerReplication(
+      const std::string& masterIp, 
+      int masterPort) { return -1; }
+  
+  virtual int QueryReplicationState() { return -1; }
+
 };
 
 #endif

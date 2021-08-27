@@ -1,4 +1,4 @@
-﻿/*
+/*
  * =====================================================================================
  *
  *       Filename:  index_conf.cc
@@ -264,6 +264,10 @@ bool IndexConf::ParseConf(string path) {
 		 }
 		 if (ParseDTCPara("dtc_intelligent_config", m_DTCIntelligentHost) != 0) {
 			 log_error("parse json error!");
+			 return false;
+		 }
+		 if (ParseDTCPara("dtc_original_config", m_DTCOriginalHost) != 0) {
+			 log_error("parse json error , in field \"dtc_original_config\" .");
 			 return false;
 		 }
 	}

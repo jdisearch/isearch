@@ -100,6 +100,10 @@ public:
 		return m_DTCIntelligentHost;
 	}
 
+	SDTCHost& GetDTCOriginalConfig(){
+		return m_DTCOriginalHost;
+	}
+
 private:
 	int ParseDTCPara(const char *dtc_name,SDTCHost &dtchost) ;
 	int ParseGlobalPara();
@@ -108,6 +112,7 @@ private:
 	SGlobalIndexConfig m_GlobalConf;
 	SDTCHost m_DTCIndexHost;
 	SDTCHost m_DTCIntelligentHost;
+	SDTCHost m_DTCOriginalHost;
 	Json::Value m_value;
 };
 

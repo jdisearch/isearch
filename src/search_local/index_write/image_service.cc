@@ -48,7 +48,7 @@ int CTaskImage::insert_snapshot_dtc(const UserTableContent &fields,int &doc_vers
 		return RT_ERROR_GET_SNAPSHOT;
 	}
 	DTC::InsertRequest insertReq(dtc_server);
-	insertReq.SetKey(gen_dtc_key_string(fields.appid, "10", fields.doc_id).c_str());
+	insertReq.SetKey(CommonHelper::Instance()->GenerateDtcKey(fields.appid, "10", fields.doc_id).c_str());
 	insertReq.Set("doc_id", fields.doc_id.c_str());
 	insertReq.Set("doc_version", doc_version);
 	insertReq.Set("extend", fields.content.c_str());
@@ -80,7 +80,7 @@ int CTaskImage::delete_snapshot_dtc(string &doc_id,uint32_t appid,Json::Value &r
 		return RT_ERROR_GET_SNAPSHOT;
 	}
 	DTC::DeleteRequest deleteReq(dtc_server);
-	ret = deleteReq.SetKey(gen_dtc_key_string(appid, "10", doc_id).c_str());
+	ret = deleteReq.SetKey(CommonHelper::Instance()->GenerateDtcKey(appid, "10", doc_id).c_str());
 
 	DTC::Result rst;
 	ret = deleteReq.Execute(rst);
@@ -97,7 +97,7 @@ static int get_snapshot_execute(DTC::Server* dtc_server,const UserTableContent &
 	DTC::GetRequest getReq(dtc_server);
 	int ret = 0;
 
-	ret = getReq.SetKey(gen_dtc_key_string(fields.appid, "10", fields.doc_id).c_str());
+	ret = getReq.SetKey(CommonHelper::Instance()->GenerateDtcKey(fields.appid, "10", fields.doc_id).c_str());
 	ret = getReq.Need("doc_version");
 
 	ret = getReq.Execute(rst);
@@ -197,7 +197,7 @@ int CTaskImage::do_insert_index(DTC::Server* dtcServer, map<string, item> &word_
 	int ret;
 	map<string, item>::iterator map_iter = word_map.begin();
 	for (; map_iter != word_map.end(); map_iter++) {
-		string key = gen_dtc_key_string(app_id, "00", map_iter->first);
+		string key = CommonHelper::Instance()->GenerateDtcKey(app_id, "00", map_iter->first);
 		item it = map_iter->second;
 		ret = insert_index_dtc(dtcServer,key,it,3,doc_version,res);
 		if(ret != 0)
@@ -206,7 +206,7 @@ int CTaskImage::do_insert_index(DTC::Server* dtcServer, map<string, item> &word_
 
 	map_iter = title_map.begin();
 	for (; map_iter != title_map.end(); map_iter++) {
-		string key = gen_dtc_key_string(app_id, "00", map_iter->first);
+		string key = CommonHelper::Instance()->GenerateDtcKey(app_id, "00", map_iter->first);
 		item it = map_iter->second;
 		ret = insert_index_dtc(dtcServer,key,it,3,doc_version,res);
 		if(ret != 0){
@@ -291,7 +291,7 @@ int CTaskImage::update_sanpshot_dtc(const UserTableContent &fields,int doc_versi
 		return RT_ERROR_GET_SNAPSHOT;
 	}
 	DTC::UpdateRequest updateReq(dtc_server);
-	ret = updateReq.SetKey(gen_dtc_key_string(fields.appid, "00", fields.doc_id).c_str());
+	ret = updateReq.SetKey(CommonHelper::Instance()->GenerateDtcKey(fields.appid, "00", fields.doc_id).c_str());
 	updateReq.Set("doc_version", doc_version);
 	if (fields.content.length() > 0)
 		updateReq.Set("extend", fields.content.c_str());

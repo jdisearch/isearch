@@ -32,8 +32,9 @@ RocksdbDirectWorker::RocksdbDirectWorker(
     PollThread* poll,
     int fd)
 :
-PollerObject(poll, fd),
-mDBProcessRocks(processor)
+PollerObject(poll, fd)
+,mDBProcessRocks(processor)
+,range_query_row_()
 {
 }
 
@@ -88,12 +89,56 @@ void RocksdbDirectWorker::input_notify()
 
 void RocksdbDirectWorker::proc_direct_request()
 {
-  mResponseContext.free();
+  switch ((DirectRequestType)mRequestContext.sDirectQueryType)
+  {
+  case DirectRequestType::eRangeQuery:
+    procDirectRangeQuery();
+    break;
+  case DirectRequestType::eReplicationRegistry:
+    procReplicationRegistry();
+    break;
+  case DirectRequestType::eReplicationStateQuery:
+    procReplicationStateQuery();
+    break;
+  default:
+    log_error("unrecognize request type:%d", mRequestContext.sDirectQueryType);
+  }
+  
+  return;
+}
 
+void RocksdbDirectWorker::procDirectRangeQuery()
+{
+  // priority of query conditions
+  RangeQuery_t* rQueryConds = (RangeQuery_t*)mRequestContext.sPacketValue.uRangeQuery;
+  std::sort(rQueryConds->sFieldConds.begin(), rQueryConds->sFieldConds.end(),
+      [this](const QueryCond& cond1, const QueryCond& cond2) ->bool { 
+        return cond1.sFieldIndex < cond2.sFieldIndex || 
+          (cond1.sFieldIndex == cond2.sFieldIndex && 
+           condtion_priority((CondOpr)cond1.sCondOpr, (CondOpr)cond2.sCondOpr)); });
+  assert(rQueryConds->sFieldConds[0].sFieldIndex == 0 );
+
+  mResponseContext.sDirectRespValue.uRangeQueryRows = (uint64_t)(&range_query_row_);
   mDBProcessRocks->process_direct_query(&mRequestContext, &mResponseContext);
   return;
 }
 
+void RocksdbDirectWorker::procReplicationRegistry()
+{
+  ReplicationQuery_t* registryCond = (ReplicationQuery_t*)mRequestContext.sPacketValue.uReplicationQuery;
+  int ret = mDBProcessRocks->TriggerReplication(registryCond->sMasterIp, registryCond->sMasterPort);
+  mResponseContext.sRowNums = 0;
+  mResponseContext.sDirectRespValue.uReplicationState = ret;
+  return;
+}
+
+void RocksdbDirectWorker::procReplicationStateQuery()
+{
+  int ret = mDBProcessRocks->QueryReplicationState();
+  mResponseContext.sRowNums = 0;
+  mResponseContext.sDirectRespValue.uReplicationState = ret;
+  return;
+}
 int RocksdbDirectWorker::recieve_request()
 {
   static const int maxContextLen = 16 << 10; // 16k
@@ -111,13 +156,14 @@ int RocksdbDirectWorker::recieve_request()
   
   mRequestContext.serialize_from(dataBuffer, dataLen);
   
-  // priority of query conditions
-  std::sort(mRequestContext.sFieldConds.begin(), mRequestContext.sFieldConds.end(),
-      [this](const QueryCond& cond1, const QueryCond& cond2) ->bool { 
-        return cond1.sFieldIndex < cond2.sFieldIndex || 
-          (cond1.sFieldIndex == cond2.sFieldIndex && 
-           condtion_priority((CondOpr)cond1.sCondOpr, (CondOpr)cond2.sCondOpr)); });
-  assert(mRequestContext.sFieldConds[0].sFieldIndex == 0 );
+  // // priority of query conditions
+  // RangeQuery_t* rQueryConds = (RangeQuery_t*)mRequestContext.sPacketValue.uRangeQuery;
+  // std::sort(rQueryConds->sFieldConds.begin(), rQueryConds->sFieldConds.end(),
+  //    [this](const QueryCond& cond1, const QueryCond& cond2) ->bool { 
+  //       return cond1.sFieldIndex < cond2.sFieldIndex || 
+  //         (cond1.sFieldIndex == cond2.sFieldIndex && 
+  //          condtion_priority((CondOpr)cond1.sCondOpr, (CondOpr)cond2.sCondOpr)); });
+  // assert(rQueryConds->sFieldConds[0].sFieldIndex == 0 );
 
   return 0;
 }
@@ -128,7 +174,7 @@ void RocksdbDirectWorker::send_response()
   mResponseContext.sSequenceId = mRequestContext.sSequenceId;
 
   std::string rowValue;
-  mResponseContext.serialize_to(rowValue);
+  mResponseContext.serialize_to((DirectRequestType)mRequestContext.sDirectQueryType,rowValue);
   
   int valueLen = rowValue.length();
   int ret = send_message((char*)&valueLen, sizeof(int));
@@ -150,6 +196,8 @@ void RocksdbDirectWorker::send_response()
 
   log_info("send response successful. netfd:%d, sequenceId:%" PRIu64, netfd, mResponseContext.sSequenceId);
   
+  mResponseContext.free((DirectRequestType)mRequestContext.sDirectQueryType);
+
   return;
 }
 

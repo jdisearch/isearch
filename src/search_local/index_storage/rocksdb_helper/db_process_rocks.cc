@@ -25,10 +25,12 @@
 #include <unistd.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <ctype.h>
 
 #include <bitset>
 #include <map>
 #include <string>
+#include <vector>
 #include <algorithm>
 
 #include "db_process_rocks.h"
@@ -70,6 +72,7 @@ RocksdbProcess::RocksdbProcess(RocksDBConn *conn)
   mUncommitedMigId = -1;
 
   mOrderByUnit = NULL;
+  mReplUnit = NULL;
 }
 
 RocksdbProcess::~RocksdbProcess()
@@ -213,6 +216,19 @@ int RocksdbProcess::Init(int GroupID, const DbConfig *Config, DTCTableDefinition
   log_info("%s", ss.str().c_str());
 
   return ret;
+}
+
+int RocksdbProcess::startReplListener()
+{
+  // init replication related
+  mReplUnit = new RocksdbReplication(mDBConn);
+  if (!mReplUnit)
+  {
+    log_error("%s", "create replication unit failed");
+    return -1;
+  }
+
+  return mReplUnit->initializeReplication();
 }
 
 int RocksdbProcess::get_replicate_end_key()
@@ -443,13 +459,21 @@ inline int RocksdbProcess::str2Value(
     break;
 
   case DField::String:
-    Value.str.len = Str.length();
-    Value.str.ptr = const_cast<char *>(Str.data()); // 不重新new，要等这个value使用完后释放内存(如果Str是动态分配的)
+    {
+      char* p = (char*)calloc(Str.length() , sizeof(char));
+      memcpy((void*)p , (void*)Str.data() , Str.length());
+      Value.str.ptr = p;
+      Value.str.len = Str.length();
+    }
     break;
 
   case DField::Binary:
-    Value.bin.len = Str.length();
-    Value.bin.ptr = const_cast<char *>(Str.data());
+    {
+      char* p = (char*)calloc(Str.length() , sizeof(char));
+      memcpy((void*)p , (void*)Str.data() , Str.length());
+      Value.bin.ptr = p;
+      Value.bin.len = Str.length();
+    }
     break;
 
   default:
@@ -600,6 +624,7 @@ int RocksdbProcess::condition_filter(
 
   case DField::String:
   case DField::Binary:
+  {
     matched = is_matched(rocksValue.c_str(), comparator, condValue.c_str(), (int)rocksValue.length(), (int)condValue.length(), false);
     if (!matched)
     {
@@ -607,6 +632,7 @@ int RocksdbProcess::condition_filter(
                condValue.c_str(), comparator);
       return 1;
     }
+  }
     break;
 
   default:
@@ -662,6 +688,23 @@ template bool RocksdbProcess::is_matched<int64_t>(const int64_t lv, int comp, co
 template bool RocksdbProcess::is_matched<uint64_t>(const uint64_t lv, int comp, const uint64_t rv);
 template bool RocksdbProcess::is_matched<double>(const double lv, int comp, const double rv);
 
+int RocksdbProcess::memcmp_ignore_case(
+    const void* lv, 
+    const void* rv, 
+    int count)
+{
+  int iret = 0;
+  for (int i = 0; i < count; i++){
+    char lv_buffer = tolower(((char*)lv)[i]);
+    char rv_buffer = tolower(((char*)rv)[i]);
+    iret = memcmp(&lv_buffer , &rv_buffer , sizeof(char));
+    if (iret != 0){
+      return iret;
+    }
+  }
+  return iret;
+}
+
 //template<>
 bool RocksdbProcess::is_matched(
     const char *lv,
@@ -686,37 +729,38 @@ bool RocksdbProcess::is_matched(
   {
   case 0:
     if (caseSensitive)
-      return lLen == rLen && !strncmp(lv, rv, minLen);
-    return lLen == rLen && !strncasecmp(lv, rv, minLen);
+      return lLen == rLen && !memcmp(lv, rv, minLen);
+    return lLen == rLen && !memcmp_ignore_case(lv, rv, minLen);
   case 1:
     if (lLen != rLen)
       return true;
     if (caseSensitive)
-      return strncmp(lv, rv, minLen);
-    return strncasecmp(lv, rv, minLen);
+      return memcmp(lv, rv, minLen);
+    return memcmp_ignore_case(lv, rv, minLen);
   case 2:
     if (caseSensitive)
-      ret = strncmp(lv, rv, minLen);
+      ret = memcmp(lv, rv, minLen);
     else
-      ret = strncasecmp(lv, rv, minLen);
+      ret = memcmp_ignore_case(lv, rv, minLen);
     return ret < 0 || (ret == 0 && lLen < rLen);
   case 3:
     if (caseSensitive)
-      ret = strncmp(lv, rv, minLen);
+      ret = memcmp(lv, rv, minLen);
     else
-      ret = strncasecmp(lv, rv, minLen);
+      ret = memcmp_ignore_case(lv, rv, minLen);
+    log_error("iret:%d , len:%d ,rLen:%d", ret , lLen , rLen);
     return ret < 0 || (ret == 0 && lLen <= rLen);
   case 4:
     if (caseSensitive)
-      ret = strncmp(lv, rv, minLen);
+      ret = memcmp(lv, rv, minLen);
     else
-      ret = strncasecmp(lv, rv, minLen);
+      ret = memcmp_ignore_case(lv, rv, minLen);
     return ret > 0 || (ret == 0 && lLen > rLen);
   case 5:
     if (caseSensitive)
-      ret = strncmp(lv, rv, minLen);
+      ret = memcmp(lv, rv, minLen);
     else
-      ret = strncasecmp(lv, rv, minLen);
+      ret = memcmp_ignore_case(lv, rv, minLen);
     return ret > 0 || (ret == 0 && lLen >= rLen);
   default:
     log_error("unsupport comparator:%d", comparator);
@@ -864,7 +908,7 @@ int RocksdbProcess::save_direct_row(
 
   int fieldId, rocksFId;
   std::string fieldValue;
-  std::vector<QueryCond> &condFields = reqCxt->sFieldConds;
+  std::vector<QueryCond>& condFields = ((RangeQuery_t*)reqCxt->sPacketValue.uRangeQuery)->sFieldConds;
   for (size_t idx = 0; idx < condFields.size(); idx++)
   {
     fieldId = condFields[idx].sFieldIndex;
@@ -893,14 +937,15 @@ int RocksdbProcess::save_direct_row(
   }
 
   // deal with order by syntax
-  if (mOrderByUnit || reqCxt->sOrderbyFields.size() > 0)
+  if (mOrderByUnit || ((RangeQuery_t*)reqCxt->sPacketValue.uRangeQuery)->sOrderbyFields.size() > 0)
   {
     if (!mOrderByUnit)
     {
       // build order by unit
-      int heapSize = reqCxt->sLimitCond.sLimitStart >= 0 && reqCxt->sLimitCond.sLimitStep > 0 ? reqCxt->sLimitCond.sLimitStart + reqCxt->sLimitCond.sLimitStep : 50;
-      mOrderByUnit = new RocksdbOrderByUnit(mTableDef, heapSize,
-                                            mReverseFieldIndexMapping, reqCxt->sOrderbyFields);
+      int heapSize = ((RangeQuery_t*)reqCxt->sPacketValue.uRangeQuery)->sLimitCond.sLimitStart >= 0 && ((RangeQuery_t*)reqCxt->sPacketValue.uRangeQuery)->sLimitCond.sLimitStep > 0 ?
+            ((RangeQuery_t*)reqCxt->sPacketValue.uRangeQuery)->sLimitCond.sLimitStart + ((RangeQuery_t*)reqCxt->sPacketValue.uRangeQuery)->sLimitCond.sLimitStep : 50;
+      mOrderByUnit = new RocksdbOrderByUnit(mTableDef, heapSize, 
+          mReverseFieldIndexMapping, ((RangeQuery_t*)reqCxt->sPacketValue.uRangeQuery)->sOrderbyFields);
       assert(mOrderByUnit);
     }
 
@@ -913,18 +958,17 @@ int RocksdbProcess::save_direct_row(
 
   // limit condition control
   ret = 0;
-  if (reqCxt->sLimitCond.sLimitStart >= 0 && reqCxt->sLimitCond.sLimitStep > 0)
+  if (((RangeQuery_t*)reqCxt->sPacketValue.uRangeQuery)->sLimitCond.sLimitStart >= 0 && ((RangeQuery_t*)reqCxt->sPacketValue.uRangeQuery)->sLimitCond.sLimitStep > 0)
   {
-    if (totalRows < reqCxt->sLimitCond.sLimitStart)
+    if (totalRows < ((RangeQuery_t*)reqCxt->sPacketValue.uRangeQuery)->sLimitCond.sLimitStart)
     {
       // not reach to the range of limitation
       totalRows++;
       return 0;
     }
-
+    
     // leaving from the range of limitaion
-    if (respCxt->sRowValues.size() == reqCxt->sLimitCond.sLimitStep - 1)
-      ret = 1;
+    if (((RangeQueryRows_t*)respCxt->sDirectRespValue.uRangeQueryRows)->sRowValues.size() == ((RangeQuery_t*)reqCxt->sPacketValue.uRangeQuery)->sLimitCond.sLimitStep - 1) ret = 1;
   }
 
   // build row
@@ -957,7 +1001,7 @@ void RocksdbProcess::build_direct_row(
     row.append(std::string((char *)&dataLen, 4)).append(fieldValue);
   }
 
-  respCxt->sRowValues.push_front(row);
+  ((RangeQueryRows_t*)respCxt->sDirectRespValue.uRangeQueryRows)->sRowValues.push_front(row);
   return;
 }
 
@@ -1122,27 +1166,24 @@ int RocksdbProcess::process_select(DTCTask *Task)
   }
 
   // prefix key
-  //std::string prefixKey;
-  std::vector<std::string> prefixKey(1);
-  ret = value2Str(Task->request_key(), 0, prefixKey[0]);
-  if (ret != 0 || prefixKey[0].empty())
+  std::string prefixKey;
+  ret = value2Str(Task->request_key(), 0, prefixKey);
+  if (ret != 0 || prefixKey.empty())
   {
     log_error("dtc primary key can not be empty!");
     Task->set_error(-EC_ERROR_BASE, __FUNCTION__, "get dtc primary key failed!");
     return -1;
   }
-  std::vector<int> preType(1);
-  preType[0] = mKeyfield_types[0];
 
   if (mKeyfield_types[0] == DField::String)
-    std::transform(prefixKey[0].begin(), prefixKey[0].end(), prefixKey[0].begin(), ::tolower);
+    std::transform(prefixKey.begin(), prefixKey.end(), prefixKey.begin(), ::tolower);
 
 
   // encode the key to rocksdb format
-  std::string fullKey = std::move(key_format::Encode(prefixKey, preType));
+  std::string fullKey = std::move(key_format::encode_bytes(prefixKey));
   if (fullKey.empty())
   {
-    log_error("encode primary key failed! key:%s", prefixKey[0].c_str());
+    log_error("encode primary key failed! key:%s", prefixKey.c_str());
     Task->set_error(-EC_ERROR_BASE, __FUNCTION__, "encode primary key failed!");
     return -1;
   }
@@ -1154,7 +1195,7 @@ int RocksdbProcess::process_select(DTCTask *Task)
   ret = mDBConn->retrieve_start(fullKey, value, rocksItr, true);
   if (ret < 0)
   {
-    log_error("query rocksdb failed! key:%s, ret:%d", prefixKey[0].c_str(), ret);
+    log_error("query rocksdb failed! key:%s, ret:%d", prefixKey.c_str(), ret);
     Task->set_error(ret, __FUNCTION__, "retrieve primary key failed!");
     mDBConn->retrieve_end(rocksItr);
     return -1;
@@ -1163,12 +1204,12 @@ int RocksdbProcess::process_select(DTCTask *Task)
   {
     // not found the key
     Task->set_total_rows(0);
-    log_info("no matched key:%s", prefixKey[0].c_str());
+    log_info("no matched key:%s", prefixKey.c_str());
     mDBConn->retrieve_end(rocksItr);
     return 0;
   }
 
-  log_info("begin to iterate key:%s", prefixKey[0].c_str());
+  log_info("begin to iterate key:%s", prefixKey.c_str());
 
   // iterate the matched prefix key and find out the real one from start to end
   int totalRows = 0;
@@ -1187,14 +1228,14 @@ int RocksdbProcess::process_select(DTCTask *Task)
     if (ret < 0)
     {
       // ignore the incorrect key and keep going
-      log_error("save row failed! key:%s", prefixKey[0].c_str());
+      log_error("save row failed! key:%s", prefixKey.c_str());
     }
 
     // move iterator to the next key
     ret = mDBConn->next_entry(rocksItr, fullKey, value);
     if (ret < 0)
     {
-      log_error("iterate rocksdb failed! key:%s", prefixKey[0].c_str());
+      log_error("iterate rocksdb failed! key:%s", prefixKey.c_str());
       Task->set_error(ret, __FUNCTION__, "iterate rocksdb failed!");
       mDBConn->retrieve_end(rocksItr);
       return -1;
@@ -1508,7 +1549,9 @@ int RocksdbProcess::process_update(DTCTask *Task)
           }
         }
 
-        if (originKeys.find(newKey) == originKeys.end() && newEntries.find(newKey) == newEntries.end() && deletedKeys.find(newKey) == deletedKeys.end())
+        if ( originKeys.find(newKey) == originKeys.end() 
+            && newEntries.find(newKey) == newEntries.end()
+            && deletedKeys.find(newKey) == deletedKeys.end() )
         {
           // there are so many duplcate string save in the different containers, this will
           // waste too much space, we can optimize it in the future
@@ -2046,7 +2089,7 @@ int RocksdbProcess::ProcessReplicate(DTCTask *Task)
     return (-2);
   }
 
-  // key for replication start
+  // key for replication start:
   std::string startKey, prevPrimaryKey, compoundKey, compoundValue;
   RocksDBConn::RocksItr_t rocksItr;
 
@@ -2204,6 +2247,24 @@ int RocksdbProcess::process_direct_query(
 
   std::vector<QueryCond> primaryKeyConds;
   ret = analyse_primary_key_conds(reqCxt, primaryKeyConds);
+
+#if 0
+  std::vector<QueryCond>::iterator iter = primaryKeyConds.begin();
+  for (; iter != primaryKeyConds.end(); ++iter){
+    std::vector<int> fieldTypes;
+    fieldTypes.push_back(DField::Signed);
+    std::vector<std::string> fieldValues;
+
+    int ipos = iter->sCondValue.find_last_of("#");
+    std::string stemp = iter->sCondValue.substr(ipos + 1);
+    key_format::Decode(stemp , fieldTypes , fieldValues);
+    log_error("field index:%d , condopr:%d , condvalue:%s" ,
+        iter->sFieldIndex , 
+        iter->sCondOpr , 
+        fieldValues[0].c_str());
+  }
+#endif
+
   if (ret != 0)
   {
     log_error("query condition incorrect in query context!");
@@ -2231,8 +2292,11 @@ int RocksdbProcess::process_direct_query(
   std::string value;
   RocksDBConn::RocksItr_t rocksItr;
 
-  bool forwardDirection = (primaryKeyConds[0].sCondOpr == (uint8_t)CondOpr::eEQ || primaryKeyConds[0].sCondOpr == (uint8_t)CondOpr::eGT || primaryKeyConds[0].sCondOpr == (uint8_t)CondOpr::eGE);
+  bool forwardDirection = (primaryKeyConds[0].sCondOpr == (uint8_t)CondOpr::eEQ || 
+      primaryKeyConds[0].sCondOpr == (uint8_t)CondOpr::eGT || 
+      primaryKeyConds[0].sCondOpr == (uint8_t)CondOpr::eGE);
   bool backwardEqual = primaryKeyConds[0].sCondOpr == (uint8_t)CondOpr::eLE;
+  log_debug("forwardDirection:%d , backwardEqual:%d", (int)forwardDirection , (int)backwardEqual);
   if (backwardEqual)
   {
     // if the query condtion is < || <=, use seek_for_prev to seek in the total_order_seek mode
@@ -2316,6 +2380,39 @@ int RocksdbProcess::process_direct_query(
   while (true)
   {
     ret = range_key_matched(fullKey, primaryKeyConds);
+
+#if 0
+    std::vector<std::string> rocksValues;
+    std::vector<int> fieldTypes;
+    fieldTypes.push_back(DField::String);
+    fieldTypes.push_back(DField::String);
+    fieldTypes.push_back(DField::Signed);
+    fieldTypes.push_back(DField::Signed);
+    fieldTypes.push_back(DField::Signed);
+
+    key_format::Decode(fullKey, fieldTypes, rocksValues);
+
+    for (int i = 0; i < rocksValues[0].length(); i++){
+      log_error("No:%d， is %d \n" , i , (int)rocksValues[0][i]);
+    }
+    
+    int ipos = rocksValues[0].find_last_of("#");
+    std::string stemp = rocksValues[0].substr(ipos + 1);
+    std::vector<std::string> rocksValues001;
+
+    std::vector<int> fieldTypes001;
+    fieldTypes001.push_back(DField::Signed);
+
+    key_format::Decode(stemp , fieldTypes001 , rocksValues001);
+    log_error("primary value:%s",  rocksValues001[0].c_str());
+
+    for (size_t i = 0; i < rocksValues.size(); i++)
+    {
+      
+      log_error("value:%s", rocksValues[i].c_str() );
+    }
+#endif
+
     if (ret == -1)
     {
       // prefix key not matched, reach to the end
@@ -2347,7 +2444,7 @@ int RocksdbProcess::process_direct_query(
     if (ret < 0)
     {
       log_error("iterate rocksdb failed! key:%s", prefixKey.c_str());
-      respCxt->sRowNums = ret;
+      respCxt->sRowNums = 0;
       mDBConn->retrieve_end(rocksItr);
       return -1;
     }
@@ -2364,7 +2461,8 @@ int RocksdbProcess::process_direct_query(
   if (mOrderByUnit)
   {
     OrderByUnitElement element;
-    int start = reqCxt->sLimitCond.sLimitStart >= 0 && reqCxt->sLimitCond.sLimitStep > 0 ? reqCxt->sLimitCond.sLimitStart : 0;
+    int start = ((RangeQuery_t*)reqCxt->sPacketValue.uRangeQuery)->sLimitCond.sLimitStart >= 0 && ((RangeQuery_t*)reqCxt->sPacketValue.uRangeQuery)->sLimitCond.sLimitStep > 0 ? 
+          ((RangeQuery_t*)reqCxt->sPacketValue.uRangeQuery)->sLimitCond.sLimitStart : 0;
     while (true)
     {
       ret = mOrderByUnit->get_row(element);
@@ -2385,7 +2483,7 @@ int RocksdbProcess::process_direct_query(
     }
   }
 
-  respCxt->sRowNums = respCxt->sRowValues.size();
+  respCxt->sRowNums = ((RangeQueryRows_t*)respCxt->sDirectRespValue.uRangeQueryRows)->sRowValues.size();
   mDBConn->retrieve_end(rocksItr);
 
 #ifdef PRINT_STAT
@@ -2394,6 +2492,18 @@ int RocksdbProcess::process_direct_query(
 #endif
 
   return (0);
+}
+
+int RocksdbProcess::TriggerReplication(
+    const std::string& masterIp,
+    int masterPort)
+{
+  return mReplUnit->startSlaveReplication(masterIp, masterPort);
+}
+
+int RocksdbProcess::QueryReplicationState()
+{
+  return mReplUnit->getReplicationState();
 }
 
 int RocksdbProcess::encode_dtc_key(
@@ -3165,7 +3275,7 @@ int RocksdbProcess::analyse_primary_key_conds(
     DirectRequestContext *reqCxt,
     std::vector<QueryCond> &primaryKeyConds)
 {
-  std::vector<QueryCond> &queryConds = reqCxt->sFieldConds;
+  std::vector<QueryCond>& queryConds = ((RangeQuery_t*)reqCxt->sPacketValue.uRangeQuery)->sFieldConds;
   auto itr = queryConds.begin();
   while (itr != queryConds.end())
   {
@@ -3396,4 +3506,52 @@ void RocksdbProcess::print_stat_info()
   log_error("%s", ss.str().c_str());
 
   return;
+}
+// use for debuging
+int RocksdbProcess::decodeInternalKV(
+    const std::string encodeKey,
+    const std::string encodeVal,
+    std::string& decodeKeys,
+    std::string& decodeVals)
+{
+  int ret;
+  // decode the compoundKey and check whether it is matched
+  std::vector<std::string> keys;
+  key_format::Decode(encodeKey, mKeyfield_types, keys);
+  if ( keys.size() != mCompoundKeyFieldNums )
+  {
+    log_error("unmatched row, fullKey:%s, keyNum:%lu, definitionFieldNum:%d", 
+        encodeKey.c_str(), keys.size(), mCompoundKeyFieldNums);
+    return -1;
+  }
+  
+  // decode key bitmap
+  int bitmapLen = 0;
+  decodeBitmapKeys(encodeVal, keys, bitmapLen);
+
+  std::string fieldValue;
+  char *valueHead = const_cast<char*>(encodeVal.data()) + bitmapLen;
+	for (size_t idx = 0; idx < mFieldIndexMapping.size(); idx++)
+  {
+    int fieldId = mFieldIndexMapping[idx];
+    if ( idx < mCompoundKeyFieldNums )
+    {
+      fieldValue = keys[idx];
+      decodeKeys.append(fieldValue);
+      if (idx != mCompoundKeyFieldNums - 1) decodeKeys.append(",");
+    }
+    else
+    {
+      ret = get_value_by_id(valueHead, fieldId, fieldValue);
+      if ( ret != 0 )
+      {
+        log_error("parse field value failed! compoundValue:%s", encodeVal.c_str());
+        return -1;
+      }
+      decodeVals.append(fieldValue);
+      if (idx != mFieldIndexMapping.size() - 1) decodeVals.append(",");
+    }
+  }
+
+	return(0);	
 }

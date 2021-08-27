@@ -35,7 +35,7 @@ void DagSegment::getDag(iutf8string& utf8_str, uint32_t appid, map<uint32_t, vec
         vector<uint32_t> tmplist;
         string frag = utf8_str[k];
         while (i < N) {
-            if (wordValid(frag, appid) == true) {
+            if (WordValid(frag, appid) == true) {
                 tmplist.push_back(i);
             }
             i++;

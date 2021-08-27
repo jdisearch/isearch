@@ -21,23 +21,13 @@
 #include <string>
 #include <sys/types.h>
 #include <vector>
+#include "comm.h"
 #include "index_conf.h"
 #include "split_tool.h"
 using namespace std;
 
 #define NUMBER_ID 500000000
 #define MAXNUMBER 100000000
-
-struct table_info{
-	int is_primary_key;
-	int field_type;
-	int index_tag;
-	int snapshot_tag;
-	int field_value;
-	int segment_tag;
-	int segment_feature;
-	string index_info;
-};
 
 class SplitManager {
 public:

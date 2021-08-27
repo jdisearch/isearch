@@ -1,7 +1,6 @@
 为了省去配置机器环境的麻烦，建议通过docker来运行demo容器，在终端执行如下命令：  
 ```
-// KEYWORD_CACHE_SIZE和HANPIN_CACHE_SIZE用于设置缓存的大小，单位为M，默认是100M
-docker run --env KEYWORD_CACHE_SIZE=1024 --env HANPIN_CACHE_SIZE=1024 -d intelligentsearch/search_local:1.0
+docker run -d intelligentsearch/isearch:latest
 ```
 启动容器后，通过如下命令进入容器：  
 ```
@@ -14,17 +13,16 @@ docker exec -it 容器id /bin/bash
 
 isearch应用的字段配置文件名称为app_field_define.txt，通过以下指令查看配置文件内容：
 ```
-cat /usr/local/intelligentsearch/index_write/conf/app_field_define.txt
+cat /usr/local/isearch/index_read/conf/app_field_define.txt
 ```
-可以看到，demo应用的appid为10001，对应的字段为doc_id、title、content、author、weight、telephone、longitude、latitude。
 
 ### 2. 上报索引数据
 
-说明：由于接入层RESTFul API仍在开发中，目前仅能通过tcp请求的方式进行索引的导入和查询，后续会支持RESTFul格式的API进行索引的操作。
+1）tcp方式
 
 执行如下命令进行测试数据的导入。
 ```
-cd /usr/local/intelligentsearch/tools
+cd /usr/local/isearch/tools
 ./client_test send.json 106 127.0.0.1 11017
 ```
 若屏幕显示如下信息，则表示数据导入成功：
@@ -35,25 +33,31 @@ server message: {"code":0}
 ```
 可以通过修改send.json中的数据来导入更多的测试数据。
 
+2）http方式
+
+执行如下命令
+```
+cd /usr/local/isearch/tools
+sh load_data.sh
+```
+
 ### 3. 测试搜索
 
-首先，我们分别以亚运会、金牌、公园进行搜索（修改search.json文件）：
-```
-{"key":"亚运会", "appid":10001, "fields":"title"}
-{"key":"金牌", "appid":10001, "fields":"title"}
-{"key":"公园", "appid":10001, "fields":"title"}
-```
+
 执行如下命令进行数据的查询：
 ```
-cd /usr/local/intelligentsearch/tools
+cd /usr/local/isearch/tools
+// tcp方式
 ./client_test search.json 101 127.0.0.1 12003
+// http方式
+sh query.sh
 ```
-以下为公园的搜索结果：
+
+以下为搜索结果的示例：
 ```
 {
 	"code": 0,
 	"count": 1,
-	"hlWord": ["公园"],
 	"result": [{
 		"doc_id": "12351",
 		"score": 11.689424985915906,
@@ -61,31 +65,27 @@ cd /usr/local/intelligentsearch/tools
 	}]
 }
 ```
-接下来测试复杂的字段以及布尔搜索：
+
+以下是针对search.json中查询请求的说明
 ```
-// title包含公园的记录
-{"key":"title:公园", "appid":10001, "fields":"title"}
-// title包含公园或者author是张三的记录
-{"key":"title:公园 author:张三", "appid":10001, "fields":"title"}
-// content字段包含京东并且author是张三的记录
-{"key_and":"content:京东 author:张三", "appid":10001, "fields":"title"}
-// content字段包含京东并且author不是张三的记录
-{"key":"content:京东", "key_invert":"author:张三", "appid":10001, "fields":"title"}
-```
-接下来测试模糊匹配的情形：
-```
-{"key":"author:zs", "appid":10001,"fields":"title"}
-{"key":"author:张", "appid":10001,"fields":"title"}
-```
-接下来测试范围查的情形：
-```
-// weight字段在21到24之间的记录
-{"key":"weight:[21,24]", "appid":10001, "fields":"title"}
-// weight字段在21到24之间的记录，并且结果按照weight升序排列
-{"key":"weight:[21,24]", "sort_type":"4", "sort_field":"weight", "appid":10001 ,"fields":"title"}
-```
-接下来测试地理位置查询的场景：
-```
-// 查询坐标点[116.50, 39.76]附近900米范围内的记录
-{"key_and":"longitude:116.50 latitude:39.76 distance:0.9", "appid":10001, "fields":"title"}
+// match查询
+{"appid":10010,"query":{"match":{"birthPlace":"上海市"}}}
+{"appid":10010,"query":{"match":{"dreamPlace":"王国"}}}
+{"appid":10010,"query":{"match":{"name":"Jackie"}}}
+// term查询
+{"appid":10010,"query":{"term":{"year":20}}}
+// range查询
+{"appid":10010,"query":{"range":{"height":{"gte":175 ,"lte": 180}}}}
+// geo_distance查询
+{"appid":10010,"query":{"geo_distance":{"currentLocation":"39.452, -76.589","distance":"0.5"}}}
+// geo_polygon查询
+{"appid":10010,"query":{"geo_polygon":{"currentShape":{"points":"POLYGON((121.437271 31.339747, 121.438022 31.337291, 121.435297 31.336814, 121.434524 31.339252, 121.437271 31.339747))"}}}}
+// bool查询
+{"appid":10010,"query":{"bool":{"must":{"match":{"birthPlace":"中华人民共和国"},"range":{"brithday":{"gt":19900654,"lte":19931124}}},"must_not":{"match":{"homeAddress":"上海市"}}}}}
+{"appid":10010,"query":{"bool":{"must":{"match":{"birthPlace":"上海市"},"geo_distance":{"currentLocation":"39.452, -76.589","distance":"1.123"}}}}}
+{"appid":10010,"query":{"bool":{"must":{"match":{"birthPlace":"上海市"},"term":{"gender":"男"}}}}}
+// 通过page_index进行翻页
+{"appid":10010,"query":{"match":{"dreamPlace":"阿姆斯"}},"fields":"birthPlace,homeAddress,dreamPlace,name","page_index":1,"page_size":3}
+// 按height字段进行排序
+{"appid":10010,"query":{"range":{"height":{"gte":174 ,"lte": 180}}},"fields":"birthPlace,height,name","sort_type":"5","sort_field":"height"}
 ```

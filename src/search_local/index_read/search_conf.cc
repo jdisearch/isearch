@@ -57,14 +57,6 @@ bool SearchConf::ParseConf(string path) {
 			 log_error("parse json error!");
 			 return false;
 		 }
-		 if (ParseClickPara() != 0) {
-		 	 log_error("parse json error!");
-		 	 return false;
-		 }
-		 if (ParseQueryPara() != 0) {
-		 	 log_error("parse json error!");
-		 	 return false;
-		 }
 		 if (ParseAppFeildDBPara() != 0) {
 		 	log_error("parse json error!");
 		 	return false;
@@ -445,64 +437,6 @@ int SearchConf::ParseGlobalPara()
 		m_GlobalConf.iCaPid = 1595901961;
 	}
 
-	return 0;
-}
-
-int SearchConf::ParseClickPara()
-{
-	Json::Value click_config;
-	if (m_value.isMember("jdq_clickreport_config") && m_value["jdq_clickreport_config"].isObject()) {
-		click_config = m_value["jdq_clickreport_config"];
-		if (click_config.isMember("broker_list") && click_config["broker_list"].isString()) {
-			m_ClickInfo.broker = click_config["broker_list"].asString();
-		}else {
-			log_error("parse data error!");
-			return -RT_PARSE_JSON_ERR;
-		}
-
-		if (click_config.isMember("client_id") && click_config["client_id"].isString()) {
-			m_ClickInfo.clientid = click_config["client_id"].asString();
-		}else {
-			log_error("parse data error!");
-			return -RT_PARSE_JSON_ERR;
-		}
-
-		if (click_config.isMember("topic") && click_config["topic"].isString()) {
-			m_ClickInfo.topic = click_config["topic"].asString();
-		}else {
-			log_error("parse data error!");
-			return -RT_PARSE_JSON_ERR;
-		}
-	}
-	return 0;
-}
-
-int SearchConf::ParseQueryPara()
-{
-	Json::Value query_config;
-	if (m_value.isMember("jdq_query_config") && m_value["jdq_query_config"].isObject()) {
-		query_config = m_value["jdq_query_config"];
-		if (query_config.isMember("broker_list") && query_config["broker_list"].isString()) {
-			m_QueryInfo.broker = query_config["broker_list"].asString();
-		}else {
-			log_error("parse data error!");
-			return -RT_PARSE_JSON_ERR;
-		}
-
-		if (query_config.isMember("client_id") && query_config["client_id"].isString()) {
-			m_QueryInfo.clientid = query_config["client_id"].asString();
-		}else {
-			log_error("parse data error!");
-			return -RT_PARSE_JSON_ERR;
-		}
-
-		if (query_config.isMember("topic") && query_config["topic"].isString()) {
-			m_QueryInfo.topic = query_config["topic"].asString();
-		}else {
-			log_error("parse data error!");
-			return -RT_PARSE_JSON_ERR;
-		}
-	}
 	return 0;
 }
 

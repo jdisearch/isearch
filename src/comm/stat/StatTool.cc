@@ -68,9 +68,9 @@ static inline void cell_base(int64_t v)
 {
 	if(outnoname) return;
 	if(outfmt == CTableFormater::FORMAT_ALIGNED)
-		out.Cell("count[>="F64"]:", v);
+		out.Cell("count[>=" F64 "]:", v);
 	else
-		out.Cell("count[>="F64"]", v);
+		out.Cell("count[>=" F64 "]", v);
 }
 
 static inline void cell_nbase(int v)
@@ -95,7 +95,7 @@ static inline void cell_fixed(int64_t val, int n, int div)
 		sign = "-";
 	}
 		
-	out.Cell("%s"F64".%0*d", sign, val/div, n, (int)(val%div));
+	out.Cell("%s" F64 ".%0*d", sign, val/div, n, (int)(val%div));
 }
 
 static inline void cell_percent(int64_t val)
@@ -112,7 +112,7 @@ static inline void cell_percent_fixed(int64_t val, int n, int div)
 		sign = "-";
 	}
 		
-	out.Cell("%s"F64".%0*d%%", sign, val/div, n, (int)(val%div));
+	out.Cell("%s" F64 ".%0*d%%", sign, val/div, n, (int)(val%div));
 }
 
 static inline void cell_hms(int64_t val)
@@ -129,7 +129,7 @@ static inline void cell_hms(int64_t val)
 	else if(val < 60*60)
 		out.Cell("%s%d:%02d", sign, (int)(val/60), (int)(val%60));
 	else
-		out.Cell("%s"F64":%02d:%02d", sign, val/3600, (int)((val/60)%60), (int)(val%60));
+		out.Cell("%s" F64 ":%02d:%02d", sign, val/3600, (int)((val/60)%60), (int)(val%60));
 }
 
 static inline void cell_hmsmsec(int64_t val)
@@ -145,7 +145,7 @@ static inline void cell_hmsmsec(int64_t val)
 	else if(val < 60*60*1000)
 		out.Cell("%s%d:%02d.%03d", sign, (int)(val/60000), (int)((val/1000)%60), (int)(val%1000));
 	else
-		out.Cell("%s"F64":%02d:%02d.%03d", sign,
+		out.Cell("%s" F64 ":%02d:%02d.%03d", sign,
 				val/3600000, (int)((val/60000)%60), (int)((val/1000)%60), (int)(val%1000));
 }
 
@@ -157,7 +157,7 @@ static inline void cell_hmsusec(int64_t val)
 		val = - val;
 		sign = "-";
 	}
-	out.Cell("%s"F64".%06d", sign, val/1000000, (int)(val%1000000));
+	out.Cell("%s" F64 ".%06d", sign, val/1000000, (int)(val%1000000));
 }
 
 static inline void cell_datetime(int64_t v)

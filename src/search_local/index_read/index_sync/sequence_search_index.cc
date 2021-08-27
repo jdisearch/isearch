@@ -20,7 +20,7 @@
 #include "mutexlock.h"
 #include "log.h"
 #include "../index_tbl_op.h"
-#include "rocksdb_direct_context.h"
+#include "../key_format.h"
 #include <algorithm>
 #include <iomanip>
 
@@ -33,12 +33,23 @@ const char *INDEX_SYMBOL     = "00";
 const char *MAX_BORDER_SYMBOL = "10";
 const char *MIN_BORDER_SYMBOL = "00";
 
-static string gen_dtc_key_string(string appid, string type, double key) {
-	stringstream ssKey;
-	ssKey << setw(20) << setfill('0') << (int)key;
-	stringstream ss;
-	ss << appid << "#" << type << "#" << ssKey.str();
-	return ss.str();
+static string gen_dtc_key_string(string appid, string type, uint32_t key_type, double key) {
+	log_debug("fieldtype:%d , key:%f " , key_type , key);
+	KeyFormat::UnionKey o_keyinfo_vet;
+    o_keyinfo_vet.push_back(std::make_pair(key_type , std::to_string(key)));
+	std::string s_format_key = KeyFormat::Encode(o_keyinfo_vet);
+
+#if 0
+	KeyFormat::UnionKey o_output_vet;
+	o_output_vet.push_back(std::make_pair(key_type , ""));
+	KeyFormat::Decode(s_format_key , o_output_vet);
+	for (int i = 0; i < o_output_vet.size(); i++){
+		log_error("decode string:%s", o_output_vet[i].second.c_str());
+	}
+#endif
+	std::stringstream stream_key;
+	stream_key << appid << "#" << type << "#" << s_format_key;
+	return stream_key.str();
 }
 
 static string gen_dtc_key_string(string appid, string type, string key) {
@@ -471,6 +482,8 @@ int SearchRocksDBIndex::getFieldIndex(const char *fieldName){
 
 
 void SearchRocksDBIndex::GetRangeIndex(uint32_t range_type, InvertIndexEntry &startEntry, InvertIndexEntry &endEntry, std::vector<InvertIndexEntry>& resultEntry){
+	log_debug("range_type:%d", range_type);
+	
 	if (range_type == RANGE_GELE) {
 		GetRangeIndexGELE(startEntry, endEntry, resultEntry);
 	}
@@ -493,7 +506,7 @@ void SearchRocksDBIndex::GetRangeIndex(uint32_t range_type, InvertIndexEntry &st
 		GetRangeIndexGT(startEntry, resultEntry);
 	}
 	else if (range_type == RANGE_LT) {
-		GetRangeIndexLT(startEntry, resultEntry);
+		GetRangeIndexLT(endEntry, resultEntry);
 	}
 }
 
@@ -535,10 +548,6 @@ void SearchRocksDBIndex::setQueryCond(QueryCond& query_cond, int field_index, in
 
 
 void SearchRocksDBIndex::GetRangeIndexGELE(InvertIndexEntry& begin_key, const InvertIndexEntry& end_key, std::vector<InvertIndexEntry>& entry){
-	
-	DirectRequestContext direct_request_context;
-	stringstream ss;
-
 	if(getFieldIndex("field") == -1){
 		log_error("GetRangeIndexGELE get field Index error");
 		return;
@@ -549,33 +558,44 @@ void SearchRocksDBIndex::GetRangeIndexGELE(InvertIndexEntry& begin_key, const In
 		return;
 	}
 
+	RangeQuery_t o_range_query;
+
 	QueryCond query_cond1;
 	query_cond1.sFieldIndex = getFieldIndex("field");
-	query_cond1.sCondOpr = 0;
+	query_cond1.sCondOpr = (uint8_t)CondOpr::eEQ;
+
+	stringstream ss;
 	ss << begin_key._InvertIndexField;
 	query_cond1.sCondValue = ss.str();
-	direct_request_context.sFieldConds.push_back(query_cond1);
+	
+	o_range_query.sFieldConds.push_back(query_cond1);
 	
 	
 	QueryCond query_cond2;
 	query_cond2.sFieldIndex = getFieldIndex("key");
-	query_cond2.sCondOpr = 5;
-	query_cond2.sCondValue = gen_dtc_key_string(begin_key._InvertIndexAppid, INDEX_SYMBOL, begin_key._InvertIndexKey);
-	direct_request_context.sFieldConds.push_back(query_cond2);
+	query_cond2.sCondOpr = (uint8_t)CondOpr::eGE;
+	query_cond2.sCondValue = gen_dtc_key_string(begin_key._InvertIndexAppid, INDEX_SYMBOL
+		, begin_key._InvertIndex_key_type ,begin_key._InvertIndexKey);
+	o_range_query.sFieldConds.push_back(query_cond2);
 
 
 	QueryCond query_cond3;
 	query_cond3.sFieldIndex = getFieldIndex("key");
-	query_cond3.sCondOpr = 3;
-	query_cond3.sCondValue = gen_dtc_key_string(end_key._InvertIndexAppid, INDEX_SYMBOL, end_key._InvertIndexKey);
-	direct_request_context.sFieldConds.push_back(query_cond3);
+	query_cond3.sCondOpr = (uint8_t)CondOpr::eLE;
+	query_cond3.sCondValue = gen_dtc_key_string(end_key._InvertIndexAppid, INDEX_SYMBOL
+		, end_key._InvertIndex_key_type , end_key._InvertIndexKey);
+	o_range_query.sFieldConds.push_back(query_cond3);
+
+	DirectRequestContext direct_request_context;
+	direct_request_context.sDirectQueryType = (uint8_t)DirectRequestType::eRangeQuery;
+	direct_request_context.sPacketValue.uRangeQuery = (uint64_t)(&o_range_query);
 
 	setEntry(direct_request_context, entry);
 }
 
 void SearchRocksDBIndex::GetRangeIndexGE(InvertIndexEntry& begin_key, std::vector<InvertIndexEntry>& entry){
 	
-	DirectRequestContext direct_request_context;
+	
 	stringstream ss;
 
 	if(getFieldIndex("field") == -1){
@@ -588,34 +608,37 @@ void SearchRocksDBIndex::GetRangeIndexGE(InvertIndexEntry& begin_key, std::vecto
 		return;
 	}
 
+	RangeQuery_t o_range_query;
+
 	QueryCond query_cond1;
 	query_cond1.sFieldIndex = getFieldIndex("field");
-	query_cond1.sCondOpr = 0;
+	query_cond1.sCondOpr = (uint8_t)CondOpr::eEQ;
 	ss << begin_key._InvertIndexField;
 	query_cond1.sCondValue = ss.str();
-	direct_request_context.sFieldConds.push_back(query_cond1);
+	o_range_query.sFieldConds.push_back(query_cond1);
 
 
 	QueryCond query_cond2;
 	query_cond2.sFieldIndex = getFieldIndex("key");
-	query_cond2.sCondOpr = 5;
-	query_cond2.sCondValue = gen_dtc_key_string(begin_key._InvertIndexAppid, INDEX_SYMBOL, begin_key._InvertIndexKey);
-	direct_request_context.sFieldConds.push_back(query_cond2);
+	query_cond2.sCondOpr = (uint8_t)CondOpr::eGE;
+	query_cond2.sCondValue = gen_dtc_key_string(begin_key._InvertIndexAppid, INDEX_SYMBOL, 
+			begin_key._InvertIndex_key_type , begin_key._InvertIndexKey);
+	o_range_query.sFieldConds.push_back(query_cond2);
 
 	QueryCond query_cond3;
 	query_cond3.sFieldIndex = getFieldIndex("key");
-	query_cond3.sCondOpr = 2;
+	query_cond3.sCondOpr = (uint8_t)CondOpr::eLT;
 	query_cond3.sCondValue = gen_dtc_key_string(begin_key._InvertIndexAppid, MAX_BORDER_SYMBOL, "");
-	direct_request_context.sFieldConds.push_back(query_cond3);
+	o_range_query.sFieldConds.push_back(query_cond3);
+
+	DirectRequestContext direct_request_context;
+	direct_request_context.sDirectQueryType = (uint8_t)DirectRequestType::eRangeQuery;
+	direct_request_context.sPacketValue.uRangeQuery = (uint64_t)(&o_range_query);
 
 	setEntry(direct_request_context, entry);
 }
 
 void SearchRocksDBIndex::GetRangeIndexLE(InvertIndexEntry& end_key, std::vector<InvertIndexEntry>& entry){
-	
-	DirectRequestContext direct_request_context;
-	stringstream ss;
-
 	if(getFieldIndex("field") == -1){
 		log_error("GetRangeIndexLE get field Index error");
 		return;
@@ -626,33 +649,37 @@ void SearchRocksDBIndex::GetRangeIndexLE(InvertIndexEntry& end_key, std::vector<
 		return;
 	}
 
+	RangeQuery_t o_range_query;
+
 	QueryCond query_cond1;
 	query_cond1.sFieldIndex = getFieldIndex("field");
-	query_cond1.sCondOpr = 0;
+	query_cond1.sCondOpr = (uint8_t)CondOpr::eEQ;
+	stringstream ss;
 	ss << end_key._InvertIndexField;
 	query_cond1.sCondValue = ss.str();
-	direct_request_context.sFieldConds.push_back(query_cond1);
+	o_range_query.sFieldConds.push_back(query_cond1);
 
 	QueryCond query_cond2;
 	query_cond2.sFieldIndex = getFieldIndex("key");
-	query_cond2.sCondOpr = 3;
-	query_cond2.sCondValue = gen_dtc_key_string(end_key._InvertIndexAppid, INDEX_SYMBOL, end_key._InvertIndexKey);
-	direct_request_context.sFieldConds.push_back(query_cond2);
+	query_cond2.sCondOpr = (uint8_t)CondOpr::eLE;
+	query_cond2.sCondValue = gen_dtc_key_string(end_key._InvertIndexAppid, INDEX_SYMBOL
+		, end_key._InvertIndex_key_type , end_key._InvertIndexKey);
+	o_range_query.sFieldConds.push_back(query_cond2);
 
 	QueryCond query_cond3;
 	query_cond3.sFieldIndex = getFieldIndex("key");
-	query_cond3.sCondOpr = 4;
+	query_cond3.sCondOpr = (uint8_t)CondOpr::eGT;
 	query_cond3.sCondValue = gen_dtc_key_string(end_key._InvertIndexAppid, MIN_BORDER_SYMBOL, "");
-	direct_request_context.sFieldConds.push_back(query_cond3);
+	o_range_query.sFieldConds.push_back(query_cond3);
+
+	DirectRequestContext direct_request_context;
+	direct_request_context.sDirectQueryType = (uint8_t)DirectRequestType::eRangeQuery;
+	direct_request_context.sPacketValue.uRangeQuery = (uint64_t)(&o_range_query);
 
 	setEntry(direct_request_context, entry);
 }
 
 void SearchRocksDBIndex::GetRangeIndexGTLT(InvertIndexEntry& begin_key, const InvertIndexEntry& end_key, std::vector<InvertIndexEntry>& entry){
-	
-	DirectRequestContext direct_request_context;
-	stringstream ss;
-
 	if(getFieldIndex("field") == -1){
 		log_error("GetRangeIndexGTLT get field Index error");
 		return;
@@ -662,35 +689,38 @@ void SearchRocksDBIndex::GetRangeIndexGTLT(InvertIndexEntry& begin_key, const In
 		log_error("GetRangeIndexGTLT get key Index error");
 		return;
 	}
+	RangeQuery_t o_range_query;
 
 	QueryCond query_cond1;
 	query_cond1.sFieldIndex = getFieldIndex("field");
-	query_cond1.sCondOpr = 0;
+	query_cond1.sCondOpr = (uint8_t)CondOpr::eEQ;
+	stringstream ss;
 	ss << begin_key._InvertIndexField;
 	query_cond1.sCondValue = ss.str();
-	direct_request_context.sFieldConds.push_back(query_cond1);
+	o_range_query.sFieldConds.push_back(query_cond1);
 
 	QueryCond query_cond2;
 	query_cond2.sFieldIndex = getFieldIndex("key");
-	query_cond2.sCondOpr = 4;
-	query_cond2.sCondValue = gen_dtc_key_string(begin_key._InvertIndexAppid, INDEX_SYMBOL, begin_key._InvertIndexKey);
-	direct_request_context.sFieldConds.push_back(query_cond2);
+	query_cond2.sCondOpr = (uint8_t)CondOpr::eGT;
+	query_cond2.sCondValue = gen_dtc_key_string(begin_key._InvertIndexAppid, INDEX_SYMBOL
+		, begin_key._InvertIndex_key_type , begin_key._InvertIndexKey);
+	o_range_query.sFieldConds.push_back(query_cond2);
 
 	QueryCond query_cond3;
 	query_cond3.sFieldIndex = getFieldIndex("key");
-	query_cond3.sCondOpr = 2;
-	query_cond3.sCondValue = gen_dtc_key_string(end_key._InvertIndexAppid, INDEX_SYMBOL, end_key._InvertIndexKey);
-	direct_request_context.sFieldConds.push_back(query_cond3);
+	query_cond3.sCondOpr = (uint8_t)CondOpr::eLT;
+	query_cond3.sCondValue = gen_dtc_key_string(end_key._InvertIndexAppid, INDEX_SYMBOL
+		, end_key._InvertIndex_key_type , end_key._InvertIndexKey);
+	o_range_query.sFieldConds.push_back(query_cond3);
 
+	DirectRequestContext direct_request_context;
+	direct_request_context.sDirectQueryType = (uint8_t)DirectRequestType::eRangeQuery;
+	direct_request_context.sPacketValue.uRangeQuery = (uint64_t)(&o_range_query);
 
 	setEntry(direct_request_context, entry);
 }
 
 void SearchRocksDBIndex::GetRangeIndexGTLE(InvertIndexEntry& begin_key, const InvertIndexEntry& end_key, std::vector<InvertIndexEntry>& entry){
-	
-	DirectRequestContext direct_request_context;
-	stringstream ss;
-
 	if(getFieldIndex("field") == -1){
 		log_error("GetRangeIndexGTLE get field Index error");
 		return;
@@ -701,33 +731,38 @@ void SearchRocksDBIndex::GetRangeIndexGTLE(InvertIndexEntry& begin_key, const In
 		return;
 	}
 
+	RangeQuery_t o_range_query;
+
 	QueryCond query_cond1;
 	query_cond1.sFieldIndex = getFieldIndex("field");
-	query_cond1.sCondOpr = 0;
+	query_cond1.sCondOpr = (uint8_t)CondOpr::eEQ;
+	stringstream ss;
 	ss << begin_key._InvertIndexField;
 	query_cond1.sCondValue = ss.str();
-	direct_request_context.sFieldConds.push_back(query_cond1);
+	o_range_query.sFieldConds.push_back(query_cond1);
 
 	QueryCond query_cond2;
 	query_cond2.sFieldIndex = getFieldIndex("key");
-	query_cond2.sCondOpr = 4;
-	query_cond2.sCondValue = gen_dtc_key_string(begin_key._InvertIndexAppid, INDEX_SYMBOL, begin_key._InvertIndexKey);
-	direct_request_context.sFieldConds.push_back(query_cond2);
+	query_cond2.sCondOpr = (uint8_t)CondOpr::eGT;
+	query_cond2.sCondValue = gen_dtc_key_string(begin_key._InvertIndexAppid, INDEX_SYMBOL
+		, begin_key._InvertIndex_key_type , begin_key._InvertIndexKey);
+	o_range_query.sFieldConds.push_back(query_cond2);
 
 	QueryCond query_cond3;
 	query_cond3.sFieldIndex = getFieldIndex("key");
-	query_cond3.sCondOpr = 3;
-	query_cond3.sCondValue = gen_dtc_key_string(end_key._InvertIndexAppid, INDEX_SYMBOL, end_key._InvertIndexKey);
-	direct_request_context.sFieldConds.push_back(query_cond3);
+	query_cond3.sCondOpr = (uint8_t)CondOpr::eLE;
+	query_cond3.sCondValue = gen_dtc_key_string(end_key._InvertIndexAppid, INDEX_SYMBOL
+		, end_key._InvertIndex_key_type , end_key._InvertIndexKey);
+	o_range_query.sFieldConds.push_back(query_cond3);
+
+	DirectRequestContext direct_request_context;
+	direct_request_context.sDirectQueryType = (uint8_t)DirectRequestType::eRangeQuery;
+	direct_request_context.sPacketValue.uRangeQuery = (uint64_t)(&o_range_query);
 
 	setEntry(direct_request_context, entry);
 }
 
 void SearchRocksDBIndex::GetRangeIndexGELT(InvertIndexEntry& begin_key, const InvertIndexEntry& end_key, std::vector<InvertIndexEntry>& entry){
-	
-	DirectRequestContext direct_request_context;
-	stringstream ss;
-
 	if(getFieldIndex("field") == -1){
 		log_error("GetRangeIndexGELT get field Index error");
 		return;
@@ -738,33 +773,38 @@ void SearchRocksDBIndex::GetRangeIndexGELT(InvertIndexEntry& begin_key, const In
 		return;
 	}
 
+	RangeQuery_t o_range_query;
+
 	QueryCond query_cond1;
 	query_cond1.sFieldIndex = getFieldIndex("field");
-	query_cond1.sCondOpr = 0;
+	query_cond1.sCondOpr = (uint8_t)CondOpr::eEQ;
+	stringstream ss;
 	ss << begin_key._InvertIndexField;
 	query_cond1.sCondValue = ss.str();
-	direct_request_context.sFieldConds.push_back(query_cond1);
+	o_range_query.sFieldConds.push_back(query_cond1);
 
 	QueryCond query_cond2;
 	query_cond2.sFieldIndex = getFieldIndex("key");
-	query_cond2.sCondOpr = 5;
-	query_cond2.sCondValue = gen_dtc_key_string(begin_key._InvertIndexAppid, INDEX_SYMBOL, begin_key._InvertIndexKey);
-	direct_request_context.sFieldConds.push_back(query_cond2);
+	query_cond2.sCondOpr = (uint8_t)CondOpr::eGE;
+	query_cond2.sCondValue = gen_dtc_key_string(begin_key._InvertIndexAppid, INDEX_SYMBOL
+		, begin_key._InvertIndex_key_type , begin_key._InvertIndexKey);
+	o_range_query.sFieldConds.push_back(query_cond2);
 
 	QueryCond query_cond3;
 	query_cond3.sFieldIndex = getFieldIndex("key");
-	query_cond3.sCondOpr = 2;
-	query_cond3.sCondValue = gen_dtc_key_string(end_key._InvertIndexAppid, INDEX_SYMBOL, end_key._InvertIndexKey);
-	direct_request_context.sFieldConds.push_back(query_cond3);
+	query_cond3.sCondOpr = (uint8_t)CondOpr::eLT;
+	query_cond3.sCondValue = gen_dtc_key_string(end_key._InvertIndexAppid, INDEX_SYMBOL
+		, end_key._InvertIndex_key_type , end_key._InvertIndexKey);
+	o_range_query.sFieldConds.push_back(query_cond3);
+
+	DirectRequestContext direct_request_context;
+	direct_request_context.sDirectQueryType = (uint8_t)DirectRequestType::eRangeQuery;
+	direct_request_context.sPacketValue.uRangeQuery = (uint64_t)(&o_range_query);
 
 	setEntry(direct_request_context, entry);
 }
 
 void SearchRocksDBIndex::GetRangeIndexGT(InvertIndexEntry& begin_key, std::vector<InvertIndexEntry>& entry){
-	
-	DirectRequestContext direct_request_context;
-	stringstream ss;
-
 	if(getFieldIndex("field") == -1){
 		log_error("GetRangeIndexGT get field Index error");
 		return;
@@ -774,34 +814,37 @@ void SearchRocksDBIndex::GetRangeIndexGT(InvertIndexEntry& begin_key, std::vecto
 		log_error("GetRangeIndexGT get key Index error");
 		return;
 	}
+	RangeQuery_t o_range_query;
 
 	QueryCond query_cond1;
 	query_cond1.sFieldIndex = getFieldIndex("field");
-	query_cond1.sCondOpr = 0;
+	query_cond1.sCondOpr = (uint8_t)CondOpr::eEQ;
+	stringstream ss;
 	ss << begin_key._InvertIndexField;
 	query_cond1.sCondValue = ss.str();
-	direct_request_context.sFieldConds.push_back(query_cond1);
+	o_range_query.sFieldConds.push_back(query_cond1);
 
 	QueryCond query_cond2;
 	query_cond2.sFieldIndex = getFieldIndex("key");
-	query_cond2.sCondOpr = 4;
-	query_cond2.sCondValue = gen_dtc_key_string(begin_key._InvertIndexAppid, INDEX_SYMBOL, begin_key._InvertIndexKey);
-	direct_request_context.sFieldConds.push_back(query_cond2);
+	query_cond2.sCondOpr = (uint8_t)CondOpr::eGT;
+	query_cond2.sCondValue = gen_dtc_key_string(begin_key._InvertIndexAppid, INDEX_SYMBOL
+		, begin_key._InvertIndex_key_type , begin_key._InvertIndexKey);
+	o_range_query.sFieldConds.push_back(query_cond2);
 
 	QueryCond query_cond3;
 	query_cond3.sFieldIndex = getFieldIndex("key");
-	query_cond3.sCondOpr = 2;
+	query_cond3.sCondOpr = (uint8_t)CondOpr::eLT;
 	query_cond3.sCondValue = gen_dtc_key_string(begin_key._InvertIndexAppid, MAX_BORDER_SYMBOL, "");
-	direct_request_context.sFieldConds.push_back(query_cond3);
+	o_range_query.sFieldConds.push_back(query_cond3);
+
+	DirectRequestContext direct_request_context;
+	direct_request_context.sDirectQueryType = (uint8_t)DirectRequestType::eRangeQuery;
+	direct_request_context.sPacketValue.uRangeQuery = (uint64_t)(&o_range_query);
 
 	setEntry(direct_request_context, entry);
 }
 
 void SearchRocksDBIndex::GetRangeIndexLT(InvertIndexEntry& end_key, std::vector<InvertIndexEntry>& entry){
-	
-	DirectRequestContext direct_request_context;
-	stringstream ss;
-
 	if(getFieldIndex("field") == -1){
 		log_error("GetRangeIndexLT get field Index error");
 		return;
@@ -812,24 +855,32 @@ void SearchRocksDBIndex::GetRangeIndexLT(InvertIndexEntry& end_key, std::vector<
 		return;
 	}
 
+	RangeQuery_t o_range_query;
+
 	QueryCond query_cond1;
 	query_cond1.sFieldIndex = getFieldIndex("field");
-	query_cond1.sCondOpr = 0;
+	query_cond1.sCondOpr = (uint8_t)CondOpr::eEQ;
+	stringstream ss;
 	ss << end_key._InvertIndexField;
 	query_cond1.sCondValue = ss.str();
-	direct_request_context.sFieldConds.push_back(query_cond1);
+	o_range_query.sFieldConds.push_back(query_cond1);
 
 	QueryCond query_cond2;
 	query_cond2.sFieldIndex = getFieldIndex("key");
-	query_cond2.sCondOpr = 2;
-	query_cond2.sCondValue = gen_dtc_key_string(end_key._InvertIndexAppid, INDEX_SYMBOL, end_key._InvertIndexKey);
-	direct_request_context.sFieldConds.push_back(query_cond2);
+	query_cond2.sCondOpr = (uint8_t)CondOpr::eLT;
+	query_cond2.sCondValue = gen_dtc_key_string(end_key._InvertIndexAppid, INDEX_SYMBOL
+		, end_key._InvertIndex_key_type , end_key._InvertIndexKey);
+	o_range_query.sFieldConds.push_back(query_cond2);
 
 	QueryCond query_cond3;
 	query_cond3.sFieldIndex = getFieldIndex("key");
-	query_cond3.sCondOpr = 4;
-	query_cond3.sCondValue = gen_dtc_key_string(end_key._InvertIndexAppid, MAX_BORDER_SYMBOL, "");
-	direct_request_context.sFieldConds.push_back(query_cond3);
+	query_cond3.sCondOpr = (uint8_t)CondOpr::eGT;
+	query_cond3.sCondValue = gen_dtc_key_string(end_key._InvertIndexAppid, MIN_BORDER_SYMBOL, "");
+	o_range_query.sFieldConds.push_back(query_cond3);
+
+	DirectRequestContext direct_request_context;
+	direct_request_context.sDirectQueryType = (uint8_t)DirectRequestType::eRangeQuery;
+	direct_request_context.sPacketValue.uRangeQuery = (uint64_t)(&o_range_query);
 
 	setEntry(direct_request_context, entry);
 }
@@ -843,9 +894,7 @@ void SearchRocksDBIndex::GetScoreByCacheSetSearchAfter(const CacheQueryInfo &que
 }
 
 void SearchRocksDBIndex::GetRangeIndexInTerminal(RANGTYPE range_type, const InvertIndexEntry& begin_key, const InvertIndexEntry& end_key, const TerminalQryCond& query_cond, std::vector<InvertIndexEntry>& entry){
-	DirectRequestContext direct_request_context;
-	direct_request_context.sMagicNum = 12345;
-	direct_request_context.sSequenceId = 10;
+	
 	if(getFieldIndex("field") == -1){
 		log_error("GetRangeIndexInTerminal get field Index error");
 		return;
@@ -860,13 +909,13 @@ void SearchRocksDBIndex::GetRangeIndexInTerminal(RANGTYPE range_type, const Inve
 		sort_type = false;
 	}
 
-	int greater_type = eGT;
-	int less_type = eLT;
+	int greater_type = (uint8_t)CondOpr::eGT;
+	int less_type = (uint8_t)CondOpr::eLT;
 	if(range_type == RANGE_GELE || range_type == RANGE_GELT || range_type == RANGE_GE){
-		greater_type = eGE;
+		greater_type = (uint8_t)CondOpr::eGE;
 	}
 	if(range_type == RANGE_GELE || range_type == RANGE_GTLE || range_type == RANGE_LE){
-		less_type = eLE;
+		less_type = (uint8_t)CondOpr::eLE;
 	}
 	string begin_symbol = INDEX_SYMBOL;
 	string end_symbol = INDEX_SYMBOL;
@@ -877,40 +926,50 @@ void SearchRocksDBIndex::GetRangeIndexInTerminal(RANGTYPE range_type, const Inve
 		begin_symbol = MIN_BORDER_SYMBOL;
 	}
 
+	RangeQuery_t o_range_query;
+
 	QueryCond query_cond1;
 	query_cond1.sFieldIndex = getFieldIndex("field");
-	query_cond1.sCondOpr = 0;
+	query_cond1.sCondOpr = (uint8_t)CondOpr::eEQ;
 	stringstream ss;
 	ss << end_key._InvertIndexField;
 	query_cond1.sCondValue = ss.str();
-	direct_request_context.sFieldConds.push_back(query_cond1);
+	o_range_query.sFieldConds.push_back(query_cond1);
 
 
 	QueryCond query_cond2;
 	query_cond2.sFieldIndex = getFieldIndex("key");
 	query_cond2.sCondOpr = greater_type;
-	query_cond2.sCondValue = gen_dtc_key_string(end_key._InvertIndexAppid, begin_symbol, begin_key._InvertIndexKey);
-	direct_request_context.sFieldConds.push_back(query_cond2);
+	query_cond2.sCondValue = gen_dtc_key_string(end_key._InvertIndexAppid, begin_symbol
+		, begin_key._InvertIndex_key_type , begin_key._InvertIndexKey);
+	o_range_query.sFieldConds.push_back(query_cond2);
 
 
 	QueryCond query_cond3;
 	query_cond3.sFieldIndex = getFieldIndex("key");
 	query_cond3.sCondOpr = less_type;
-	query_cond3.sCondValue = gen_dtc_key_string(end_key._InvertIndexAppid, end_symbol, end_key._InvertIndexKey);
-	direct_request_context.sFieldConds.push_back(query_cond3);
+	query_cond3.sCondValue = gen_dtc_key_string(end_key._InvertIndexAppid, end_symbol
+		, end_key._InvertIndex_key_type , end_key._InvertIndexKey);
+	o_range_query.sFieldConds.push_back(query_cond3);
 
 	// key和docd_id对应的field值分别为0和1
 	std::pair<int, bool> order_cond1;
 	order_cond1 = make_pair(0, sort_type);
-	direct_request_context.sOrderbyFields.push_back(order_cond1);
+	o_range_query.sOrderbyFields.push_back(order_cond1);
 	std::pair<int, bool> order_cond2;
 	order_cond2 = make_pair(1, sort_type);
-	direct_request_context.sOrderbyFields.push_back(order_cond2);
+	o_range_query.sOrderbyFields.push_back(order_cond2);
 
 	LimitCond sLimitCond;
 	sLimitCond.sLimitStart = query_cond.limit_start;
 	sLimitCond.sLimitStep = query_cond.page_size;
-	direct_request_context.sLimitCond = sLimitCond;
+	o_range_query.sLimitCond = sLimitCond;
+
+	DirectRequestContext direct_request_context;
+	direct_request_context.sMagicNum = 12345;
+	direct_request_context.sSequenceId = 10;
+	direct_request_context.sDirectQueryType = (uint8_t)DirectRequestType::eRangeQuery;
+	direct_request_context.sPacketValue.uRangeQuery = (uint64_t)(&o_range_query);
 
 	setEntry(direct_request_context, entry);
 }

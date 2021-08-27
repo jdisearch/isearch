@@ -48,7 +48,7 @@ int CTaskTopIndex::insert_snapshot_dtc(const UserTableContent &fields,int &doc_v
 		return RT_ERROR_GET_SNAPSHOT;
 	}
 	DTC::InsertRequest insertReq(dtc_server);
-	insertReq.SetKey(gen_dtc_key_string(fields.appid, "11", fields.doc_id).c_str());
+	insertReq.SetKey(CommonHelper::Instance()->GenerateDtcKey(fields.appid, "11", fields.doc_id).c_str());
 	insertReq.Set("doc_id", fields.doc_id.c_str());
 	insertReq.Set("doc_version", doc_version);
 	insertReq.Set("created_time", fields.publish_time);
@@ -79,7 +79,7 @@ int CTaskTopIndex::delete_snapshot_dtc(const string &doc_id, uint32_t appid, Jso
 		return RT_ERROR_GET_SNAPSHOT;
 	}
 	DTC::DeleteRequest deleteReq(dtc_server);
-	ret = deleteReq.SetKey(gen_dtc_key_string(appid, "11", doc_id).c_str());
+	ret = deleteReq.SetKey(CommonHelper::Instance()->GenerateDtcKey(appid, "11", doc_id).c_str());
 	ret = deleteReq.EQ("doc_id", doc_id.c_str());
 
 	DTC::Result rst;
@@ -96,7 +96,7 @@ static int get_snapshot_execute(DTC::Server* dtc_server,const UserTableContent &
 	DTC::GetRequest getReq(dtc_server);
 	int ret = 0;
 
-	ret = getReq.SetKey(gen_dtc_key_string(fields.appid, "11", fields.doc_id).c_str());
+	ret = getReq.SetKey(CommonHelper::Instance()->GenerateDtcKey(fields.appid, "11", fields.doc_id).c_str());
 	ret = getReq.Need("doc_version");
 
 	ret = getReq.Execute(rst);
@@ -297,7 +297,7 @@ int CTaskTopIndex::do_insert_top_index(const UserTableContent &fields,int doc_ve
 
 	set<string>::iterator iter = word_set.begin();
 	for (; iter != word_set.end(); iter++) {
-		string key = gen_dtc_key_string(fields.appid, "01", *iter);
+		string key = CommonHelper::Instance()->GenerateDtcKey(fields.appid, "01", *iter);
 		ret = insert_top_index_dtc(key,fields,doc_version,res);
 		if(ret < 0)
 			return RT_ERROR_INSERT_TOP_INDEX_DTC;
@@ -314,7 +314,7 @@ int CTaskTopIndex::update_sanpshot_dtc(const UserTableContent &fields,int doc_ve
 		return RT_ERROR_GET_SNAPSHOT;
 	}
 	DTC::UpdateRequest updateReq(dtc_server);
-	ret = updateReq.SetKey(gen_dtc_key_string(fields.appid, "11", fields.doc_id).c_str());
+	ret = updateReq.SetKey(CommonHelper::Instance()->GenerateDtcKey(fields.appid, "11", fields.doc_id).c_str());
 	updateReq.Set("doc_version", doc_version);
 	if(fields.content != "null\n")
 		updateReq.Set("extend", fields.content.c_str());

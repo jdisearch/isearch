@@ -159,6 +159,19 @@ void RocksdbDirectListener::input_notify()
   return;
 }
 
+void RocksdbDirectListener::output_notify()
+{
+  log_error("%s", "can never come here!!!");
+  return;
+}
+
+void RocksdbDirectListener::hangup_notify()
+{
+  // close socket
+  PollerObject::detach_poller();
+  delete this;
+}
+
 /*
 void RocksdbDirectListener::init()
 {

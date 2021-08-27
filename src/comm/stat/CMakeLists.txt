@@ -7,9 +7,9 @@ AUX_SOURCE_DIRECTORY(. main)
 add_library(stat ${main} ${http_service})
 
 LINK_DIRECTORIES(
-${PROJECT_SOURCE_DIR}/../../comm
-${PROJECT_SOURCE_DIR}/../../3rdlib/jsoncpp/lib
-${PROJECT_SOURCE_DIR}/../../3rdlib/attr_api
+${CMAKE_CURRENT_BINARY_DIR}/../../comm
+${CMAKE_CURRENT_BINARY_DIR}/../../3rdlib/jsoncpp/lib
+${CMAKE_CURRENT_BINARY_DIR}/../../3rdlib/attr_api
 )
 
 ADD_EXECUTABLE(stattool ${main} ${http_service})

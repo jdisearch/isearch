@@ -23,7 +23,7 @@ void BmmSegment::ConcreteSplit(const string& str, uint32_t appid, vector<string>
             if (j == phrase_sub.length() - 1)
                 break;
             iutf8string key = phrase_sub.utf8substr(j, phrase_sub.length()-j);
-            if (wordValid(key.stlstring(), appid) == true) {
+            if (WordValid(key.stlstring(), appid) == true) {
                 bmm_list.insert(bmm_list.begin(), key.stlstring());
                 i -= key.length();
                 break;

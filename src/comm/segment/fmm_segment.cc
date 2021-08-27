@@ -23,7 +23,7 @@ void FmmSegment::ConcreteSplit(const string& str, uint32_t appid, vector<string>
             if (j == 1)
                 break;
             iutf8string key = phrase_sub.utf8substr(0, j);
-            if (wordValid(key.stlstring(), appid) == true) {
+            if (WordValid(key.stlstring(), appid) == true) {
                 fmm_list.push_back(key.stlstring());
                 i += key.length();
                 break;

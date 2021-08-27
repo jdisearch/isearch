@@ -21,6 +21,7 @@
 #include <sys/time.h>
 #include <fstream>
 #include "db_manager.h"
+#include "utf8_str.h"
 using namespace std;
 
 extern pthread_mutex_t mutex;

@@ -25,18 +25,47 @@
 #include <stdlib.h>
 using namespace std;
 
+const double DOUBLE_EPS = 1e-10;
+
 struct GeoPoint {
-	double lon;
-	double lat;
+    double lon;
+    double lat;
+};
+
+struct EnclosingRectangle{
+    double dlngMax;
+    double dlngMin;
+    double dlatMax;
+    double dlatMin;
+
+    EnclosingRectangle()
+        : dlngMax(0.0)
+        , dlngMin(0.0)
+        , dlatMax(0.0)
+        , dlatMin(0.0)
+    { }
+
+    EnclosingRectangle(double _dlngMax, double _dlngMin
+            , double _dlatMax , double _dlatMin)
+        : dlngMax(_dlngMax)
+        , dlngMin(_dlngMin)
+        , dlatMax(_dlatMax)
+        , dlatMin(_dlatMin)
+    { }
+
+    bool IsVaild(){
+        return (!(fabs(dlngMax - dlngMin) < DOUBLE_EPS))
+            && (!(fabs(dlatMax - dlatMin) < DOUBLE_EPS));
+    }
 };
 
 string encode(double lat, double lng, int precision);
 vector<string> getArroundGeoHash(double lat, double lon, int precision);
 GeoPoint GetTerminalGeo(GeoPoint& beg , // 初始的geo坐标
-						double distance,// 距离
-						double  angle   //角度
+                        double distance,// 距离
+                        double  angle   //角度
 );
 vector<string> GetArroundGeoHash(GeoPoint& circle_center, double distance, int precision);
-vector<string> GetArroundGeoHash(double lng_max, double lng_min, double lat_max, double lat_min, int precision);
+vector<string> GetArroundGeoHash(const EnclosingRectangle& oEnclosingRectangle, int precision);
 
 #endif

@@ -44,30 +44,9 @@ struct WordIdInfo {
 struct IntelligentTable
 {	
 	map<uint32_t, WordIdInfo> word_id_map; // 中文词语id
-	map<uint16_t, set_uint> charact_01_map;
-	map<uint16_t, set_uint> charact_02_map;
-	map<uint16_t, set_uint> charact_03_map;
-	map<uint16_t, set_uint> charact_04_map;
-	map<uint16_t, set_uint> charact_05_map;
-	map<uint16_t, set_uint> charact_06_map;
-	map<uint16_t, set_uint> charact_07_map;
-	map<uint16_t, set_uint> charact_08_map;
-	map<uint16_t, set_uint> phonetic_01_map;
-	map<uint16_t, set_uint> phonetic_02_map;
-	map<uint16_t, set_uint> phonetic_03_map;
-	map<uint16_t, set_uint> phonetic_04_map;
-	map<uint16_t, set_uint> phonetic_05_map;
-	map<uint16_t, set_uint> phonetic_06_map;
-	map<uint16_t, set_uint> phonetic_07_map;
-	map<uint16_t, set_uint> phonetic_08_map;
-	map<string, set_uint> initial_01_map;
-	map<string, set_uint> initial_02_map;
-	map<string, set_uint> initial_03_map;
-	map<string, set_uint> initial_04_map;
-	map<string, set_uint> initial_05_map;
-	map<string, set_uint> initial_06_map;
-	map<string, set_uint> initial_07_map;
-	map<string, set_uint> initial_08_map;
+	map<uint16_t, set_uint> charact_map[8];
+	map<uint16_t, set_uint> phonetic_map[8];
+	map<string, set_uint> initial_map[8];
 };
 
 class DataManager
@@ -123,14 +102,7 @@ private:
 	map<string, uint32_t> en_word_map; // 英文词语到id的映射
 	map<uint32_t, WordIdInfo> word_id_map; // 中文词语id
 	map<uint32_t, WordIdInfo> en_word_id_map; // 英文词语id
-	map<string, set_uint> en_initial_01_map;
-	map<string, set_uint> en_initial_02_map;
-	map<string, set_uint> en_initial_03_map;
-	map<string, set_uint> en_initial_04_map;
-	map<string, set_uint> en_initial_05_map;
-	map<string, set_uint> en_initial_06_map;
-	map<string, set_uint> en_initial_07_map;
-	map<string, set_uint> en_initial_08_map;
+	map<string, set_uint> en_initial_map[8];
 
 	map<string, uint32_t> relate_map;
 	multimap<uint32_t, string> relate_id_map;
@@ -142,7 +114,7 @@ private:
 	string sAnalyzePath;
 	string sRelatePath;
 
-	uint32_t rowCnt; //DB中只能推荐词语的行数
+	uint32_t rowCnt; //DB中智能推荐词语的行数
 
 };
 

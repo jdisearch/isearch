@@ -45,6 +45,8 @@ public:
   int Bind();
   int attach_thread();
   virtual void input_notify(void);
+  virtual void output_notify(void);
+  virtual void hangup_notify(void);
 
 private:
   // void init();

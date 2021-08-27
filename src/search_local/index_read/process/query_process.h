@@ -19,41 +19,83 @@
 #ifndef __QUERY_PROCESS_H__
 #define __QUERY_PROCESS_H__
 
-#include "../component.h"
-#include "../logical_operate.h"
+#include <iostream>
+#include <sstream>
+#include "../request_context.h"
+#include "../result_context.h"
+#include "../valid_doc_filter.h"
 #include "../doc_manager.h"
-#include "../comm.h"
 #include "../db_manager.h"
 #include "../split_manager.h"
+#include "../comm.h"
+#include "../sort_operator/sort_operator_base.h"
+#include "../test/timer_counter.h"
 #include "skiplist.h"
 #include "task_request.h"
 
+const char* const BOOL ="bool";
+const char* const MUST ="must";
+const char* const SHOULD ="should";
+const char* const MUST_NOT ="must_not";
+const char* const TERM ="term";
+const char* const MATCH ="match";
+const char* const RANGE ="range";
+const char* const GEODISTANCE ="geo_distance";
+const char* const DISTANCE = "distance";
+const char* const GEOSHAPE ="geo_polygon";
+
+#define FIRST_TEST_INDEX 0
+#define FIRST_SPLIT_WORD_INDEX 0
+
+// query process definition has priorities ,beacause of BOOL query
+enum E_INDEX_READ_QUERY_PROCESS{
+    E_INDEX_READ_PRE_TERM,
+    E_INDEX_READ_RANGE,
+    E_INDEX_READ_GEO_DISTANCE,
+    E_INDEX_READ_GEO_SHAPE,
+    E_INDEX_READ_MATCH,
+    E_INDEX_READ_TERM,
+    E_INDEX_READ_TOTAL_NUM
+};
+
 class QueryProcess{
 public:
-    QueryProcess(uint32_t appid, Json::Value& value, Component* component);
-    ~QueryProcess();
-    int DoJob();
-    void SetSkipList(SkipList& skipList);
-    void SetRequest(CTaskRequest* request);
-	void SetErrMsg(string err_msg);
-	string GetErrMsg();
+    QueryProcess(const Json::Value& value);
+    virtual~ QueryProcess();
+
+public:
+    int StartQuery();
+    void SetRequest(CTaskRequest* const request) { request_ = request; };
+    void SetParseJsonValue(const Json::Value& value) { parse_value_ = value; };
+    void SetComponent(RequestContext* const component) { component_ = component;};
+    void SetDocManager(DocManager* const doc_manager) { doc_manager_ = doc_manager;};
+
+public:
+    virtual int ParseContent(int logic_type) = 0;
+    virtual int GetValidDoc(int logic_type , const std::vector<FieldInfo>& keys) = 0;
+    
+    virtual int ParseContent() = 0;
+    virtual int GetValidDoc() = 0;
+    virtual int GetScore();
+    virtual void SortScore(int& i_sequence , int& i_rank);
+    virtual const Json::Value& SetResponse();
 
 protected:
-    void TaskBegin();
-    virtual int ParseContent();
-    virtual int GetValidDoc();
-    virtual int GetScoreAndSort();
-    virtual void TaskEnd();
+    void SortByCOrderOp(int& i_rank);
+    void AscSort(int& i_sequence , int& i_rank);
+    void DescSort(int& i_sequence , int& i_rank);
+    void AppendHighLightWord();
+    int CheckValidDoc();
 
 protected:
-    Component* component_;
-    LogicalOperate* logical_operate_;
+    RequestContext* component_;
     DocManager* doc_manager_;
-    uint32_t appid_;
-    Json::Value value_;
-    SkipList skipList_;
     CTaskRequest* request_;
-	string err_msg_;
+    SortOperatorBase* sort_operator_base_;
+    std::set<ScoreDocIdNode>* p_scoredocid_set_;
+
+    Json::Value parse_value_;
+    Json::Value response_;
 };
 
 #endif

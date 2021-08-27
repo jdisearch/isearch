@@ -9,7 +9,7 @@
 #define TTC_VERSION "1.0.0"
 /* the following show line should be line 11 as line number is used in Makefile */
 #define TTC_GIT_VERSION ""
-#define TTC_VERSION_DETAIL TTC_VERSION"."TTC_GIT_VERSION
+#define TTC_VERSION_DETAIL TTC_VERSION "." TTC_GIT_VERSION
 
 extern const char compdatestr[];
 extern const char comptimestr[];

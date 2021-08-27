@@ -1,0 +1,9 @@
+{
+	"CONFIG" :
+        {
+            "LogLevel":7,
+            "UpdateInterval":1,
+            "CaDir" : "/usr/local/dtcadmin/ca/conf/",
+            "CaPid":1606976164
+        }
+}

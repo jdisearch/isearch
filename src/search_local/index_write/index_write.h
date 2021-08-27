@@ -38,15 +38,14 @@ class CTaskIndexGen : public CTaskDispatcher<CTaskRequest>
 private:
 	CPollThread * ownerThread;
 	CRequestOutput<CTaskRequest> output;
-	int read_only;
 
 private:
-	int decode_request(const Json::Value &req, Json::Value &subreq, uint32_t &id, uint32_t &count);
+	int decode_request(const Json::Value &req, Json::Value &subreq, uint32_t &id);
 
 public:
 	CTaskIndexGen(CPollThread * o);
 	virtual ~CTaskIndexGen();
-	int index_gen_process(Json::Value &req,Json::Value &res);
+	int index_gen_process(Json::Value &req);
 	int pre_process(void);
 
 	inline void BindDispatcher(CTaskDispatcher<CTaskRequest> *p){

@@ -7,26 +7,24 @@
 
 ### URL
 ```html
-http://127.0.0.1/index/search
+http://127.0.0.1/search
 ```
 ### Http Method
-GET
+POST
 ### Http返回格式
 JSON
 ### Http请求参数说明
 | 参数 | 类型 | 是否必需 | 描述 |
 | ------------ | ------------ | ------------ | ------------ |
 | appid | int  | 是  | appname对应的ID  |
-| key  | string  |  否 | 搜索查询词  |
-| key_and | string  | 否  | 包含全部关键词  |
-| key_invert  | string  |  否 | 过滤关键词  |
+| query  | string  |  是 | 搜索查询词  |
 | page_index  | int  | 否  |  页码 |
 | page_size  | int | 否  | 每页条数  |
 | sort_type  | int  | 否  | 排序方式  |
 | sort_field  | string  | 否  | 排序字段  |
 | fields | string  | 否  | 返回指定字段值  |
 
-说明：key支持多字段检索，如key为`content:京东 author:张三`表示搜索content字段包含京东并且author是张三的记录，其中content和author为应用内配置的字段名，应用可以自定义字段名称。
+说明：query兼容elasticsearch协议，格式可参考tools/search.json文件。
 
 应用的定义及支持的字段类型可参考：[项目配置文件](https://gitee.com/jd-platform-opensource/isearch#%E9%A1%B9%E7%9B%AE%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)
 
@@ -38,7 +36,10 @@ JSON
 | result  | string  | 结果内容  |
 ### CURL调用示例
 ```
-curl 'http://127.0.0.1/index/search?page_index=0&key=京东&appid=10001'
+curl -X POST \
+  http://127.0.0.1/search \
+  -H 'content-type: application/json' \
+  -d '{"appid":10064,"query":{"match":{"author_id":"21386"}},"page_index":1,"page_size":3}'
 ```
 ### 成功返回示例
 ```json
@@ -71,7 +72,7 @@ curl 'http://127.0.0.1/index/search?page_index=0&key=京东&appid=10001'
 
 ### URL
 ```html
-http://127.0.0.1/index/common
+http://127.0.0.1/insert
 ```
 ### Http Method
 POST
@@ -81,7 +82,6 @@ JSON
 | 参数 | 类型 | 是否必需 | 描述 |
 | ------------ | ------------ | ------------ | ------------ |
 | appid |  string  |  是 | 用户组id  |
-| fields_count  | int  |  是 | 内容数量  |
 | table_content  |  object |  是 | 内容对象  |
 #### table_content的参数
 | 参数 | 类型 | 是否必需 | 描述 |
@@ -99,11 +99,13 @@ JSON
 |  author | string  | 是  |  文章作者 |
 |  title | string  | 是  | 文章标题  |
 |  content |  string |  是 | 文章内容 |
+
 ### Http 返回结果说明
 | 参数 | 类型 |  描述 |
 | ------------ | ------------ | ------------ |
 | code  |  int |  执行结果 |
 | message  |  string | 信息描述  |
+
 ### CURL调用示例
 ```html
 curl -X POST \
@@ -111,8 +113,7 @@ curl -X POST \
   -H 'content-type: application/json' \
   -d '{
 	"appid": 10001,
-	"fields_count": 1,
-	"table_content": [{
+	"table_content": {
 		"cmd": "add",
 		"fields": {
 			"doc_id": "28394556",
@@ -121,7 +122,7 @@ curl -X POST \
 			"title": " 京东阅读电子阅读器即将上线 ",
 			"content": "今天小编得到了一个令人振奋的消息！它是什么呢？京东阅读官方即将推出搭载京东阅读客户端"
 		}
-	}]
+	}
   }'
 ```
 ### 成功返回示例

@@ -41,6 +41,7 @@
 #include "skiplist.h"
 #include "monitor.h"
 #include "index_sync/sync_index_timer.h"
+#include "correction/correction_manager.h"
 using namespace std;
 
 #define STRING_HELPER(str)                                      #str
@@ -67,7 +68,9 @@ static CAgentProcess* agentProcess;
 static CAgentListenPkg* agentListener;
 static CSearchProcess* searchProcess;
 static CPollThread* updateThread;
+
 extern MemPool skipNodePool;
+
 pthread_mutex_t mutex;
 SyncIndexTimer *globalSyncIndexTimer;
 int stop = 0;
@@ -123,8 +126,13 @@ static int ServicePreRun(int log_level, bool deam, string log_path)
 	SGlobalConfig &global_cfg = SearchConf::Instance()->GetGlobalConfig();
 	search_create_pid(global_cfg.pid_file);
 
-	if (!SplitManager::Instance()->Init(global_cfg)) {
+	if (!SplitManager::Instance()->Init(global_cfg.sWordsPath, global_cfg.sTrainPath, global_cfg.sSplitMode)) {
 		log_error("g_splitManager init error");
+		return -RT_INIT_ERR;
+	}
+
+	if(!CorrectManager::Instance()->Init(global_cfg.sEnWordsPath, global_cfg.sCharacterPath)){
+		log_error("Correction init error");
 		return -RT_INIT_ERR;
 	}
 
@@ -168,6 +176,7 @@ void ServicePostRun(string str_pid_file) {
 	SearchConf::Instance()->Destroy();
 	DataManager::Instance()->Destroy();
 	SplitManager::Instance()->Destroy();
+	CorrectManager::Instance()->Destroy();
 	search_delete_pid(str_pid_file);
 }
 

@@ -71,114 +71,43 @@ IntelligentTable* DataManager::LoadIntelligentTable(const string& file_path)
 			WordIdInfo word_info;
 			word_info.word = int_vec[i++];
 			IntelligentInfo info;
-			info.charact_id_01 = atoi(int_vec[i++].c_str());
-			info.charact_id_02 = atoi(int_vec[i++].c_str());
-			info.charact_id_03 = atoi(int_vec[i++].c_str());
-			info.charact_id_04 = atoi(int_vec[i++].c_str());
-			info.charact_id_05 = atoi(int_vec[i++].c_str());
-			info.charact_id_06 = atoi(int_vec[i++].c_str());
-			info.charact_id_07 = atoi(int_vec[i++].c_str());
-			info.charact_id_08 = atoi(int_vec[i++].c_str());
-			info.phonetic_id_01 = atoi(int_vec[i++].c_str());
-			info.phonetic_id_02 = atoi(int_vec[i++].c_str());
-			info.phonetic_id_03 = atoi(int_vec[i++].c_str());
-			info.phonetic_id_04 = atoi(int_vec[i++].c_str());
-			info.phonetic_id_05 = atoi(int_vec[i++].c_str());
-			info.phonetic_id_06 = atoi(int_vec[i++].c_str());
-			info.phonetic_id_07 = atoi(int_vec[i++].c_str());
-			info.phonetic_id_08 = atoi(int_vec[i++].c_str());
-			info.initial_char_01 = int_vec[i++];
-			info.initial_char_02 = int_vec[i++];
-			info.initial_char_03 = int_vec[i++];
-			info.initial_char_04 = int_vec[i++];
-			info.initial_char_05 = int_vec[i++];
-			info.initial_char_06 = int_vec[i++];
-			info.initial_char_07 = int_vec[i++];
-			info.initial_char_08 = int_vec[i++];
+			for(int j = 0; j < 8; j++){
+				info.charact_id[j] = atoi(int_vec[i++].c_str());
+			}
+			for(int j = 0; j < 8; j++){
+				info.phonetic_id[j] = atoi(int_vec[i++].c_str());
+			}
+			for(int j = 0; j < 8; j++){
+				info.initial_char[j] = int_vec[i++];
+			}
 			word_info.word_freq = atoi(int_vec[i++].c_str());
 			tableInfo->word_id_map[word_id] = word_info;
-			if (info.charact_id_01 != 0 && info.charact_id_01 != 65535) {
-				tableInfo->charact_01_map[info.charact_id_01].insert(word_id);
+			for(int j = 0; j < 8; j++){
+				if (info.charact_id[j] != 0 && info.charact_id[j] != 65535) {
+					map<uint16_t, set_uint>& charact_map_ = tableInfo->charact_map[j];
+					charact_map_[info.charact_id[j]].insert(word_id);
+				}
 			}
-			if (info.charact_id_02 != 0 && info.charact_id_02 != 65535) {
-				tableInfo->charact_02_map[info.charact_id_02].insert(word_id);
+			for(int j = 0; j < 8; j++){
+				if (info.phonetic_id[j] != 0 && info.phonetic_id[j] != 65535) {
+					map<uint16_t, set_uint>& phonetic_map_ = tableInfo->phonetic_map[j];
+					phonetic_map_[info.phonetic_id[j]].insert(word_id);
+				}
 			}
-			if (info.charact_id_03 != 0 && info.charact_id_03 != 65535) {
-				tableInfo->charact_03_map[info.charact_id_03].insert(word_id);
-			}
-			if (info.charact_id_04 != 0 && info.charact_id_04 != 65535) {
-				tableInfo->charact_04_map[info.charact_id_04].insert(word_id);
-			}
-			if (info.charact_id_05 != 0 && info.charact_id_05 != 65535) {
-				tableInfo->charact_05_map[info.charact_id_05].insert(word_id);
-			}
-			if (info.charact_id_06 != 0 && info.charact_id_06 != 65535) {
-				tableInfo->charact_06_map[info.charact_id_06].insert(word_id);
-			}
-			if (info.charact_id_07 != 0 && info.charact_id_07 != 65535) {
-				tableInfo->charact_07_map[info.charact_id_07].insert(word_id);
-			}
-			if (info.charact_id_08 != 0 && info.charact_id_08 != 65535) {
-				tableInfo->charact_08_map[info.charact_id_08].insert(word_id);
-			}
-
-			if (info.phonetic_id_01 != 0 && info.phonetic_id_01 != 65535) {
-				tableInfo->phonetic_01_map[info.phonetic_id_01].insert(word_id);
-			}
-			if (info.phonetic_id_02 != 0 && info.phonetic_id_02 != 65535) {
-				tableInfo->phonetic_02_map[info.phonetic_id_02].insert(word_id);
-			}
-			if (info.phonetic_id_03 != 0 && info.phonetic_id_03 != 65535) {
-				tableInfo->phonetic_03_map[info.phonetic_id_03].insert(word_id);
-			}
-			if (info.phonetic_id_04 != 0 && info.phonetic_id_04 != 65535) {
-				tableInfo->phonetic_04_map[info.phonetic_id_04].insert(word_id);
-			}
-			if (info.phonetic_id_05 != 0 && info.phonetic_id_05 != 65535) {
-				tableInfo->phonetic_05_map[info.phonetic_id_05].insert(word_id);
-			}
-			if (info.phonetic_id_06 != 0 && info.phonetic_id_06 != 65535) {
-				tableInfo->phonetic_06_map[info.phonetic_id_06].insert(word_id);
-			}
-			if (info.phonetic_id_07 != 0 && info.phonetic_id_07 != 65535) {
-				tableInfo->phonetic_07_map[info.phonetic_id_07].insert(word_id);
-			}
-			if (info.phonetic_id_08 != 0 && info.phonetic_id_08 != 65535) {
-				tableInfo->phonetic_08_map[info.phonetic_id_08].insert(word_id);
-			}
-
-			if (info.initial_char_01 != "0") {
-				tableInfo->initial_01_map[info.initial_char_01].insert(word_id);
-			}
-			if (info.initial_char_02 != "0") {
-				tableInfo->initial_02_map[info.initial_char_02].insert(word_id);
-			}
-			if (info.initial_char_03 != "0") {
-				tableInfo->initial_03_map[info.initial_char_03].insert(word_id);
-			}
-			if (info.initial_char_04 != "0") {
-				tableInfo->initial_04_map[info.initial_char_04].insert(word_id);
-			}
-			if (info.initial_char_05 != "0") {
-				tableInfo->initial_05_map[info.initial_char_05].insert(word_id);
-			}
-			if (info.initial_char_06 != "0") {
-				tableInfo->initial_06_map[info.initial_char_06].insert(word_id);
-			}
-			if (info.initial_char_07 != "0") {
-				tableInfo->initial_07_map[info.initial_char_07].insert(word_id);
-			}
-			if (info.initial_char_08 != "0") {
-				tableInfo->initial_08_map[info.initial_char_08].insert(word_id);
+			for(int j = 0; j < 8; j++){
+				if (info.initial_char[j] != "0") {
+					map<string, set_uint>& initial_map_ = tableInfo->initial_map[j];
+					initial_map_[info.initial_char[j]].insert(word_id);
+				}
 			}
 		}
 	}
 	
 	log_debug("charact_01_map: %d, phonetic_01_map: %d, initial_01_map: %d,\
 	charact_02_map: %d, phonetic_02_map: %d, initial_02_map: %d,charact_03_map: %d, phonetic_03_map: %d, initial_03_map: %d",
-		(int)tableInfo->charact_01_map.size(), (int)tableInfo->phonetic_01_map.size(), (int)tableInfo->initial_01_map.size(),
-		(int)tableInfo->charact_02_map.size(), (int)tableInfo->phonetic_02_map.size(), (int)tableInfo->initial_02_map.size(), 
-		(int)tableInfo->charact_03_map.size(), (int)tableInfo->phonetic_03_map.size(), (int)tableInfo->initial_03_map.size());
+		(int)tableInfo->charact_map[0].size(), (int)tableInfo->phonetic_map[0].size(), (int)tableInfo->initial_map[0].size(),
+		(int)tableInfo->charact_map[1].size(), (int)tableInfo->phonetic_map[1].size(), (int)tableInfo->initial_map[1].size(), 
+		(int)tableInfo->charact_map[2].size(), (int)tableInfo->phonetic_map[2].size(), (int)tableInfo->initial_map[2].size());
 	return tableInfo;
 }
 
@@ -290,59 +219,25 @@ bool DataManager::Init(const SGlobalConfig &global_cfg) {
 			int i = 0;
 			word_id = atoi(int_vec[i++].c_str());
 			IntelligentInfo info;
-			info.charact_id_01 = atoi(int_vec[i++].c_str());
-			info.charact_id_02 = atoi(int_vec[i++].c_str());
-			info.charact_id_03 = atoi(int_vec[i++].c_str());
-			info.charact_id_04 = atoi(int_vec[i++].c_str());
-			info.charact_id_05 = atoi(int_vec[i++].c_str());
-			info.charact_id_06 = atoi(int_vec[i++].c_str());
-			info.charact_id_07 = atoi(int_vec[i++].c_str());
-			info.charact_id_08 = atoi(int_vec[i++].c_str());
-			info.phonetic_id_01 = atoi(int_vec[i++].c_str());
-			info.phonetic_id_02 = atoi(int_vec[i++].c_str());
-			info.phonetic_id_03 = atoi(int_vec[i++].c_str());
-			info.phonetic_id_04 = atoi(int_vec[i++].c_str());
-			info.phonetic_id_05 = atoi(int_vec[i++].c_str());
-			info.phonetic_id_06 = atoi(int_vec[i++].c_str());
-			info.phonetic_id_07 = atoi(int_vec[i++].c_str());
-			info.phonetic_id_08 = atoi(int_vec[i++].c_str());
-			info.initial_char_01 = int_vec[i++];
-			info.initial_char_02 = int_vec[i++];
-			info.initial_char_03 = int_vec[i++];
-			info.initial_char_04 = int_vec[i++];
-			info.initial_char_05 = int_vec[i++];
-			info.initial_char_06 = int_vec[i++];
-			info.initial_char_07 = int_vec[i++];
-			info.initial_char_08 = int_vec[i++];
-			
-			if (info.initial_char_01 != "0") {
-				en_initial_01_map[info.initial_char_01].insert(word_id);
+			for(int j = 0; j < 8; j++){
+				info.charact_id[j] = atoi(int_vec[i++].c_str());
 			}
-			if (info.initial_char_02 != "0") {
-				en_initial_02_map[info.initial_char_02].insert(word_id);
+			for(int j = 0; j < 8; j++){
+				info.phonetic_id[j] = atoi(int_vec[i++].c_str());
 			}
-			if (info.initial_char_03 != "0") {
-				en_initial_03_map[info.initial_char_03].insert(word_id);
+			for(int j = 0; j < 8; j++){
+				info.initial_char[j] = int_vec[i++];
 			}
-			if (info.initial_char_04 != "0") {
-				en_initial_04_map[info.initial_char_04].insert(word_id);
-			}
-			if (info.initial_char_05 != "0") {
-				en_initial_05_map[info.initial_char_05].insert(word_id);
-			}
-			if (info.initial_char_06 != "0") {
-				en_initial_06_map[info.initial_char_06].insert(word_id);
-			}
-			if (info.initial_char_07 != "0") {
-				en_initial_07_map[info.initial_char_07].insert(word_id);
-			}
-			if (info.initial_char_08 != "0") {
-				en_initial_08_map[info.initial_char_08].insert(word_id);
+			for(int j = 0; j < 8; j++){
+				if (info.initial_char[j] != "0") {
+					map<string, set_uint>& en_initial_map_ = en_initial_map[j];
+					en_initial_map_[info.initial_char[j]].insert(word_id);
+				}
 			}
 		}
 	}
 	en_intelligent_infile.close();
-	log_debug("en_initial_01_map: %d, en_initial_02_map: %d, en_initial_03_map: %d", (int)en_initial_01_map.size(), (int)en_initial_02_map.size(), (int)en_initial_03_map.size());
+	log_debug("en_initial_01_map: %d, en_initial_02_map: %d, en_initial_03_map: %d", (int)en_initial_map[0].size(), (int)en_initial_map[1].size(), (int)en_initial_map[2].size());
 
 	ifstream relate_infile;
 	relate_infile.open(global_cfg.sRelatePath.c_str());
@@ -593,89 +488,39 @@ bool DataManager::GetSuggestWord(const IntelligentInfo &info, vector<string> &wo
 	pthread_mutex_lock(&mutex);
 	set<uint32_t> word_id_set;
 	int count = 0;
-	if (info.charact_id_01 != 0) {
+	if (info.charact_id[0] != 0) {
 		if (word_id_set.empty() && count == 0) {
 			count++;
-			word_id_set = itable->charact_01_map[info.charact_id_01];
+			word_id_set = itable->charact_map[0][info.charact_id[0]];
 		}
 	}
-	if (info.phonetic_id_01 != 0) {
+	if (info.phonetic_id[0] != 0) {
 		if (word_id_set.empty() && count == 0) {
 			count++;
-			word_id_set = itable->phonetic_01_map[info.phonetic_id_01];
+			word_id_set = itable->phonetic_map[0][info.phonetic_id[0]];
 		}
 	}
-	if (info.initial_char_01 != "") {
+	if (info.initial_char[0] != "") {
 		if (word_id_set.empty() && count == 0) {
 			count++;
-			word_id_set = itable->initial_01_map[info.initial_char_01];
+			word_id_set = itable->initial_map[0][info.initial_char[0]];
 		}
 	}
 
-	if (info.charact_id_02 != 0) {
-		word_id_set = sets_intersection(word_id_set, itable->charact_02_map[info.charact_id_02]);
+	for(int i = 1; i < 8; i++){
+		if (info.charact_id[i] != 0) {
+			word_id_set = sets_intersection(word_id_set, itable->charact_map[i][info.charact_id[i]]);
+		}
 	}
-	if (info.charact_id_03 != 0) {
-		word_id_set = sets_intersection(word_id_set, itable->charact_03_map[info.charact_id_03]);
+	for(int i = 1; i < 8; i++){
+		if (info.phonetic_id[i] != 0) {
+			word_id_set = sets_intersection(word_id_set, itable->phonetic_map[i][info.phonetic_id[i]]);
+		}
 	}
-	if (info.charact_id_04 != 0) {
-		word_id_set = sets_intersection(word_id_set, itable->charact_04_map[info.charact_id_04]);
-	}
-	if (info.charact_id_05 != 0) {
-		word_id_set = sets_intersection(word_id_set, itable->charact_05_map[info.charact_id_05]);
-	}
-	if (info.charact_id_06 != 0) {
-		word_id_set = sets_intersection(word_id_set, itable->charact_06_map[info.charact_id_06]);
-	}
-	if (info.charact_id_07 != 0) {
-		word_id_set = sets_intersection(word_id_set, itable->charact_07_map[info.charact_id_07]);
-	}
-	if (info.charact_id_08 != 0) {
-		word_id_set = sets_intersection(word_id_set, itable->charact_08_map[info.charact_id_08]);
-	}
-
-	if (info.phonetic_id_02 != 0) {
-		word_id_set = sets_intersection(word_id_set, itable->phonetic_02_map[info.phonetic_id_02]);
-	}
-	if (info.phonetic_id_03 != 0) {
-		word_id_set = sets_intersection(word_id_set, itable->phonetic_03_map[info.phonetic_id_03]);
-	}
-	if (info.phonetic_id_04 != 0) {
-		word_id_set = sets_intersection(word_id_set, itable->phonetic_04_map[info.phonetic_id_04]);
-	}
-	if (info.phonetic_id_05 != 0) {
-		word_id_set = sets_intersection(word_id_set, itable->phonetic_05_map[info.phonetic_id_05]);
-	}
-	if (info.phonetic_id_06 != 0) {
-		word_id_set = sets_intersection(word_id_set, itable->phonetic_06_map[info.phonetic_id_06]);
-	}
-	if (info.phonetic_id_07 != 0) {
-		word_id_set = sets_intersection(word_id_set, itable->phonetic_07_map[info.phonetic_id_07]);
-	}
-	if (info.phonetic_id_08 != 0) {
-		word_id_set = sets_intersection(word_id_set, itable->phonetic_08_map[info.phonetic_id_08]);
-	}
-
-	if (info.initial_char_02 != "") {
-		word_id_set = sets_intersection(word_id_set, itable->initial_02_map[info.initial_char_02]);
-	}
-	if (info.initial_char_03 != "") {
-		word_id_set = sets_intersection(word_id_set, itable->initial_03_map[info.initial_char_03]);
-	}
-	if (info.initial_char_04 != "") {
-		word_id_set = sets_intersection(word_id_set, itable->initial_04_map[info.initial_char_04]);
-	}
-	if (info.initial_char_05 != "") {
-		word_id_set = sets_intersection(word_id_set, itable->initial_05_map[info.initial_char_05]);
-	}
-	if (info.initial_char_06 != "") {
-		word_id_set = sets_intersection(word_id_set, itable->initial_06_map[info.initial_char_06]);
-	}
-	if (info.initial_char_07 != "") {
-		word_id_set = sets_intersection(word_id_set, itable->initial_07_map[info.initial_char_07]);
-	}
-	if (info.initial_char_08 != "") {
-		word_id_set = sets_intersection(word_id_set, itable->initial_08_map[info.initial_char_08]);
+	for(int i = 1; i < 8; i++){
+		if (info.initial_char[i] != "") {
+			word_id_set = sets_intersection(word_id_set, itable->initial_map[i][info.initial_char[i]]);
+		}
 	}
 
 	map<string, uint32_t> word_freq_map;
@@ -702,29 +547,13 @@ bool DataManager::GetSuggestWord(const IntelligentInfo &info, vector<string> &wo
 
 bool DataManager::GetEnSuggestWord(const IntelligentInfo &info, vector<string> &word_vec, uint32_t suggest_cnt) {
 	set<uint32_t> word_id_set;
-	if (info.initial_char_01 != "") {
-		word_id_set = en_initial_01_map[info.initial_char_01];
+	if (info.initial_char[0] != "") {
+		word_id_set = en_initial_map[0][info.initial_char[0]];
 	}
-	if (info.initial_char_02 != "") {
-		word_id_set = sets_intersection(word_id_set, en_initial_02_map[info.initial_char_02]);
-	}
-	if (info.initial_char_03 != "") {
-		word_id_set = sets_intersection(word_id_set, en_initial_03_map[info.initial_char_03]);
-	}
-	if (info.initial_char_04 != "") {
-		word_id_set = sets_intersection(word_id_set, en_initial_04_map[info.initial_char_04]);
-	}
-	if (info.initial_char_05 != "") {
-		word_id_set = sets_intersection(word_id_set, en_initial_05_map[info.initial_char_05]);
-	}
-	if (info.initial_char_06 != "") {
-		word_id_set = sets_intersection(word_id_set, en_initial_06_map[info.initial_char_06]);
-	}
-	if (info.initial_char_07 != "") {
-		word_id_set = sets_intersection(word_id_set, en_initial_07_map[info.initial_char_07]);
-	}
-	if (info.initial_char_08 != "") {
-		word_id_set = sets_intersection(word_id_set, en_initial_08_map[info.initial_char_08]);
+	for(int i = 1; i < 8; i++){
+		if (info.initial_char[i] != "") {
+			word_id_set = sets_intersection(word_id_set, en_initial_map[i][info.initial_char[i]]);
+		}
 	}
 
 	map<string, uint32_t> word_freq_map;

@@ -32,23 +32,25 @@ class CIndexTableManager
 public:
 	int InitServer(const SDTCHost &dtchost);
 	bool DeleteIndex(std::string word, const std::string& doc_id, uint32_t doc_version, uint32_t field);
-	int delete_snapshot_dtc(string &doc_id, uint32_t appid, Json::Value &res);
+	int delete_snapshot_dtc(const string &doc_id, const uint32_t& appid);
 	int delete_hanpin_index(string key, string doc_id);
-	int get_snapshot_active_doc(const UserTableContent &fields, int &doc_version, Json::Value &res);
-	int do_insert_index(map<string, item> &word_map, uint64_t app_id,int doc_version,int field,Json::Value &res);
-	int insert_index_dtc(string key, struct item &it, u_int8_t field_type, int doc_version, Json::Value &res);
+	int get_snapshot_active_doc(const UserTableContent &fields, int &trans_version);
+	int do_insert_index(std::map<std::string, WordProperty>& word_map, const InsertParam& insert_param, Json::Value &res);
+	int insert_index_dtc(const WordProperty& word_property, const InsertParam& insert_param, Json::Value &res);
 	int do_insert_intelligent(string key, string doc_id, string word, const vector<IntelligentInfo> & info_vec, int doc_version);
-	int update_sanpshot_dtc(const UserTableContent &fields,int doc_version,int trans_version,int &affected_rows);
+	int update_sanpshot_dtc(const UserTableContent &fields,int trans_version,int &affected_rows);
 	int update_sanpshot_dtc(uint32_t appid, string doc_id, int trans_version);
-	int update_snapshot_version(const UserTableContent &fields,int doc_version,int &affected_rows);
+	int update_snapshot_version(const UserTableContent &fields,int trans_version,int &affected_rows);
 	int insert_snapshot_version(const UserTableContent &fields,int doc_version);
 	int update_docid_index_dtc(const string & invert_keys, const string & doc_id, uint32_t appid, int doc_version);
 	int insert_docid_index_dtc(const string & invert_keys, const string & doc_id, uint32_t appid, int doc_version);
 	int insert_union_index_dtc(const string & union_key, const string & doc_id, uint32_t appid, int doc_version);
 	int delete_docid_index_dtc(const string & key, const string & doc_id);
-	bool GetIndexData(const std::string& doc_id, uint32_t doc_version, map<uint32_t, vector<string> > &res);
+	bool GetIndexData(const std::string& doc_id, uint32_t old_doc_version, map<uint32_t, vector<string> > &res);
 	bool delete_index(std::string word, const std::string& doc_id, uint32_t doc_version, uint32_t field);
 	bool delete_intelligent(std::string key, std::string doc_id, uint32_t trans_version);
+
+	int Dump_Original_Request(const Json::Value& _requst);
 private:
 	DTC::Server server;
 };
@@ -56,6 +58,7 @@ private:
 extern CIndexTableManager g_IndexInstance;
 extern CIndexTableManager g_delIndexInstance;
 extern CIndexTableManager g_hanpinIndexInstance;
+extern CIndexTableManager g_originalIndexInstance;
 
 class DeleteItem {
 public:

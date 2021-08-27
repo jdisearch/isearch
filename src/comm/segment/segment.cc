@@ -25,13 +25,29 @@ bool Segment::isAlphaOrDigit(string str) {
     return false;
 }
 
-bool Segment::wordValid(string word, uint32_t appid) {
+bool Segment::WordValid(string word, uint32_t appid) {
     if(punct_set_.find(word) != punct_set_.end()){
         return false;
     }
     if (word_dict_.find(word) != word_dict_.end()) {
         map<uint32_t, WordInfo> wordInfo = word_dict_[word];
         if (wordInfo.find(0) != wordInfo.end() || wordInfo.find(appid) != wordInfo.end()) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool Segment::GetWordInfo(string word, uint32_t appid, WordInfo &word_info) {
+    if (word_dict_.find(word) != word_dict_.end()) {
+        map<uint32_t, WordInfo> wordInfo = word_dict_[word];
+        if (wordInfo.find(0) != wordInfo.end()) {
+            word_info = wordInfo[0];
+            return true;
+        }
+        if (wordInfo.find(appid) != wordInfo.end()) {
+            word_info = wordInfo[appid];
             return true;
         }
     }
@@ -90,7 +106,7 @@ bool Segment::Init(string word_path, string train_path){
 }
 
 void Segment::Split(const string& str, uint32_t appid, vector<string>& new_res_all, bool hmm_flag){
-	iutf8string phrase(str);
+    iutf8string phrase(str);
     vector<string> sen_list;
     set<string> special_set;  // 记录英文和数字字符串
     string tmp_words = "";
@@ -171,7 +187,7 @@ void Segment::dealByHmmMgr(uint32_t appid, const vector<string>& res_all, vector
                 if (utf8_buf.length() == 1) {
                     new_res_all.push_back(buf);
                 }
-                else if (wordValid(buf, appid) == false) { // 连续的单字组合起来，使用HMM算法进行分词
+                else if (WordValid(buf, appid) == false) { // 连续的单字组合起来，使用HMM算法进行分词
                     vector<string> vec;
                     hmm_manager_->HmmSplit(buf, vec);
                     new_res_all.insert(new_res_all.end(), vec.begin(), vec.end());
@@ -187,7 +203,7 @@ void Segment::dealByHmmMgr(uint32_t appid, const vector<string>& res_all, vector
         if (utf8_buf.length() == 1) {
             new_res_all.push_back(buf);
         }
-        else if (wordValid(buf, appid) == false) { // 连续的单字组合起来，使用HMM算法进行分词
+        else if (WordValid(buf, appid) == false) { // 连续的单字组合起来，使用HMM算法进行分词
             vector<string> vec;
             hmm_manager_->HmmSplit(buf, vec);
             new_res_all.insert(new_res_all.end(), vec.begin(), vec.end());
@@ -206,7 +222,7 @@ void Segment::CutForSearch(const string& str, uint32_t appid, vector<vector<stri
         if (utf8_str.length() > 2 && isAllAlphaOrDigit(new_res_all[i]) == false) {
             for (int j = 0; j < utf8_str.length() - 1; j++) {
                 string tmp_str = utf8_str.substr(j, 2);
-                if (wordValid(tmp_str, appid) == true) {
+                if (WordValid(tmp_str, appid) == true) {
                     vec.push_back(tmp_str);
                 }
             }
@@ -214,7 +230,7 @@ void Segment::CutForSearch(const string& str, uint32_t appid, vector<vector<stri
         if (utf8_str.length() > 3 && isAllAlphaOrDigit(new_res_all[i]) == false) {
             for (int j = 0; j < utf8_str.length() - 2; j++) {
                 string tmp_str = utf8_str.substr(j, 3);
-                if (wordValid(tmp_str, appid) == true) {
+                if (WordValid(tmp_str, appid) == true) {
                     vec.push_back(tmp_str);
                 }
             }
@@ -239,7 +255,7 @@ bool Segment::isAllAlphaOrDigit(string str) {
 }
 
 void Segment::CutNgram(const string& str, vector<string>& search_res, uint32_t n) {
-	iutf8string phrase(str);
+    iutf8string phrase(str);
     uint32_t N = (n > (uint32_t)phrase.length()) ? (uint32_t)phrase.length() : n;
     for (size_t i = 1; i <= N; i++) {
         for (size_t j = 0; j < (size_t)phrase.length() - i + 1; j++) {

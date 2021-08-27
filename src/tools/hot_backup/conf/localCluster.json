@@ -1,0 +1,69 @@
+{
+    "MODULE" : 
+	{
+		"SERVERSHARDING" :
+		[
+			{
+				"ShardingName" : "keyword_index_data1743",
+				"INSTANCE" :
+				[
+					{
+						"ip" : "11.80.20.175",
+						"port" : "12003",
+						"weight" : 1
+					},
+					{
+						"ip" : "11.27.100.251",
+						"port" : "11017",
+						"keywordtablePort" : "20000",
+						"rocksDbReplPort" : "40411",
+						"originaltablePort" : "20070",
+						"weight" : 1,
+						"role" : "index_gen",
+						"disasterRole" : "master"
+					},
+					{
+						"ip" : "11.27.100.252",
+						"port" : "11017",
+						"keywordtablePort" : "20000",
+						"rocksDbReplPort" : "40411",
+						"originaltablePort" : "20070",
+						"weight" : 1,
+						"role" : "index_gen",
+						"disasterRole" : "replicate"
+					}
+				]
+			},{
+				"ShardingName" : "keyword_index_data1744",
+				"INSTANCE" :
+				[
+					{
+						"ip" : "11.80.20.175",
+						"port" : "12003",
+						"weight" : 1
+					},
+					{
+						"ip" : "11.28.21.9",
+						"port" : "11017",
+						"keywordtablePort" : "20000",
+						"rocksDbReplPort" : "40411",
+						"originaltablePort" : "20070",
+						"weight" : 1,
+						"role" : "index_gen",
+						"disasterRole" : "master"
+					},
+					{
+						"ip" : "11.29.119.199",
+						"port" : "11017",
+						"keywordtablePort" : "20000",
+						"rocksDbReplPort" : "40411",
+						"originaltablePort" : "20070",
+						"weight" : 1,
+						"role" : "index_gen",
+						"disasterRole" : "replicate"
+					}
+				]
+			}
+		]
+    }
+}

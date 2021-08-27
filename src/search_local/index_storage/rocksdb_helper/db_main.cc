@@ -43,6 +43,7 @@
 #include "rocksdb_conn.h"
 #include "db_process_rocks.h"
 #include "rocksdb_direct_process.h"
+#include "rocksdb_replication.h"
 
 extern void _set_remote_log_config_(const char *addr, int port, int businessid);
 const char progname[] = "rocksdb_helper";
@@ -50,7 +51,7 @@ const char usage_argv[] = "machId addr [port]";
 char cacheFile[256] = CACHE_CONF_NAME;
 char tableFile[256] = TABLE_CONF_NAME;
 
-static HelperProcessBase *helperProc;
+HelperProcessBase* helperProc;
 static unsigned int procTimeout;
 
 static RocksDBConn *gRocksdbConn;
@@ -605,12 +606,14 @@ int main(int argc, char **argv)
 			return -1;
 
 		ret = rocks_direct_access_proc();
-		if (ret != 0)
-			return -1;
-
-		break;
-	}
-	}
+		if (ret != 0) return -1;
+      // start master replication listener
+      ret = helperProc->startReplListener();
+      if (ret != 0) return -1;
+      
+      break;
+    }
+  }
 
 	if (usematch)
 		helperProc->use_matched_rows();

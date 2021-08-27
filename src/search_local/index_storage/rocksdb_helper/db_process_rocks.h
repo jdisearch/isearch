@@ -26,6 +26,7 @@
 #include "rocksdb_key_comparator.h"
 #include "rocksdb_direct_context.h"
 #include "rocksdb_orderby_unit.h"
+#include "rocksdb_replication.h"
 
 class RocksdbProcess : public HelperProcessBase 
 {
@@ -58,6 +59,7 @@ class RocksdbProcess : public HelperProcessBase
     int64_t mUncommitedMigId;
     
     RocksdbOrderByUnit* mOrderByUnit;
+	RocksdbReplication* mReplUnit;
 
   // statistic info
   enum class TimeZone : unsigned char
@@ -95,23 +97,36 @@ class RocksdbProcess : public HelperProcessBase
     RocksdbProcess(RocksDBConn *conn);
     virtual ~RocksdbProcess();
 
-    int Init(int GroupID, const DbConfig* Config, DTCTableDefinition *tdef, int slave);
-    int check_table();
+    virtual int Init(int GroupID, const DbConfig *Config, DTCTableDefinition *tdef, int slave);
+    virtual int check_table();
 
-    int process_task (DTCTask* Task);
+    virtual int process_task (DTCTask* Task);
 
-    void init_title(int m, int t);
-    void set_title(const char *status);
-    const char *Name(void) { return name; }
-    void set_proc_timeout(unsigned int Seconds) { procTimeout = Seconds; }
+    virtual void init_title(int m, int t);
+    virtual void set_title(const char *status);
+    virtual const char *Name(void) { return name; }
+    virtual void set_proc_timeout(unsigned int Seconds) { procTimeout = Seconds; }
   
-    int process_direct_query(
-        DirectRequestContext* reqCxt,
-        DirectResponseContext* respCxt); 
+    virtual int process_direct_query(
+		DirectRequestContext *reqCxt,
+		DirectResponseContext *respCxt);
   
+    virtual int startReplListener();
+
+    virtual int TriggerReplication(
+      const std::string& masterIp, 
+      int masterPort);
+
+    virtual int QueryReplicationState();
+    
+    int decodeInternalKV(
+        const std::string encodeKey,
+        const std::string encodeVal,
+        std::string& decodeKeys,
+        std::string& decodeVals);
   protected:
-    void init_ping_timeout(void);
-	void use_matched_rows(void);	
+    virtual void init_ping_timeout(void);
+	virtual void use_matched_rows(void);	
 
     inline int value2Str(const DTCValue* Value, int fieldId, std::string &strValue);
     inline int setdefault_value(int field_type, DTCValue& Value);
@@ -269,6 +284,8 @@ class RocksdbProcess : public HelperProcessBase
           int64_t timeElapse);
 
       void print_stat_info();
+
+      int memcmp_ignore_case(const void* lv, const void* rv, int count);
 };
 
 #endif // __DB_PROCESS_ROCKS_H__

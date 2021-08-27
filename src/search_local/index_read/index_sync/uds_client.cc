@@ -15,18 +15,9 @@
  *
  * =====================================================================================
  */
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdint.h>  
-#include <iostream>
-#include <vector>
-#include "log.h"
 #include "uds_client.h"
+#include "log.h"
+#include "rocksdb_direct_context.h"
 
 #define DATA_SIZE 4
 #define BUFFER_SIZE 1024
@@ -177,13 +168,13 @@ void parseResponse(char *data, int dataLen, std::vector<std::vector<std::string>
 bool UDSClient::sendAndRecv(DirectRequestContext &direct_request_context, std::vector<std::vector<std::string> >& row_fields, std::vector<struct TableField* > table_field_vec)
 {
 
-    int len = direct_request_context.binarySize();
+    int len = direct_request_context.binary_size(DirectRequestType::eRangeQuery);
     char *send_buffer = (char*)malloc(len + DATA_SIZE);
     *(int*)send_buffer = len;
     //send_buffer += DATA_SIZE;
     
 
-    direct_request_context.serializeTo(send_buffer + DATA_SIZE, len);
+    direct_request_context.serialize_to(send_buffer + DATA_SIZE, len);
 
     log_debug("send byte len is %d",len + DATA_SIZE);
     if(sendMessage(send_buffer, len + DATA_SIZE) == -1){

@@ -105,7 +105,7 @@ static int get_snapshot_execute(DTC::Server* dtc_server,const UserTableContent &
 	if (fields.top == 1) {
 		top_tag = "11";
 	}
-	ret = getReq.SetKey(gen_dtc_key_string(fields.appid, top_tag, fields.doc_id).c_str());
+	ret = getReq.SetKey(CommonHelper::Instance()->GenerateDtcKey(fields.appid, top_tag, fields.doc_id).c_str());
 	ret = getReq.Need("extend");
 	ret = getReq.Need("created_time");
 
@@ -179,7 +179,7 @@ int CTaskSnapShot::update_sanpshot_dtc(const UserTableContent &fields,Json::Valu
 		top_tag = "11";
 	}
 	DTC::UpdateRequest updateReq(dtc_server);
-	ret = updateReq.SetKey(gen_dtc_key_string(fields.appid, top_tag, fields.doc_id).c_str());
+	ret = updateReq.SetKey(CommonHelper::Instance()->GenerateDtcKey(fields.appid, top_tag, fields.doc_id).c_str());
 	updateReq.Set("weight",fields.weight);
 
 	DTC::Result rst;

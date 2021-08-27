@@ -116,7 +116,7 @@ void NgramSegment::fmm(const string& str, uint32_t appid, vector<string>& fmm_li
             if (j == 1)
                 break;
             iutf8string key = phrase_sub.utf8substr(0, j);
-            if (wordValid(key.stlstring(), appid) == true) {
+            if (WordValid(key.stlstring(), appid) == true) {
                 fmm_list.push_back(key.stlstring());
                 i += key.length() - 1;
                 break;
@@ -145,7 +145,7 @@ void NgramSegment::bmm(const string& str, uint32_t appid, vector<string>& bmm_li
             if (j == phrase_sub.length() - 1)
                 break;
             iutf8string key = phrase_sub.utf8substr(j, phrase_sub.length()-j);
-            if (wordValid(key.stlstring(), appid) == true) {
+            if (WordValid(key.stlstring(), appid) == true) {
                 vector<string>::iterator iter = bmm_list.begin();
                 bmm_list.insert(iter, key.stlstring());
                 i -= key.length() - 1;

@@ -19,7 +19,18 @@
 #ifndef _UDS_CLIENT_H_
 #define _UDS_CLIENT_H_
 
-#include "rocksdb_direct_context.h"
+#include <vector>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <string.h>
+#include <unistd.h>
+#include <stdint.h>  
+#include <iostream>
+
+class DirectRequestContext;
+
 class UDSClient{
 public:
     UDSClient();
@@ -27,7 +38,11 @@ public:
         Close();
     };
     bool Connect(const char *path);
-    bool sendAndRecv(DirectRequestContext &direct_request_context, std::vector<std::vector<std::string> >& row_fields, std::vector<struct TableField* > table_field_vec);
+    bool sendAndRecv(
+        DirectRequestContext &direct_request_context, 
+        std::vector<std::vector<std::string> >& row_fields, 
+        std::vector<struct TableField* > table_field_vec);
+
     int receiveMessage(char *data, int dataLen);
     int sendMessage(const char *data, int dataLen);
     void Close();
