@@ -68,7 +68,7 @@ curl -X POST \
 ## 索引上报
 ----
 ### 接口描述
->该接口上传记录至索引服务，生成普通索引表。
+>该接口上传记录至索引服务，生成普通索引。
 
 ### URL
 ```html
@@ -95,10 +95,12 @@ JSON
 | 参数 | 类型 | 是否必需 | 描述 |
 | ------------ | ------------ | ------------ | ------------ |
 |  doc_id  |  string  | 是  | 文章ID  |
-|  weight  |  int | 是  | 文章权重  |
-|  author | string  | 是  |  文章作者 |
-|  title | string  | 是  | 文章标题  |
-|  content |  string |  是 | 文章内容 |
+|  style  |  int | 是  | 样式id  |
+|  title | string  | 是  |  标题 |
+|  author_id | string  | 是  | 作者id  |
+|  createtime |  int |  是 | 时间 |
+
+注：这里fields的参数与appid定义的字段相对应，这里仅是一个示例。
 
 ### Http 返回结果说明
 | 参数 | 类型 |  描述 |
@@ -109,21 +111,10 @@ JSON
 ### CURL调用示例
 ```html
 curl -X POST \
-  http://127.0.0.1/index/common \
+  http://127.0.0.1/insert \
   -H 'content-type: application/json' \
-  -d '{
-	"appid": 10001,
-	"table_content": {
-		"cmd": "add",
-		"fields": {
-			"doc_id": "28394556",
-			"weight": 218,
-			"author": "zhangsan",
-			"title": " 京东阅读电子阅读器即将上线 ",
-			"content": "今天小编得到了一个令人振奋的消息！它是什么呢？京东阅读官方即将推出搭载京东阅读客户端"
-		}
-	}
-  }'
+  -H 'doc_id: 115' \
+  -d '{"appid":10064,"table_content":{"cmd":"add","fields":{"author_id":"21386","createtime":1488981884,"doc_id":"115","status":3,"style":0,"sub_position":1,"title":"内存不够用？关闭这4个功能就行了"}}}'
 ```
 ### 成功返回示例
 ```json
