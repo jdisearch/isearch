@@ -81,7 +81,6 @@ public:
 	bool IsChineseWord(uint32_t appid, string str);
 	string GetPhonetic(string charact);
 	bool IsSensitiveWord(string word);
-	bool IsContainKey(vector<FieldInfo>& keys, string key);
 	bool IsPhonetic(string phonetic) {
 		bool result = false;
 		if (phonetic_set.find(phonetic) != phonetic_set.end())

@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 2.6)
 
 PROJECT(correction_unittest)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -lrt -Wall -O2")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fprofile-arcs -ftest-coverage -lrt -Wall -O2")
 
 AUX_SOURCE_DIRECTORY(. main)
 set(OTHER_FILE "../correction/correction.cc" "../utils/get_aois_action.cc"
- "../index_tbl_op.cc" "../search_conf.cc" "../split_manager.cc" "../data_manager.cc" "../search_util.cc"
+ "../search_conf.cc" "../split_manager.cc" "../data_manager.cc" "../search_util.cc"
  "../db_manager.cc" "../request_context.cc" "../result_context.cc")
 
 LINK_DIRECTORIES(   
@@ -29,7 +29,7 @@ target_include_directories(correction_unittest  PUBLIC
 ../../../search_local/index_storage/api/c_api_cc
 )
 
-target_link_libraries(correction_unittest common gtest_main gtest jsoncpp stat dtc dl)
+target_link_libraries(correction_unittest common gtest_main gtest jsoncpp stat dl -lpthread -lm)
 SET_TARGET_PROPERTIES(correction_unittest PROPERTIES RUNTIME_OUTPUT_DIRECTORY "./bin")
 
 

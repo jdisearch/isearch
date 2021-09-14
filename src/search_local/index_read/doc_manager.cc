@@ -20,6 +20,7 @@
 #include "doc_manager.h"
 #include "log.h"
 #include "search_util.h"
+#include "index_tbl_op.h"
 #include "db_manager.h"
 #include "process/geo_distance_query_process.h"
 #include <math.h>

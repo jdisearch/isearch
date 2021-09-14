@@ -748,7 +748,7 @@ bool RocksdbProcess::is_matched(
       ret = memcmp(lv, rv, minLen);
     else
       ret = memcmp_ignore_case(lv, rv, minLen);
-    log_error("iret:%d , len:%d ,rLen:%d", ret , lLen , rLen);
+    //log_error("iret:%d , len:%d ,rLen:%d", ret , lLen , rLen);
     return ret < 0 || (ret == 0 && lLen <= rLen);
   case 4:
     if (caseSensitive)
@@ -998,7 +998,9 @@ void RocksdbProcess::build_direct_row(
     }
 
     int dataLen = fieldValue.length();
-    row.append(std::string((char *)&dataLen, 4)).append(fieldValue);
+    //row.append(std::string((char *)&dataLen, 4)).append(fieldValue);
+    row += std::string((char *)&dataLen, 4);
+    row += fieldValue;
   }
 
   ((RangeQueryRows_t*)respCxt->sDirectRespValue.uRangeQueryRows)->sRowValues.push_front(row);
@@ -2489,6 +2491,7 @@ int RocksdbProcess::process_direct_query(
 #ifdef PRINT_STAT
   mETime = GET_TIMESTAMP();
   insert_stat(OprType::eDirectQuery, mETime - mSTime);
+  log_debug("cost time: %lld", (long long int)(mETime - mSTime));
 #endif
 
   return (0);
@@ -3099,6 +3102,10 @@ int RocksdbProcess::split_values(
   char *head = const_cast<char *>(compoundValue.data());
   for (int idx = 0; idx < mExtraValueFieldNums; idx++)
   {
+    if(idx == mExtraValueFieldNums-1){ // extend field no need to parse
+      values.push_back("");
+      break;
+    }
     ret = get_value_by_id(head, mFieldIndexMapping[mCompoundKeyFieldNums + idx], value);
     assert(ret == 0);
     values.push_back(std::move(value));

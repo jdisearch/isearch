@@ -6,7 +6,7 @@ CC = g++
 
 .SUFFIXES: .cc .h
 
-FLAGS = -g -std=c++11 -DROCKSDB_COMPILER=1 -DOMN_PLATFORM_UNIX $(Optimize) -Wl,--no-undefined -Xlinker -zmuldefs
+FLAGS = -g -O2 -std=c++11 -DROCKSDB_COMPILER=1 -DOMN_PLATFORM_UNIX $(Optimize) -Wl,--no-undefined -Xlinker -zmuldefs
 #FLAGS = -O3 -DOMN_PLATFORM_UNIX $(Optimize)
 
 INCDIRS = -I.. -I../common -I../watchdog -I../cache -I../stat -I../../../3rdlib/rocksdb/include -I../../../3rdlib/rocksdb/logging -I../../../3rdlib/attr_api -I../../../comm

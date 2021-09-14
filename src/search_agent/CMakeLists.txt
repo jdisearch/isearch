@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.6)
 PROJECT(search_agent)
 EXECUTE_PROCESS(COMMAND git log -1 --pretty=format:%h . OUTPUT_VARIABLE version)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -g  -lrt -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g  -lrt -Wall")
 
 AUX_SOURCE_DIRECTORY(. main)
 

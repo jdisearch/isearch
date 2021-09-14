@@ -34,7 +34,7 @@ int RangeQueryProcess::ParseContent(int logic_type)
         if(field_value.isObject()){
             Json::Value start;
             Json::Value end;
-            RANGTYPE ui_range_type;
+            RANGTYPE ui_range_type = RANGE_INIT;
             if(field_value.isMember(GTE)){
                 start = field_value[GTE];
                 if(field_value.isMember(LTE)){

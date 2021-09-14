@@ -1,0 +1,39 @@
+{
+    "MODULE" : 
+	{
+		"SERVERSHARDING" :
+		[
+			{
+				"ShardingName" : "keyword_index_data1743",
+				"INSTANCE" :
+				[
+					{
+						"ip" : "127.0.0.1",
+						"port" : "12003",
+						"weight" : 1
+					},
+					{
+						"ip" : "127.0.0.1",
+						"port" : "11017",
+						"keywordtablePort" : "20000",
+						"rocksDbReplPort" : "40411",
+						"originaltablePort" : "20070",
+						"weight" : 1,
+						"role" : "index_gen",
+						"disasterRole" : "master"
+					},
+					{
+						"ip" : "127.0.0.2",
+						"port" : "11017",
+						"keywordtablePort" : "20000",
+						"rocksDbReplPort" : "40411",
+						"originaltablePort" : "20070",
+						"weight" : 1,
+						"role" : "index_gen",
+						"disasterRole" : "replicate"
+					}
+				]
+			}
+		]
+    }
+}

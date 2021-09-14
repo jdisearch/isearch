@@ -998,4 +998,143 @@ vector<IndexInfo> vec_difference(vector<IndexInfo> &a, vector<IndexInfo> &b){
     return diff_vec;
 }
 
+int ShiftIntelligentInfo(IntelligentInfo &info, int len)
+{
+    uint16_t *p = &info.charact_id[0];
 
+    if (len >= 8) {
+        return -1;
+    }
+
+    if (len < 1) {
+        return -2;
+    }
+
+    memmove(&p[len], &p[0], sizeof(uint16_t) * (8 - len));
+
+    for (int i = 0; i < len; i++) {
+        p[i] = 0;
+    }
+
+    p = &info.phonetic_id[0];
+
+    memmove(&p[len], &p[0], sizeof(uint16_t) * (8 - len));
+
+    for (int i = 0; i < len; i++) {
+        p[i] = 0;
+    }
+
+    GetInitialVec(info, len);
+
+    return 0;
+}
+
+bool GetSuggestDoc(FieldInfo& fieldInfo, uint32_t len, const IntelligentInfo &info, vector<IndexInfo> &doc_id_set, uint32_t appid)
+{
+    bool bRet;
+    int index = 0;
+    uint32_t field = fieldInfo.field;
+    uint32_t segment_feature = fieldInfo.segment_feature;
+    bRet = g_hanpinIndexInstance.GetSuggestDoc(appid, index, len, field, info, doc_id_set);
+    if (bRet == false)
+        goto resError;
+
+    if (segment_feature == 0) {
+        return true;
+    }
+
+    for (uint32_t i = 1; i <= 8 - len; i++) {
+        index = index + 1;
+        IntelligentInfo t2 = info;
+        if (ShiftIntelligentInfo(t2, i) < 0) {
+            continue;
+        }
+        bRet = g_hanpinIndexInstance.GetSuggestDoc(appid, index, len, field, t2, doc_id_set);
+        if (bRet == false)
+            goto resError;
+    }
+    return true;
+
+resError:
+    log_error("GetSuggestDoc invalid.");
+    return false;
+}
+
+bool GetSuggestDocWithoutCharacter(FieldInfo& fieldInfo, uint32_t len, const IntelligentInfo &info, vector<IndexInfo> &doc_id_set, uint32_t appid)
+{
+    bool bRet;
+    int index = 0;
+    uint32_t field = fieldInfo.field;
+    uint32_t segment_feature = fieldInfo.segment_feature;
+    bRet = g_hanpinIndexInstance.GetSuggestDocWithoutCharacter(appid, index, len, field, info, doc_id_set);
+    if (bRet == false)
+        goto resError;
+
+    if (segment_feature == 0) {
+        return true;
+    }
+
+    for (uint32_t i = 1; i <= 16 - len; i++) {
+        index = index + 1;
+        IntelligentInfo t2 = info;
+        if (ShiftIntelligentInfoWithoutCharacter(t2, i) < 0) {
+            continue;
+        }
+        bRet = g_hanpinIndexInstance.GetSuggestDocWithoutCharacter(appid, index, len, field, t2, doc_id_set);
+        if (bRet == false)
+            goto resError;
+    }
+    return true;
+
+resError:
+    log_error("GetSuggestDoc invalid.");
+    return false;
+}
+
+int GetDocByShiftWord(FieldInfo fieldInfo, vector<IndexInfo> &doc_id_set, uint32_t appid)
+{
+    log_debug("GetDocByShiftWord start");
+    bool bRet = true;
+    set<vector<Content> > result;
+    GetMultipleWords(fieldInfo.word, result);
+
+    int len = result.size();
+    if (len <= 0) {
+        log_error("get shift word error.");
+        return -RT_GET_SUGGEST_ERR;
+    }
+
+    set<vector<Content> >::iterator iter;
+    for (iter = result.begin(); iter != result.end(); iter++) 
+    {
+        IntelligentInfo info;
+        vector<Content> tmp = *iter;
+        ConvertIntelligent(tmp, info, bRet);
+        int length = tmp.size();
+        if (bRet) {
+            bRet = GetSuggestDoc(fieldInfo, length, info, doc_id_set, appid);
+            if (!bRet) {
+                log_error("GetSuggestDocInfo error.");
+                return -RT_DTC_ERR;
+            }
+        }
+    }
+
+    return 0;
+}
+
+int GetDocByShiftEnWord(FieldInfo fieldInfo, vector<IndexInfo> &doc_id_set, uint32_t appid)
+{
+    log_debug("GetDocByShiftEnWord start");
+    bool bRet = true;
+
+    int length = 0;
+    IntelligentInfo enInfo;
+    ConvertCharIntelligent(fieldInfo.word, enInfo, length);
+    bRet = GetSuggestDocWithoutCharacter(fieldInfo, length, enInfo, doc_id_set, appid);
+    if (!bRet) {
+        log_error("GetEnSuggestDocInfo error.");
+        return -RT_DTC_ERR;
+    }
+    return 0;
+}

@@ -35,8 +35,8 @@ src_common="$srcdir/$common"
 src_stat="$srcdir/$common/$stat"
 src_index_write="$srcdir/$search_local/$index_write"
 src_index_read="$srcdir/$search_local/$index_read"
-src_search_agent="$srcdir/$search_agent"
 src_index_storage="$srcdir/$search_local/$index_storage"
+src_search_agent="$srcdir/$search_agent"
 
 cd $src_common
 cmake .
@@ -47,6 +47,9 @@ cd $src_stat
 cmake .
 make
 cd $localdir
+
+cd $src_index_storage
+make
 
 cd $src_index_write
 cmake .
@@ -61,6 +64,4 @@ cd $localdir
 cd $src_search_agent
 cmake .
 make
-
-cd $src_index_storage
-make
+cd $localdir

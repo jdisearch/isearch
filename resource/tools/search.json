@@ -1,0 +1,12 @@
+{"appid":10010,"query":{"match":{"birthPlace":"上海市"}}}
+{"appid":10010,"query":{"match":{"dreamPlace":"王国"}}}
+{"appid":10010,"query":{"match":{"name":"Jackie"}}}
+{"appid":10010,"query":{"term":{"year":20}}}
+{"appid":10010,"query":{"range":{"height":{"gte":175 ,"lte": 180}}}}
+{"appid":10010,"query":{"geo_distance":{"currentLocation":"39.452, -76.589","distance":"0.5"}}}
+{"appid":10010,"query":{"geo_polygon":{"currentShape":{"points":"POLYGON((121.437271 31.339747, 121.438022 31.337291, 121.435297 31.336814, 121.434524 31.339252, 121.437271 31.339747))"}}}}
+{"appid":10010,"query":{"bool":{"must":{"match":{"birthPlace":"中华人民共和国"},"range":{"brithday":{"gt":19900654,"lte":19931124}}},"must_not":{"match":{"homeAddress":"上海市"}}}}}
+{"appid":10010,"query":{"bool":{"must":{"match":{"birthPlace":"上海市"},"geo_distance":{"currentLocation":"39.452, -76.589","distance":"1.123"}}}}}
+{"appid":10010,"query":{"bool":{"must":{"match":{"birthPlace":"上海市"},"term":{"gender":"男"}}}}}
+{"appid":10010,"query":{"match":{"dreamPlace":"阿姆斯"}},"fields":"birthPlace,homeAddress,dreamPlace,name","page_index":1,"page_size":3}
+{"appid":10010,"query":{"range":{"height":{"gte":174 ,"lte": 180}}},"fields":"birthPlace,height,name","sort_type":"5","sort_field":"height"}

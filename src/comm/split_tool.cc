@@ -84,6 +84,9 @@ bool FBSegment::Init2(string train_path) {
 				line_list.push_back(*iter);
 			}
 		}
+		if(line_list.size() == 0){
+			continue;
+		}
 		train_cnt += line_list.size();
 		for (int i = -1; i < (int)line_list.size(); i++) {
 			string word1;

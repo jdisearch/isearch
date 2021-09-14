@@ -77,6 +77,11 @@ private:
 vector<IndexInfo> vec_intersection(vector<IndexInfo> &a, vector<IndexInfo> &b);
 vector<IndexInfo> vec_union(vector<IndexInfo> &a, vector<IndexInfo> &b);
 vector<IndexInfo> vec_difference(vector<IndexInfo> &a, vector<IndexInfo> &b);
+int ShiftIntelligentInfo(IntelligentInfo &info, int len);
+bool GetSuggestDoc(FieldInfo& fieldInfo, uint32_t len, const IntelligentInfo &info, vector<IndexInfo> &doc_id_set, uint32_t appid);
+bool GetSuggestDocWithoutCharacter(FieldInfo& fieldInfo, uint32_t len, const IntelligentInfo &info, vector<IndexInfo> &doc_id_set);
+int GetDocByShiftWord(FieldInfo fieldInfo, vector<IndexInfo> &doc_id_set, uint32_t appid);
+int GetDocByShiftEnWord(FieldInfo fieldInfo, vector<IndexInfo> &doc_id_set, uint32_t appid);
 
 extern CIndexTableManager g_IndexInstance;
 extern CIndexTableManager g_hanpinIndexInstance;

@@ -514,13 +514,14 @@ void key_format::DecodeBytes(const std::string &src, std::string &dst)
 	{
 		dst = "";
 	}
-	std::stringstream oss_dst;
+	//std::stringstream oss_dst;
 	for (size_t i = 0; i < src.length(); i += SEGMENT_SIZE)
 	{
 		char padding_bytes = ENCODER_MARKER - src[i + 7];
-		oss_dst << src.substr(i, SEGMENT_SIZE - 1 - padding_bytes);
+		//oss_dst << src.substr(i, SEGMENT_SIZE - 1 - padding_bytes);
+		dst += src.substr(i, SEGMENT_SIZE - 1 - padding_bytes);
 	}
-	dst = oss_dst.str();
+	//dst = oss_dst.str();
 }
 
 void key_format::DecodeBytes(const std::string &src, uint64_t &dst)

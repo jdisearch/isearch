@@ -156,27 +156,23 @@ fields：返回指定字段值，多个字段用逗号隔开
 
 ### 源码编译
 
-运行build.sh脚本可以编译isearch需要的所有bin文件，编译环境说明如下：
+建议通过isearch_env镜像进行源码编译，获取isearch_env镜像的方式为： `docker pull intelligentsearch/isearch_env:2.0`
 
-由于检索存储层依赖rocksdb，所以编译时需要满足以下前置配置：  
-1）CentOS 7.x  
-2）gcc 4.8  
-3）Cmake版本需要大于等于3.6.2  
-4）安装gflags：  
-   gflags是google开源的一套命令行参数解析工具，支持从环境变量和配置文件读取参数  
-   安装命令：  
-   ```
-   git clone https://github.com/gflags/gflags.git
-   cd gflags
-   git checkout -b 2.2 v2.2.2
-   cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DBUILD_SHARED_LIBS=ON -DGFLAGS_NAMESPACE=google -G "Unix Makefiles" .
-   make && make install
-   sudo ldconfig
-   sudo ln -s /usr/local/lib/libgflags.so.2.2 /lib64
-   ```
-   安装后，需要将gflags的包含路径添加到PATH环境变量中  
-5）安装rocksdb依赖库：zlib，bzip2，lz4，snappy，zstandard  
-   `sudo yum install -y snappy snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan openssl-devel`
+也可以自行编译isearch_env镜像，Dockerfile文件位于dockerfiles\env目录： `docker build -t intelligentsearch/isearch_env:2.0 .`
+
+然后运行容器： `docker run -itd intelligentsearch/isearch_env:2.0`
+
+进入容器： `docker exec -it 容器id /bin/bash`
+
+执行如下命令进行编译和安装：
+```
+cd /usr/local
+git clone https://gitee.com/jd-platform-opensource/isearch.git
+mv isearch jdisearch
+cd jdisearch
+sh build.sh
+sh install.sh
+```
 
 ### 项目成员
 

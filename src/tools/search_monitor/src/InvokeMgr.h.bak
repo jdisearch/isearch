@@ -1,0 +1,138 @@
+//////////////////////////////////////////////////
+//
+// invoke API for cluster
+//   created by qiuyu on Nov 27,2018
+//
+//////////////////////////////////////////////////
+
+#ifndef __INVOKE_MGR_H__
+#define __INVOKE_MGR_H__
+
+#include "common/singleton.h"
+#include "DetectHandlerBase.h"
+#include "Sem.h"
+
+#define GLOBAL_PHYSICAL_ID_SHIFT (7 * 8)
+
+class InvokeHandler;
+class CPollThread;
+class CMutex;
+//class Sem;
+
+class InvokeMgr : public CThread
+{
+  enum
+  {
+    eMaxExpiredTimeSec = 10  
+  };
+
+  // async call timer controler
+  class InvokeTimer : public CTimerObject
+  {
+  private:
+    uint64_t mSequenceId;
+    InvokeMgr*     mInvokeMgr;
+  public:
+    InvokeTimer(
+        const uint64_t seq,
+        InvokeMgr* inMgr)
+    {
+      mSequenceId = seq;
+      mInvokeMgr = inMgr;
+    }
+
+    virtual ~InvokeTimer() {}
+
+    virtual void AttachTimer(class CTimerList *container)
+    {
+      CTimerObject::AttachTimer(container);
+    }
+
+    virtual void TimerNotify(void)
+    {
+      mInvokeMgr->callBack(mSequenceId, true, false);
+    }
+  };
+
+  typedef struct SemaphoreData
+  {
+    Sem* sSem;
+    int sTotalVotes;
+    bool sIsTimeout;
+    
+    SemaphoreData()
+    :
+    sSem(new Sem),
+    sTotalVotes(1), // vote for itself
+    sIsTimeout(false)
+    {
+    }
+
+    ~SemaphoreData()
+    {
+      if (sSem) delete sSem;
+    }
+
+    void semWait()
+    {
+      sSem->semWait();
+    }
+
+    void wakeUp()
+    {
+      sSem->semPost();
+    }
+  }SempData_t;
+
+private:
+  static int smClusterNodeSize; // numbers of cluster peer node
+  static uint64_t sgSequenceId;
+  
+  typedef std::map<uint64_t, SempData_t*> CallBackData_t;
+  typedef std::map<uint64_t, SempData_t*>::iterator CallBackDataItr_t;
+
+private:
+  CPollThread* mInvokePoll;
+  CMutex*      mLock;
+  std::vector<InvokeHandler*> mInvokeHandlers;
+  // std::map<uint64_t, SempData_t*>  mRemaingRequests;
+  CallBackData_t  mRemaingRequests;
+  CTimerList* mTimerMgr; // control all timers
+  int mTimeout;
+  bool mNeedStop;
+  int mTotalVotes;
+  bool mHasInit;
+
+public:
+  InvokeMgr();
+  ~InvokeMgr();
+
+protected:
+  // override thread function
+  virtual void* Process(void);
+
+public:
+  static InvokeMgr* getInstance()
+  {
+    return CSingleton<InvokeMgr>::Instance();
+  }
+
+  bool startInvokeMgr();
+  void stopInvokeMgr();
+
+  bool invokeVoteSync(
+      const DetectHandlerBase::DetectType type,
+      const std::string& invokeData,
+      bool& needSwitch);
+
+  bool callBack(
+      const uint64_t sequenceId,
+      const bool isTimeout,
+      const bool isVote);
+
+private:
+  uint64_t getSequenceId();
+  bool initInvokeHandlers();
+};
+
+#endif // __INVOKE_MGR_H__

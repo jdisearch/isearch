@@ -1,0 +1,55 @@
+{
+    "MODULE" : 
+	{
+		"SERVERSHARDING" :
+		[
+			{
+				"ShardingName" : "keyword_index_data1743",
+				"INSTANCE" :
+				[
+					{
+						"ip" : "11.80.17.227",
+						"port" : "12003",
+						"weight" : 1
+					},
+					{
+						"ip" : "11.50.77.97",
+						"port" : "12003",
+						"weight" : 1
+					},
+					{
+						"ip" : "11.80.17.227",
+						"port" : "11017",
+						"weight" : 1,
+						"role" : "index_gen",
+						"disasterRole" : "master"
+					},
+					{
+						"ip" : "11.50.77.97",
+						"port" : "11017",
+						"weight" : 1,
+						"role" : "index_gen",
+						"disasterRole" : "replicate"
+					}
+				]
+			},		
+			{
+				"ShardingName" : "keyword_index_data1744",
+				"INSTANCE" :
+				[
+					{
+						"ip" : "11.50.77.97",
+						"port" : "12003",
+						"weight" : 1
+					},
+					{
+						"ip" : "11.50.77.97",
+						"port" : "11017",
+						"weight" : 1 ,
+						"role" : "index_gen"
+					}
+				]
+			}
+		]
+    }
+}

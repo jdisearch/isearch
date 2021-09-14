@@ -154,7 +154,7 @@ void parseResponse(char *data, int dataLen, std::vector<std::vector<std::string>
             std::string value(data, value_len);
             data += value_len;
             dataLen -= value_len;
-            log_debug("field value:%s", value.c_str());
+            //log_debug("field value:%s", value.c_str());
             row_fields[idx].push_back(value);
 	    }
     }

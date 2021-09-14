@@ -48,7 +48,7 @@ void CustomSegment::ConcreteSplit(const string& str, uint32_t appid, vector<stri
     char res[100] = {'\0'};
     word_split_func_(str.c_str(), res, 100);
     string tmp = "";
-    for(int i = 0; i < strlen(res); i++){
+    for(int i = 0; i < (int)strlen(res); i++){
         if(res[i] != ' '){
             tmp += res[i];
         } else {

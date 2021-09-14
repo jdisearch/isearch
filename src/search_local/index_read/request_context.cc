@@ -77,14 +77,22 @@ int RequestContext::ParseJson(const char *sz_json, int json_len, Json::Value &re
         page_index_ = ParseJsonReturnInt("page_index" , recv_packet);
     }
     else {
-        page_index_ = 1 ;
+        if (recv_packet.isMember("from")){
+            page_index_ = ParseJsonReturnInt("from" , recv_packet);
+        } else {
+            page_index_ = 1 ;
+        }
     }
 
     if (recv_packet.isMember("page_size")){
         page_size_ = ParseJsonReturnInt("page_size" , recv_packet);
     }
     else {
-        page_size_ = 10;
+        if (recv_packet.isMember("size")){
+            page_index_ = ParseJsonReturnInt("size" , recv_packet);
+        } else {
+            page_size_ = 10;
+        }
     }
 
     if(recv_packet.isMember("sort_type")){
@@ -98,7 +106,22 @@ int RequestContext::ParseJson(const char *sz_json, int json_len, Json::Value &re
         sort_field_ = recv_packet["sort_field"].asString();
     }
     else {
-        sort_field_ = "";
+        if (recv_packet.isMember("sort") && recv_packet["sort"].isArray()){
+            if(recv_packet["sort"].size() > 0){
+                Json::Value sort_info = recv_packet["sort"][0];
+                Json::Value::Members member = sort_info.getMemberNames(); 
+                Json::Value::Members::iterator iter = member.begin();
+                sort_field_ = *iter;
+                Json::Value order_info = sort_info[*iter];
+                if(order_info.isMember("order") && order_info["order"].isString()){
+                    sort_type_ = (order_info["order"].asString() == "desc" ? SORT_FIELD_DESC : SORT_FIELD_ASC);
+                }
+            } else {
+                sort_field_ = "";
+            }
+        } else {
+            sort_field_ = "";
+        }
     }
 
     if (recv_packet.isMember("return_all")){

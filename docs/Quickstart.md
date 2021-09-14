@@ -1,3 +1,25 @@
+## 源码编译方式（推荐）
+
+建议通过isearch_env镜像进行源码编译，获取isearch_env镜像的方式为： `docker pull intelligentsearch/isearch_env:2.0`
+
+也可以自行编译isearch_env镜像，Dockerfile文件位于dockerfiles\env目录： `docker build -t intelligentsearch/isearch_env:2.0 .`
+
+然后运行容器： `docker run -itd intelligentsearch/isearch_env:2.0`
+
+进入容器： `docker exec -it 容器id /bin/bash`
+
+执行如下命令进行编译和安装：
+```
+cd /usr/local
+git clone https://gitee.com/jd-platform-opensource/isearch.git
+mv isearch jdisearch
+cd jdisearch
+sh build.sh
+sh install.sh
+```
+
+## 直接获取镜像（包含编译好的程序）
+
 为了省去配置机器环境的麻烦，建议通过docker来运行demo容器，在终端执行如下命令：  
 ```
 docker run -d intelligentsearch/isearch:latest

@@ -47,6 +47,9 @@ bool HmmManager::Init(string train_path, const set<string>& punct_set) {
                 line_list.push_back(*iter);
             }
         }
+        if(line_list.size() == 0){
+            continue;
+        }
         train_cnt_ += line_list.size();
         for (int i = -1; i < (int)line_list.size(); i++) {
             string word1;

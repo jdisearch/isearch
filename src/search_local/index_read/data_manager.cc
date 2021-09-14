@@ -433,15 +433,6 @@ bool DataManager::IsSensitiveWord(string word) {
 	return result;
 }
 
-bool DataManager::IsContainKey(vector<FieldInfo>& keys, string key) {
-	vector<FieldInfo>::iterator iter;
-	for (iter = keys.begin(); iter != keys.end(); iter++) {
-		if ((*iter).word == key)
-			return true;
-	}
-	return false;
-}
-
 void DataManager::GetSynonymByKey(const string& key, vector<FieldInfo>& keys)
 {
 	if (synonym_map.find(key) == synonym_map.end())
@@ -450,7 +441,7 @@ void DataManager::GetSynonymByKey(const string& key, vector<FieldInfo>& keys)
 	multimap<uint32_t, string>::iterator it;
 	it = synonym_id_map.find(id);
 	for (int i = 0, len = synonym_id_map.count(id);i < len; ++i,++it) {
-		if (IsContainKey(keys, it->second));
+		if (it->second == key)
 			continue ;
 		FieldInfo fieldInfo;
 		fieldInfo.word = it->second; 
