@@ -9,4 +9,4 @@ RUN mkdir -p $basepath/log
 COPY search_agent $basepath/bin/search_agent
 COPY sa.conf $basepath/conf/sa.conf
 
-CMD /usr/local/isearch/search_agent/bin/search_agent -d -c /usr/local/isearch/search_agent/conf/sa.conf -v 3
+CMD ["/bin/bash", "/root/start.sh"]
