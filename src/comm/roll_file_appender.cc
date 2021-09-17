@@ -35,7 +35,7 @@ namespace common {
 		filename_ss << ump_log_dir << "/" << time_str << "000_" << getpid() << "_" << rand() % 100000 << "_tp.log";
 		_FileName = filename_ss.str();
 
-		_Fd = open(_FileName.c_str(), O_RDWR | O_APPEND | O_CREAT);
+		_Fd = open(_FileName.c_str(), O_RDWR | O_APPEND | O_CREAT, 0777);
 		if (_Fd < 0) {
 			log_error("can not open file %s", _FileName.c_str());
 			return false;
@@ -86,7 +86,7 @@ namespace common {
 		std::stringstream rename_ss;
 		rename_ss << _FileName << "." << 1;
 		rename(_FileName.c_str(), rename_ss.str().c_str());
-		_Fd = open(_FileName.c_str(), O_RDWR | O_APPEND | O_CREAT);
+		_Fd = open(_FileName.c_str(), O_RDWR | O_APPEND | O_CREAT, 0777);
 		if (_Fd < 0) {
 			log_error("can not open file %s", _FileName.c_str());
 			return;
