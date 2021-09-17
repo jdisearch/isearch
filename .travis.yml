@@ -5,9 +5,9 @@ os:
 addons:
   apt:
     packages:
-    - g++-4.8.5
+    - g++-4.9
 env:
-- ISEARCH_EVAL="CC=gcc-4.8.5 && CXX=g++-4.8.5"
+- ISEARCH_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
 
 before_install:
 - eval "${ISEARCH_EVAL}"
