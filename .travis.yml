@@ -1,0 +1,34 @@
+compiler:
+- g++
+os:
+- linux
+addons:
+  apt:
+    packages:
+    - g++-4.8.5
+env:
+- ISEARCH_EVAL="CC=gcc-4.8.5 && CXX=g++-4.8.5"
+
+before_install:
+- eval "${ISEARCH_EVAL}"
+
+install:
+- echo ${CC}
+- ${CC} --version
+- echo ${CXX}
+- ${CXX} --version
+- cmake --version
+- sudo apt-get install snappy libsnappy-dev zlib1g zlib1g-dev bzip2 liblz4-dev libasan0 openssl libmxml-dev
+
+script:
+- cmake .
+- make
+
+after_success:
+- cp src/search_agent/bin/search_agent dockerfiles/agent/
+- cp resource/search_agent/conf/sa.conf dockerfiles/agent/
+- cd dockerfiles/agent
+- echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+- docker build -t $DOCKER_USERNAME/search_agent:latest .
+- docker push $DOCKER_USERNAME/search_agent:latest
