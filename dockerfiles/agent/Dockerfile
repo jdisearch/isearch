@@ -8,5 +8,6 @@ RUN mkdir -p $basepath/log
 
 COPY search_agent $basepath/bin/search_agent
 COPY sa.conf $basepath/conf/sa.conf
+COPY start.sh /root/start.sh
 
 CMD ["/bin/bash", "/root/start.sh"]
