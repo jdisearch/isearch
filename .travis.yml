@@ -22,6 +22,12 @@ install:
 - ${CXX} --version
 - cmake --version
 - sudo apt-get install snappy libsnappy-dev zlib1g zlib1g-dev bzip2 liblz4-dev libasan0 openssl libmxml-dev
+- sudo apt update
+- sudo apt install gcc-4.8
+- sudo apt install g++-4.8
+- sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 20
+- sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 20
+- ${CXX} --version
 
 script:
 - cmake .
