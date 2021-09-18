@@ -35,6 +35,7 @@ script:
 - cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DBUILD_SHARED_LIBS=ON -DGFLAGS_NAMESPACE=google -G "Unix Makefiles" .
 - make
 - cd ../isearch
+- sudo ln -s /home/travis/build/jdisearch/gflags/lib/libgflags.so.2.2.2 /lib64/libgflags.so.2.2
 - sh build.sh
 
 after_success:
@@ -55,6 +56,6 @@ after_success:
 - docker build -t $DOCKER_USERNAME/search_agent:latest .
 - docker push $DOCKER_USERNAME/search_agent:latest
 
-- cd ../cache
+- cd ../search_local
 - docker build -t $DOCKER_USERNAME/search_local:latest .
 - docker push $DOCKER_USERNAME/search_local:latest
