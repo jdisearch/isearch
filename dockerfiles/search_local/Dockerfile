@@ -1,5 +1,8 @@
 FROM centos:centos7.2.1511
 
+RUN yum -y update
+RUN yum -y epel-release
+RUN yum install -y snappy-devel jq
 ARG invertpath=/usr/local/isearch/index_storage/inverted_index
 RUN mkdir -p $invertpath
 RUN mkdir $invertpath/conf $invertpath/bin $invertpath/rocksdb_data
