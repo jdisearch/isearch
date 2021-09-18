@@ -16,28 +16,46 @@ before_install:
 - eval "${ISEARCH_EVAL}"
 
 install:
-- echo ${CC}
-- ${CC} --version
-- echo ${CXX}
-- ${CXX} --version
-- cmake --version
-- sudo apt-get install snappy libsnappy-dev zlib1g zlib1g-dev bzip2 liblz4-dev libasan0 openssl libmxml-dev
+- sudo apt-get install snappy libsnappy-dev zlib1g zlib1g-dev bzip2 liblz4-dev libasan0 openssl libmxml-dev jq
 - sudo apt update
 - sudo apt install gcc-4.8
 - sudo apt install g++-4.8
 - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 20
 - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 20
-- ${CXX} --version
 
 script:
-- cmake .
-- make
+- cd ../
+- git clone https://github.com/facebook/rocksdb.git
+- cd rocksdb
+- git checkout -b 6.6.0 ad528fe5ca08dafff47d79c85abbf3e1fbb21568
+- make shared_lib
+- cd ../
+- git clone https://github.com/gflags/gflags.git
+- cd gflags
+- git checkout -b 2.2 v2.2.2
+- cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DBUILD_SHARED_LIBS=ON -DGFLAGS_NAMESPACE=google -G "Unix Makefiles" .
+- make && make install
+- cd ../isearch
+- sh build.sh
 
 after_success:
 - cp src/search_agent/bin/search_agent dockerfiles/agent/
 - cp resource/search_agent/conf/sa.conf dockerfiles/agent/
+- cp src/search_agent/bin/search_agent dockerfiles/search_local
+- cp -r resource dockerfiles/search_local
+- cp ../rocksdb/librocksdb.so.6.6.0 dockerfiles/search_local
+- cp /usr/local/lib/libgflags.so.2.2 dockerfiles/search_local
+- cp src/search_local/index_storage/cache/dtcd dockerfiles/search_local
+- cp src/search_local/index_storage/rocksdb_helper/rocksdb_helper dockerfiles/search_local
+- cp src/search_local/index_storage/api/c_api_cc/libdtc-gcc-4.8-r4646582.so dockerfiles/search_local
+- cp src/search_local/index_write/bin/index_write dockerfiles/search_local
+- cp src/search_local/index_read/bin/index_read dockerfiles/search_local
+
 - cd dockerfiles/agent
 - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-
 - docker build -t $DOCKER_USERNAME/search_agent:latest .
 - docker push $DOCKER_USERNAME/search_agent:latest
+
+- cd ../cache
+- docker build -t $DOCKER_USERNAME/search_local:latest .
+- docker push $DOCKER_USERNAME/search_local:latest
