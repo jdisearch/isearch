@@ -25,10 +25,6 @@ install:
 
 script:
 - cd ../
-- mkdir rocksdb
-- cd rocksdb
-- wget http://storage.jd.com/lbs-search-acc/librocksdb.so.6.6.0
-- cd ../
 - git clone https://github.com/gflags/gflags.git
 - cd gflags
 - git checkout -b 2.2 v2.2.2
