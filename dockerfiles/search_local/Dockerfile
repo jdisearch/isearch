@@ -27,7 +27,7 @@ COPY resource/dtcd.sh $originalpath/bin
 COPY dtcd $originalpath/bin
 
 COPY libdtc-gcc-4.8-r4646582.so /lib64/libdtc.so.1
-COPY librocksdb.so.6.6.0 /lib64/librocksdb.so.6
+COPY librocksdb.so /lib64/librocksdb.so.6
 COPY libgflags.so.2.2 /lib64/libgflags.so.2.2
 ARG writepath=/usr/local/isearch/index_write
 RUN mkdir -p $writepath && mkdir $writepath/conf $writepath/bin $writepath/log $writepath/stat

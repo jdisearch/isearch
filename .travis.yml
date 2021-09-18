@@ -42,7 +42,7 @@ after_success:
 - cp resource/search_agent/conf/sa.conf dockerfiles/agent/
 - cp src/search_agent/bin/search_agent dockerfiles/search_local
 - cp -r resource dockerfiles/search_local
-- cp ../rocksdb/librocksdb.so.6.6.0 dockerfiles/search_local
+- cp src/3rdlib/rocksdb/lib/librocksdb.so dockerfiles/search_local
 - cp /home/travis/build/jdisearch/gflags/lib/libgflags.so.2.2.2 dockerfiles/search_local
 - cp src/search_local/index_storage/cache/dtcd dockerfiles/search_local
 - cp src/search_local/index_storage/rocksdb_helper/rocksdb_helper dockerfiles/search_local
