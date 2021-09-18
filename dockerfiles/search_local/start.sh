@@ -5,10 +5,13 @@ set -e
 #初始化
 INIT(){
 	cd /usr/local/isearch/index_storage/inverted_index/bin
+	chmod +x dtcd.sh
 	./dtcd.sh start
 	cd /usr/local/isearch/index_storage/intelligent_index/bin
+	chmod +x dtcd.sh
 	./dtcd.sh start
 	cd /usr/local/isearch/index_storage/original_data/bin
+	chmod +x dtcd.sh
 	./dtcd.sh start
 	cd /usr/local/isearch/index_write/bin
 	./index_write
