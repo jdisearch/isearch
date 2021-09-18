@@ -1,7 +1,6 @@
 FROM centos:centos7.2.1511
-RUN yum -y update
-RUN yum install -y wget pcre pcre-devel gcc gcc-c++ make zlib-devel sudo openssh-server vim lrzsz openssl-devel &&\
-    yum install -y crypto-policies snappy-devel psmisc git epel-release jq && \
+RUN yum install -y wget pcre pcre-devel gcc gcc-c++ make zlib-devel sudo openssh-server vim lrzsz openssl-devel epel-release &&\
+    yum install -y crypto-policies snappy-devel psmisc git jq && \
     yum clean all && \
     useradd --create-home --no-log-init --shell /bin/bash isearch && echo "isearch:isearch" | chpasswd && \
     mkdir -p /env/app &&\
